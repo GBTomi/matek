@@ -200,18 +200,40 @@
       <span>Láncszámolás<small>több lépés fejben, egymás után</small></span></button>
     <button class="modul" onclick="inditSzoveges()"><span class="ikon">📖</span>
       <span>Szöveges feladatok<small>rövid történet – melyik művelet kell?</small></span></button>
+    <button class="modul" id="menu-sorozat" onclick="inditSorozat()"><span class="ikon">🔁</span>
+      <span>Sorozatok<small>mi a szabály? folytasd a sort!</small></span></button>
+    <button class="modul" id="menu-nyitott" onclick="inditNyitott()"><span class="ikon">🔓</span>
+      <span>Nyitott mondatok<small>mi kerül a ▢ helyére?</small></span></button>
+    <button class="modul" id="menu-ora" onclick="inditOra()"><span class="ikon">🕒</span>
+      <span>Óra<small>hány óra van? mennyi idő telt el?</small></span></button>
+    <button class="modul" id="menu-penz" onclick="inditPenz()"><span class="ikon">💰</span>
+      <span>Pénzszámolás<small>mennyi pénzed van összesen?</small></span></button>
+    <button class="modul" id="menu-becsles" onclick="inditBecsles()"><span class="ikon">🤔</span>
+      <span>Becslés<small>körülbelül mennyi? kerekíts fejben!</small></span></button>
+    <button class="modul" id="menu-mertek" onclick="inditMertek()"><span class="ikon">📐</span>
+      <span>Mértékegységek<small>m-cm, óra-perc, kg-dkg</small></span></button>
+    <button class="modul" id="menu-romai" onclick="inditRomai()"><span class="ikon">🏛️</span>
+      <span>Római számok<small>I, V, X, L, C – oda és vissza</small></span></button>
+    <button class="modul" id="menu-sorrend" onclick="inditSorrend()"><span class="ikon">⚖️</span>
+      <span>Műveleti sorrend<small>előbb a szorzás, aztán az összeadás</small></span></button>
+    <button class="modul" id="menu-szamalkotas" onclick="inditSzamalkotas()"><span class="ikon">🎰</span>
+      <span>Számalkotás<small>legnagyobb és legkisebb szám számjegyekből</small></span></button>
+    <button class="modul" id="menu-tortek" onclick="inditTortek()"><span class="ikon">🍕</span>
+      <span>Törtek<small>fele, harmada, negyede</small></span></button>
+    <button class="modul" id="menu-negativ" onclick="inditNegativ()"><span class="ikon">❄️</span>
+      <span>Negatív számok<small>hőmérséklet és számegyenes a nulla alatt</small></span></button>
     <button class="modul" onclick="inditVegyes()"><span class="ikon">🎲</span>
       <span>Vegyes kör<small>mindenből egy kicsit</small></span></button>
     <div class="statsor" id="stat-sor"></div>
-    <button class="fo-gomb megoszto" onclick="naploKuldes(this)" style="margin-top:10px">📤 Napló küldése</button>
     <div class="beallito">
       <div class="lepteto"><span>Életkor</span>
         <button onclick="leptet('kor',-1)">−</button><b id="kor-kijelzo">9 év</b><button onclick="leptet('kor',1)">+</button></div>
       <div class="lepteto"><span>Feladat/kör</span>
         <button onclick="leptet('db',-1)">−</button><b id="db-kijelzo">10</b><button onclick="leptet('db',1)">+</button></div>
     </div>
+    <button class="fo-gomb megoszto" onclick="naploKuldes(this)" style="margin-top:8px">📤 Napló küldése</button>
     <div class="tipp">💡 Egy kör = 10 feladat. A rövid, mindennapos gyakorlás ér a legtöbbet!<br>
-      <button class="szulo-link" onclick="szuloNezet()">👨‍👩‍👧 Szülőknek</button></div>
+      <button class="szulo-link" onclick="szuloKer()">👨‍👩‍👧 Szülőknek (PIN)</button></div>
   </div>
 
   <!-- SZÜLŐI NÉZET -->
@@ -220,11 +242,11 @@
     <div class="panel" id="pin-panel" style="display:none">
       <div id="pin-szoveg" style="font-weight:700"></div>
       <input id="pin-input" class="pin-input" type="password" inputmode="numeric" maxlength="4" placeholder="PIN">
-      <button class="fo-gomb" onclick="pinOk()">Törlés</button>
+      <button class="fo-gomb" id="pin-ok" onclick="pinOk()">Törlés</button>
       <button class="vissza" onclick="pinMegse()">Mégse</button>
     </div>
-    <button class="fo-gomb" onclick="naploKuldes(this)">📤 Napló küldése</button>
-    <button class="vissza" onclick="torlesKer('mind')">🗑 Teljes napló törlése (PIN)</button>
+    <button class="fo-gomb" id="szulo-kuldes" onclick="naploKuldes(this)">📤 Napló küldése</button>
+    <button class="vissza" id="szulo-mindtorles" onclick="torlesKer('mind')">🗑 Teljes napló törlése (PIN)</button>
     <button class="vissza" onclick="menu()">← vissza a menübe</button>
   </div>
 
@@ -360,13 +382,19 @@ function beallKijelez(){
 // kerettanterv szerint: 1. osztályban nincs szorzás/osztás/írásbeli művelet,
 // az írásbeli összeadás-kivonás 3. osztálytól tananyag
 function rejtettModulok(){
-  if(beall.kor<=7) return ["szorzas","osztas","villam","irasbeli"];
-  if(beall.kor===8) return ["irasbeli"];
+  const k = beall.kor;
+  if(k<=7) return ["szorzas","osztas","villam","irasbeli",
+                   "becsles","mertek","romai","sorrend","szamalkotas","tortek","negativ"];
+  if(k===8) return ["irasbeli","becsles","mertek","romai","sorrend","tortek","negativ"];
+  if(k===9) return ["tortek","negativ"];
+  if(k===10) return ["negativ"];
   return [];
 }
+const MIND_MODUL = ["szorzas","osztas","villam","irasbeli","becsles","mertek","romai",
+                    "sorrend","szamalkotas","tortek","negativ","sorozat","nyitott","ora","penz"];
 function menuFrissit(){
   const rejtett = rejtettModulok();
-  ["szorzas","osztas","villam","irasbeli"].forEach(k=>{
+  MIND_MODUL.forEach(k=>{
     const e = $("menu-"+k);
     if(e) e.style.display = rejtett.includes(k) ? "none" : "flex";
   });
@@ -382,7 +410,10 @@ let gyengeTenyek = [];
 let ir = null;
 // session-statisztika (bezáráskor törlődik)
 const stat = { szorzas:[0,0], helyi:[0,0], muvelet:[0,0], potlas:[0,0], irasbeli:[0,0],
-               osztas:[0,0], szamegyenes:[0,0], lanc:[0,0], szoveges:[0,0] }; // [jó, összes]
+               osztas:[0,0], szamegyenes:[0,0], lanc:[0,0], szoveges:[0,0],
+               sorozat:[0,0], nyitott:[0,0], ora:[0,0], penz:[0,0], becsles:[0,0],
+               mertek:[0,0], romai:[0,0], sorrend:[0,0], szamalkotas:[0,0],
+               tortek:[0,0], negativ:[0,0] }; // [jó, összes]
 
 /* ================= képernyőváltás ================= */
 function mutat(id){
@@ -947,8 +978,231 @@ function genSzoveges(){
            modul:"szoveges", cimke:f.sz.length>60? f.sz.slice(0,57)+"…" : f.sz, tf:f.tf };
 }
 
+/* ---- új feladattípusok (v10) ---- */
+function genSorozat(){
+  const m = szamkor();
+  const lepes = m===20 ? valaszt([1,2,5]) : m===100 ? valaszt([2,5,10]) : valaszt([10,25,50,100]);
+  const felfele = Math.random()<0.7;
+  const start = felfele ? rnd(0, m-5*lepes) : rnd(5*lepes, m);
+  const tagok = [];
+  for(let i=0;i<4;i++) tagok.push(felfele ? start+i*lepes : start-i*lepes);
+  const val = felfele ? start+4*lepes : start-4*lepes;
+  return { szoveg:`<span class="lanc-kifejezes">${tagok.join(", ")}, ?</span>`, valasz:val,
+           hint:`A szabály: mindig ${felfele?"+":"−"}${lepes}. ${tagok[3]} ${felfele?"+":"−"} ${lepes} = ${val}`,
+           modul:"sorozat", cimke:`${tagok.join(", ")}, ?`, tf:`Sorozat · ${felfele?"+":"−"}${lepes}` };
+}
+
+function genNyitott(){
+  const m = szamkor();
+  const a = rnd(1, m-1), b = rnd(1, m-a), c = a+b;
+  const forma = rnd(1, beall.kor>=8 ? 5 : 4);
+  const K = { modul:"nyitott" };
+  if(forma===1) return { ...K, szoveg:`<span class="nagy">▢ + ${b} = ${c}</span>`, valasz:a,
+    hint:`${c} − ${b} = ${a}`, cimke:`▢ + ${b} = ${c}`, tf:"Nyitott mondat · összeadás" };
+  if(forma===2) return { ...K, szoveg:`<span class="nagy">${a} + ▢ = ${c}</span>`, valasz:b,
+    hint:`${c} − ${a} = ${b}`, cimke:`${a} + ▢ = ${c}`, tf:"Nyitott mondat · összeadás" };
+  if(forma===3) return { ...K, szoveg:`<span class="nagy">▢ − ${b} = ${a}</span>`, valasz:c,
+    hint:`${a} + ${b} = ${c}`, cimke:`▢ − ${b} = ${a}`, tf:"Nyitott mondat · kivonás" };
+  if(forma===4) return { ...K, szoveg:`<span class="nagy">${c} − ▢ = ${a}</span>`, valasz:b,
+    hint:`${c} − ${a} = ${b}`, cimke:`${c} − ▢ = ${a}`, tf:"Nyitott mondat · kivonás" };
+  const x = rnd(2,9), y = rnd(2,10);
+  return { ...K, szoveg:`<span class="nagy">▢ × ${x} = ${x*y}</span>`, valasz:y,
+    hint:`Gondolj a szorzótáblára: ${x} × ${y} = ${x*y}`, cimke:`▢ × ${x} = ${x*y}`, tf:"Nyitott mondat · szorzás" };
+}
+
+function oraSVG(h, mp){
+  let sv = `<div class="szamegyenes" style="max-width:170px">`+
+    `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="#fff" stroke="#2b2350" stroke-width="3"/>`;
+  for(let i=0;i<12;i++){ const a=i*Math.PI/6;
+    sv += `<line x1="${(50+40*Math.sin(a)).toFixed(1)}" y1="${(50-40*Math.cos(a)).toFixed(1)}" x2="${(50+44*Math.sin(a)).toFixed(1)}" y2="${(50-44*Math.cos(a)).toFixed(1)}" stroke="#2b2350" stroke-width="2"/>`; }
+  [[12,50,14],[3,86,53],[6,50,92],[9,14,53]].forEach(([n,x,y])=>{
+    sv += `<text x="${x}" y="${y}" font-size="10" font-weight="700" text-anchor="middle" fill="#8a82b0">${n}</text>`; });
+  const ha=((h%12)+mp/60)*Math.PI/6, ma=mp*Math.PI/30;
+  sv += `<line x1="50" y1="50" x2="${(50+22*Math.sin(ha)).toFixed(1)}" y2="${(50-22*Math.cos(ha)).toFixed(1)}" stroke="#2b2350" stroke-width="4.5" stroke-linecap="round"/>`;
+  sv += `<line x1="50" y1="50" x2="${(50+33*Math.sin(ma)).toFixed(1)}" y2="${(50-33*Math.cos(ma)).toFixed(1)}" stroke="#ff5d73" stroke-width="2.5" stroke-linecap="round"/>`;
+  sv += `<circle cx="50" cy="50" r="2.5" fill="#2b2350"/></svg></div>`;
+  return sv;
+}
+const ketjegyu = x => String(x).padStart(2,"0");
+function genOra(){
+  if(beall.kor<=7 || (beall.kor===8 && Math.random()<0.5)){
+    const h=rnd(1,12);
+    return { szoveg:`${oraSVG(h,0)}Hány órát mutat az óra?`, valasz:h,
+             hint:`A rövid mutató ide mutat: ${h} → ${h} óra.`,
+             modul:"ora", cimke:`óra: ${h}:00`, tf:"Óra · egész óra" };
+  }
+  if(beall.kor===8){
+    const h=rnd(1,12), kov = h===12?1:h+1;
+    const jo=`fél ${kov}`;
+    const opciok=[jo, `fél ${h}`, `${h} óra`];
+    return { szoveg:`${oraSVG(h,30)}Mennyi az idő?`, tipus:"valaszto", opciok, valasz:jo,
+             hint:`A nagymutató lent áll (fél), a kismutató ${h} és ${kov} között: fél ${kov}.`,
+             modul:"ora", cimke:`óra: ${h}:30`, tf:"Óra · fél órák" };
+  }
+  const h=rnd(6,17), m1=5*rnd(0,11), d=5*rnd(1,23);
+  const veg=h*60+m1+d, vh=Math.floor(veg/60), vm=veg%60;
+  return { szoveg:`Mennyi idő telik el<br><b>${h}:${ketjegyu(m1)}</b> és <b>${vh}:${ketjegyu(vm)}</b> között?<br>(percben)`,
+           valasz:d,
+           hint: m1+d>60 ? `Előbb egész óráig: ${60-m1} perc, majd még ${d-(60-m1)} perc → ${d} perc.`
+                         : `${ketjegyu(vm)} − ${ketjegyu(m1)} = ${d} perc.`,
+           modul:"ora", cimke:`${h}:${ketjegyu(m1)} → ${vh}:${ketjegyu(vm)}`, tf:"Óra · eltelt idő" };
+}
+
+function genPenz(){
+  const m = szamkor();
+  const cimletek = beall.kor<=7 ? [1,2,5,10] : beall.kor===8 ? [5,10,20,50] : [50,100,200,500];
+  let c1,c2,db1,db2,osszeg;
+  do{
+    c1 = valaszt(cimletek); do{ c2 = valaszt(cimletek); }while(c2===c1);
+    db1 = rnd(1, beall.kor<=7?3:4); db2 = rnd(1, beall.kor<=7?3:4);
+    osszeg = db1*c1 + db2*c2;
+  }while(osszeg > m);
+  return { szoveg:`<span class="szoveges-szoveg">${db1} db ${c1} forintosod és ${db2} db ${c2} forintosod van. Mennyi pénzed van összesen?</span>`,
+           valasz:osszeg,
+           hint:`${db1} × ${c1} = ${db1*c1}, ${db2} × ${c2} = ${db2*c2}, együtt ${osszeg} Ft.`,
+           modul:"penz", cimke:`${db1}×${c1} Ft + ${db2}×${c2} Ft`, tf:"Pénz · összeszámolás" };
+}
+
+function genBecsles(){
+  const ossz = Math.random()<0.5;
+  let a,b;
+  if(ossz){ a=rnd(105,880); b=rnd(105,985-a); } else { a=rnd(320,980); b=rnd(105,a-120); }
+  const ka=Math.round(a/100)*100, kb=Math.round(b/100)*100;
+  const val = ossz ? ka+kb : ka-kb;
+  const opciok=[val];
+  for(const d of [val+100,val-100,val+200,val-200]) if(opciok.length<3 && d>0 && !opciok.includes(d)) opciok.push(d);
+  opciok.sort((x,y)=>x-y);
+  return { szoveg:`<b>Körülbelül</b> mennyi<br><span class="nagy">${a} ${ossz?"+":"−"} ${b}</span> ?`,
+           tipus:"valaszto", opciok, valasz:val,
+           hint:`${a} ≈ ${ka} és ${b} ≈ ${kb} → ${ka} ${ossz?"+":"−"} ${kb} = ${val}`,
+           modul:"becsles", cimke:`becslés: ${a} ${ossz?"+":"−"} ${b}`, tf:"Becslés · kerekítéssel" };
+}
+
+function genMertek(){
+  const f = valaszt([
+    ()=>{ const x=rnd(2,9); return {sz:`${x} m = ? cm`, v:x*100, h:"1 m = 100 cm"}; },
+    ()=>{ const x=rnd(2,9); return {sz:`${x*100} cm = ? m`, v:x, h:"100 cm = 1 m"}; },
+    ()=>{ const x=rnd(2,9); return {sz:`${x} dm = ? cm`, v:x*10, h:"1 dm = 10 cm"}; },
+    ()=>{ const x=rnd(2,9); return {sz:`${x*10} cm = ? dm`, v:x, h:"10 cm = 1 dm"}; },
+    ()=>{ const x=rnd(1,9); return {sz:`${x} óra = ? perc`, v:x*60, h:"1 óra = 60 perc"}; },
+    ()=>{ const x=rnd(1,9); return {sz:`${x*60} perc = ? óra`, v:x, h:"60 perc = 1 óra"}; },
+    ()=>{ const x=rnd(1,9); return {sz:`${x} kg = ? dkg`, v:x*100, h:"1 kg = 100 dkg"}; },
+    ()=>{ const x=rnd(1,9); return {sz:`${x*100} dkg = ? kg`, v:x, h:"100 dkg = 1 kg"}; },
+  ])();
+  return { szoveg:`<span class="nagy">${f.sz}</span>`, valasz:f.v,
+           hint:`${f.h}, tehát a válasz: ${f.v}.`,
+           modul:"mertek", cimke:f.sz, tf:"Mértékegység-váltás" };
+}
+
+function toRoman(n){
+  const t=[[100,"C"],[90,"XC"],[50,"L"],[40,"XL"],[10,"X"],[9,"IX"],[5,"V"],[4,"IV"],[1,"I"]];
+  let r=""; for(const [v,sym] of t){ while(n>=v){ r+=sym; n-=v; } } return r;
+}
+function genRomai(){
+  const n = rnd(1,100);
+  if(Math.random()<0.5){
+    return { szoveg:`Melyik szám ez?<br><span class="nagy">${toRoman(n)}</span>`, valasz:n,
+             hint:`${toRoman(n)} = ${n}`, modul:"romai", cimke:`${toRoman(n)} = ?`, tf:"Római számok · olvasás" };
+  }
+  const opciok=[toRoman(n)];
+  let k=1;
+  while(opciok.length<3){
+    const j = n+ (Math.random()<0.5?-k:k); k++;
+    if(j>=1 && j<=100 && !opciok.includes(toRoman(j))) opciok.push(toRoman(j));
+  }
+  return { szoveg:`Hogyan írjuk római számmal?<br><span class="nagy">${n}</span>`,
+           tipus:"valaszto", opciok, valasz:toRoman(n),
+           hint:`${n} = ${toRoman(n)}`, modul:"romai", cimke:`${n} rómaiul`, tf:"Római számok · írás" };
+}
+
+function genSorrend(){
+  if(Math.random()<0.5){
+    const b=rnd(2,9), c=rnd(2,9), szorzat=b*c;
+    if(Math.random()<0.5){
+      const a=rnd(2,90);
+      return { szoveg:`<span class="nagy">${a} + ${b} × ${c} = ?</span>`, valasz:a+szorzat,
+               hint:`Előbb a szorzás: ${b} × ${c} = ${szorzat}, majd ${a} + ${szorzat} = ${a+szorzat}.`,
+               modul:"sorrend", cimke:`${a} + ${b} × ${c}`, tf:"Műveleti sorrend · szorzás" };
+    }
+    const a=szorzat+rnd(2,90);
+    return { szoveg:`<span class="nagy">${a} − ${b} × ${c} = ?</span>`, valasz:a-szorzat,
+             hint:`Előbb a szorzás: ${b} × ${c} = ${szorzat}, majd ${a} − ${szorzat} = ${a-szorzat}.`,
+             modul:"sorrend", cimke:`${a} − ${b} × ${c}`, tf:"Műveleti sorrend · szorzás" };
+  }
+  const c=rnd(2,9), q=rnd(2,9), d=c*q, a=rnd(2,90);
+  if(Math.random()<0.5)
+    return { szoveg:`<span class="nagy">${a} + ${d} : ${c} = ?</span>`, valasz:a+q,
+             hint:`Előbb az osztás: ${d} : ${c} = ${q}, majd ${a} + ${q} = ${a+q}.`,
+             modul:"sorrend", cimke:`${a} + ${d} : ${c}`, tf:"Műveleti sorrend · osztás" };
+  const a2 = q+rnd(2,90);
+  return { szoveg:`<span class="nagy">${a2} − ${d} : ${c} = ?</span>`, valasz:a2-q,
+           hint:`Előbb az osztás: ${d} : ${c} = ${q}, majd ${a2} − ${q} = ${a2-q}.`,
+           modul:"sorrend", cimke:`${a2} − ${d} : ${c}`, tf:"Műveleti sorrend · osztás" };
+}
+
+function genSzamalkotas(){
+  const db = beall.kor===8 ? 2 : 3;
+  let jegyek;
+  do{
+    const halmaz = new Set();
+    while(halmaz.size<db) halmaz.add(rnd(0,9));
+    jegyek = [...halmaz];
+  }while(jegyek.every(x=>x===0));
+  const nagy = Math.random()<0.5;
+  const cs = [...jegyek].sort((x,y)=> nagy ? y-x : x-y);
+  if(!nagy && cs[0]===0){ [cs[0],cs[1]]=[cs[1],cs[0]]; } // 0 nem állhat elöl
+  const val = +cs.join("");
+  return { szoveg:`Alkosd meg a <b>${nagy?"LEGNAGYOBB":"LEGKISEBB"}</b> számot<br>ezekből a számjegyekből:<br><span class="nagy">${jegyek.join(", ")}</span>`,
+           valasz:val,
+           hint: nagy ? `A legnagyobb jegy kerül előre: ${cs.join("")}.`
+                      : jegyek.includes(0) ? `A 0 nem állhat elöl, ezért: ${cs.join("")}.`
+                                           : `A legkisebb jegy kerül előre: ${cs.join("")}.`,
+           modul:"szamalkotas", cimke:`${nagy?"legnagyobb":"legkisebb"}: ${jegyek.join(", ")}`,
+           tf:`Számalkotás · ${nagy?"legnagyobb":"legkisebb"}` };
+}
+
+function genTortek(){
+  const idx = rnd(0,2);
+  const nev = [2,3,4][idx], nevszo = ["fele","harmada","negyede"][idx];
+  const q = rnd(2, [48,32,24][idx]);
+  const a = nev*q;
+  return { szoveg:`Mennyi a <b>${nevszo}</b> ennek a számnak:<br><span class="nagy">${a}</span> ?`,
+           valasz:q, hint:`${a} : ${nev} = ${q}`,
+           modul:"tortek", cimke:`${a} ${nevszo}`, tf:`Törtek · ${nevszo}` };
+}
+
+function genNegativ(){
+  const t = rnd(1,3);
+  if(t===1){
+    const a=rnd(1,9), b=rnd(a+1,15), val=a-b;
+    const opciok=[val, b-a, val-1].filter((x,i,arr)=>arr.indexOf(x)===i);
+    while(opciok.length<3) opciok.push(val+opciok.length);
+    opciok.sort((x,y)=>x-y);
+    return { szoveg:`<span class="nagy">${a} − ${b} = ?</span>`, tipus:"valaszto", opciok, valasz:val,
+             hint:`Számolj lefelé: ${a} − ${a} = 0, aztán még ${b-a} lépés lefelé → ${val}.`,
+             modul:"negativ", cimke:`${a} − ${b}`, tf:"Negatív számok · kivonás" };
+  }
+  if(t===2){
+    const a=rnd(1,10), b=rnd(1,15), val=b-a;
+    const opciok=[val, a-b, -(a+b)].filter((x,i,arr)=>arr.indexOf(x)===i);
+    while(opciok.length<3) opciok.push(val+opciok.length+1);
+    opciok.sort((x,y)=>x-y);
+    return { szoveg:`Reggel <b>−${a} °C</b> volt.<br>Délre <b>${b} fokot</b> melegedett.<br>Hány fok lett?`,
+             tipus:"valaszto", opciok, valasz:val,
+             hint:`−${a} + ${b} = ${val}${val<0?" (még mindig fagy)":""}.`,
+             modul:"negativ", cimke:`−${a} + ${b}`, tf:"Negatív számok · hőmérséklet" };
+  }
+  const x=-rnd(1,15); let y; do{ y=-rnd(1,15); }while(y===x);
+  return { szoveg:`Melyik szám a <b>kisebb</b>?`, tipus:"valaszto",
+           opciok:[Math.min(x,y),Math.max(x,y)], valasz:Math.min(x,y),
+           hint:`A számegyenesen balra a kisebb: ${Math.min(x,y)} < ${Math.max(x,y)}.`,
+           modul:"negativ", cimke:`${x} vagy ${y}`, tf:"Negatív számok · összehasonlítás" };
+}
+
 function genVegyes(){
-  let lista = ["szorzas","helyi","muvelet","potlas","osztas","lanc","szoveges","szamegyenes"];
+  let lista = ["szorzas","helyi","muvelet","potlas","osztas","lanc","szoveges","szamegyenes",
+               "sorozat","nyitott","ora","penz","becsles","mertek","romai","sorrend",
+               "szamalkotas","tortek","negativ"];
   const rejtett = rejtettModulok();
   lista = lista.filter(x=>!rejtett.includes(x));
   const m = valaszt(lista);
@@ -957,6 +1211,17 @@ function genVegyes(){
   if(m==="lanc") return genLanc();
   if(m==="szoveges") return genSzoveges();
   if(m==="szamegyenes") return genSzamegyenes();
+  if(m==="sorozat") return genSorozat();
+  if(m==="nyitott") return genNyitott();
+  if(m==="ora") return genOra();
+  if(m==="penz") return genPenz();
+  if(m==="becsles") return genBecsles();
+  if(m==="mertek") return genMertek();
+  if(m==="romai") return genRomai();
+  if(m==="sorrend") return genSorrend();
+  if(m==="szamalkotas") return genSzamalkotas();
+  if(m==="tortek") return genTortek();
+  if(m==="negativ") return genNegativ();
   if(m==="szorzas"){
     const mentett = new Set(kivTablak);
     for(let t=2;t<=10;t++) kivTablak.add(t);
@@ -982,6 +1247,17 @@ function inditOsztas(){ if(kivTablak.size===0) return; mod="osztas"; korHossz=be
 function inditSzamegyenes(){ mod="szamegyenes"; korHossz=beall.dbKor; inditKor(); }
 function inditLanc(){ mod="lanc"; korHossz=beall.dbKor; inditKor(); }
 function inditSzoveges(){ mod="szoveges"; korHossz=Math.max(5,Math.round(beall.dbKor*0.8)); inditKor(); }
+function inditSorozat(){ mod="sorozat"; korHossz=beall.dbKor; inditKor(); }
+function inditNyitott(){ mod="nyitott"; korHossz=beall.dbKor; inditKor(); }
+function inditOra(){ mod="ora"; korHossz=beall.dbKor; inditKor(); }
+function inditPenz(){ mod="penz"; korHossz=Math.max(5,Math.round(beall.dbKor*0.8)); inditKor(); }
+function inditBecsles(){ mod="becsles"; korHossz=beall.dbKor; inditKor(); }
+function inditMertek(){ mod="mertek"; korHossz=beall.dbKor; inditKor(); }
+function inditRomai(){ mod="romai"; korHossz=beall.dbKor; inditKor(); }
+function inditSorrend(){ mod="sorrend"; korHossz=beall.dbKor; inditKor(); }
+function inditSzamalkotas(){ mod="szamalkotas"; korHossz=beall.dbKor; inditKor(); }
+function inditTortek(){ mod="tortek"; korHossz=beall.dbKor; inditKor(); }
+function inditNegativ(){ mod="negativ"; korHossz=beall.dbKor; inditKor(); }
 
 function inditVillam(){
   if(kivTablak.size===0) return;
@@ -1030,6 +1306,17 @@ function ujKerdes(){
   if(mod==="szamegyenes") return genSzamegyenes();
   if(mod==="lanc")     return genLanc();
   if(mod==="szoveges") return genSzoveges();
+  if(mod==="sorozat")  return genSorozat();
+  if(mod==="nyitott")  return genNyitott();
+  if(mod==="ora")      return genOra();
+  if(mod==="penz")     return genPenz();
+  if(mod==="becsles")  return genBecsles();
+  if(mod==="mertek")   return genMertek();
+  if(mod==="romai")    return genRomai();
+  if(mod==="sorrend")  return genSorrend();
+  if(mod==="szamalkotas") return genSzamalkotas();
+  if(mod==="tortek")   return genTortek();
+  if(mod==="negativ")  return genNegativ();
   return genVegyes();
 }
 function rajzolPontok(){
@@ -1193,7 +1480,7 @@ function ellenoriz(){
   if(zarolva || ir || keszVar || bevitel==="") return;
   zarolva = true; kerdesek++;
   const tipp = parseInt(bevitel,10);
-  const jo = tipp===aktKerdes.valasz;
+  const jo = typeof aktKerdes.valasz==="string" ? bevitel===aktKerdes.valasz : tipp===aktKerdes.valasz;
   const s = stat[aktKerdes.modul] || stat.szorzas; s[1]++;
   const p = $("pontok").children[kerdesek-1];
   const v = $("visszajelzes");
@@ -1244,7 +1531,10 @@ function ujraKor(){ mod==="villam" ? inditVillam() : inditKor(); }
 const MODNEV = {szorzas:"Szorzótábla", helyi:"Helyiérték", muvelet:"Összeadás-kivonás",
                 potlas:"Pótlás", irasbeli:"Írásbeli", vegyes:"Vegyes kör",
                 osztas:"Osztás", villam:"Villámkör ⚡", szamegyenes:"Számegyenes",
-                lanc:"Láncszámolás", szoveges:"Szöveges"};
+                lanc:"Láncszámolás", szoveges:"Szöveges", sorozat:"Sorozatok",
+                nyitott:"Nyitott mondatok", ora:"Óra", penz:"Pénz", becsles:"Becslés",
+                mertek:"Mértékegység", romai:"Római számok", sorrend:"Műveleti sorrend",
+                szamalkotas:"Számalkotás", tortek:"Törtek", negativ:"Negatív számok"};
 // localStorage csak a weben él; az asztali artifact-nézetben tiltott lehet -> try/catch
 function naploOlvas(){ try{ return JSON.parse(localStorage.getItem("matekNaplo")||"[]"); }catch(e){ return null; } }
 let korId = null; // az aktuális kör napló-azonosítója
@@ -1252,7 +1542,7 @@ function naploFrissit(){ // MINDEN megválaszolt feladat után fut - félbehagyo
   if(!korId || !kerdesek) return;
   try{
     const n = JSON.parse(localStorage.getItem("matekNaplo")||"[]");
-    const e = { t:korId, mod, jok, ossz:kerdesek, maxSor:maxSorozat, hibak:[...hibak] };
+    const e = { t:korId, mod, kor:beall.kor, jok, ossz:kerdesek, maxSor:maxSorozat, hibak:[...hibak] };
     const i = n.findIndex(x=>x.t===korId);
     if(i>=0) n[i]=e; else n.push(e);
     while(n.length>300) n.shift();
@@ -1271,10 +1561,13 @@ function naploSzoveg(){ // a szülői áttekintés látható formája szövegké
     const l = napok[k], j = l.reduce((x,e)=>x+e.jok,0), o = l.reduce((x,e)=>x+e.ossz,0);
     t += `• ${k}: ${l.length} kör, ${j}/${o} jó\n`;
   });
-  t += "\nModulonként (összesen):\n";
+  t += "\nModulonként és korosztályonként:\n";
   const m = {};
-  n.forEach(e=>{ const x = m[e.mod]=m[e.mod]||[0,0]; x[0]+=e.jok; x[1]+=e.ossz; });
-  Object.entries(m).forEach(([k,[j,o]])=>{ t += `• ${MODNEV[k]||k}: ${Math.round(100*j/o)}% (${j}/${o})\n`; });
+  n.forEach(e=>{ const kulcs = `${e.mod}|${e.kor||0}`;
+    const x = m[kulcs]=m[kulcs]||[0,0]; x[0]+=e.jok; x[1]+=e.ossz; });
+  Object.entries(m).sort().forEach(([kulcs,[j,o]])=>{
+    const [md,kr] = kulcs.split("|");
+    t += `• ${MODNEV[md]||md}${kr!=="0"?` (${kr} év)`:""}: ${Math.round(100*j/o)}% (${j}/${o})\n`; });
   const hibaSorok = [];
   n.forEach(e=> e.hibak.forEach(x=>
     hibaSorok.push(`• ${typeof x==="string"?x:x.c} (${new Date(e.t).toLocaleDateString("hu-HU")})`)));
@@ -1296,7 +1589,10 @@ function naploKuldes(g){
 
 function naploIr(n){ try{ localStorage.setItem("matekNaplo", JSON.stringify(n)); }catch(e){} }
 function szuloNezet(){
+  if(!szuloBelepve){ szuloKer(); return; }
   mutat("scr-szulo"); pinMegse();
+  $("szulo-kuldes").style.display="block";
+  $("szulo-mindtorles").style.display="inline-block";
   const c = $("szulo-tartalom"), n = naploOlvas();
   if(n===null){ c.innerHTML = '<div class="szulo-ures">A napló ezen az eszközön nem érhető el (a böngészős változatban működik).</div>'; return; }
   if(!n.length){ c.innerHTML = '<div class="szulo-ures">Még nincs mentett kör. A befejezett körök ide automatikusan bekerülnek.</div>'; return; }
@@ -1307,12 +1603,15 @@ function szuloNezet(){
     const l = napok[k], j = l.reduce((s,e)=>s+e.jok,0), o = l.reduce((s,e)=>s+e.ossz,0);
     h += `<div class="szulo-sor"><span>${k}</span><span>${l.length} kör · <b>${j}/${o}</b> jó</span></div>`;
   });
-  h += '<div class="szulo-cim">Modulonként (összesen)</div>';
+  h += '<div class="szulo-cim">Modulonként és korosztályonként</div>';
   const m = {};
-  n.forEach(e=>{ const x = m[e.mod]=m[e.mod]||[0,0]; x[0]+=e.jok; x[1]+=e.ossz; });
-  Object.entries(m).forEach(([k,[j,o]])=>{
-    h += `<div class="szulo-sor"><span>${MODNEV[k]||k}</span><span><b>${Math.round(100*j/o)}%</b> <small>(${j}/${o})</small>` +
-         ` <button class="szulo-torol" onclick="torlesKer('${k}')" title="Modul naplójának törlése">🗑</button></span></div>`;
+  n.forEach(e=>{ const kulcs = `${e.mod}|${e.kor||0}`;
+    const x = m[kulcs]=m[kulcs]||[0,0]; x[0]+=e.jok; x[1]+=e.ossz; });
+  Object.entries(m).sort().forEach(([kulcs,[j,o]])=>{
+    const [md,kr] = kulcs.split("|");
+    const nev = (MODNEV[md]||md) + (kr!=="0" ? ` · ${kr} év` : "");
+    h += `<div class="szulo-sor"><span>${nev}</span><span><b>${Math.round(100*j/o)}%</b> <small>(${j}/${o})</small>` +
+         ` <button class="szulo-torol" onclick="torlesKer('${kulcs}')" title="Kategória naplójának törlése">🗑</button></span></div>`;
   });
   // hibák: kattintható pillanatképek (a régi, szöveges bejegyzések nem kattinthatók)
   const hibaSorok = [];
@@ -1348,23 +1647,44 @@ function hibaMutat(ei,hi){
   if(!x.m){ x.m = 1; naploIr(n); } // olvasottság-jelölés
 }
 
-/* ---- PIN-védett törlések (PIN: 9999) ---- */
-let fuggoTorles = null;
-function torlesKer(mit){
-  fuggoTorles = mit;
-  $("pin-szoveg").textContent = mit==="mind"
-    ? "Teljes napló törlése – add meg a szülői PIN-t:"
-    : `${MODNEV[mit]||mit} naplójának törlése – add meg a szülői PIN-t:`;
+/* ---- PIN-védett belépés és törlések (PIN: 9999) ---- */
+let fuggoTorles = null, szuloBelepve = false;
+function szuloKer(){ // Szülőknek link: első alkalommal PIN kell
+  if(szuloBelepve){ szuloNezet(); return; }
+  mutat("scr-szulo");
+  $("szulo-tartalom").innerHTML = '<div class="szulo-ures">🔒 A szülői nézet PIN-kóddal védett.</div>';
+  $("szulo-kuldes").style.display="none";
+  $("szulo-mindtorles").style.display="none";
+  fuggoTorles = "belep";
+  $("pin-szoveg").textContent = "Add meg a szülői PIN-t:";
+  $("pin-ok").textContent = "Belépés";
   const i = $("pin-input"); i.value=""; i.classList.remove("rossz");
   $("pin-panel").style.display="block"; i.focus();
 }
-function pinMegse(){ fuggoTorles=null; $("pin-panel").style.display="none"; }
+function torlesKer(mit){
+  fuggoTorles = mit;
+  let nev = "Teljes napló";
+  if(mit!=="mind"){ const [md,kr] = mit.split("|");
+    nev = (MODNEV[md]||md) + (kr!=="0" ? ` · ${kr} év` : ""); }
+  $("pin-szoveg").textContent = `${nev} törlése – add meg a szülői PIN-t:`;
+  $("pin-ok").textContent = "Törlés";
+  const i = $("pin-input"); i.value=""; i.classList.remove("rossz");
+  $("pin-panel").style.display="block"; i.focus();
+}
+function pinMegse(){
+  const belepesVolt = fuggoTorles==="belep";
+  fuggoTorles=null; $("pin-panel").style.display="none";
+  if(belepesVolt && !szuloBelepve) menu();
+}
 function pinOk(){
   const i = $("pin-input");
   if(i.value !== "9999"){ i.classList.remove("rossz"); void i.offsetWidth;
     i.classList.add("rossz"); i.value=""; return; }
-  if(fuggoTorles==="mind"){ try{ localStorage.removeItem("matekNaplo"); }catch(e){} }
-  else { const n = naploOlvas()||[]; naploIr(n.filter(e=>e.mod!==fuggoTorles)); }
+  if(fuggoTorles==="belep"){ szuloBelepve = true; }
+  else if(fuggoTorles==="mind"){ try{ localStorage.removeItem("matekNaplo"); }catch(e){} }
+  else if(fuggoTorles){ const [md,kr] = fuggoTorles.split("|");
+    const n = naploOlvas()||[];
+    naploIr(n.filter(e=>!(e.mod===md && String(e.kor||0)===kr))); }
   szuloNezet(); // pinMegse-t is meghívja, és újraszámolja a statisztikát
 }
 
