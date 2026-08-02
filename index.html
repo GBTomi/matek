@@ -95,6 +95,29 @@
           border-radius:14px; padding:12px; font-size:1.1rem; font-weight:700;
           width:100%; cursor:pointer; display:none;}
 
+  /* ---- ÍRÁSBELI ---- */
+  .irasbeli{display:inline-grid; grid-template-columns:repeat(4,56px); gap:5px 6px;
+            justify-content:center; font-variant-numeric:tabular-nums;}
+  .irasbeli .szj, .irasbeli .jel{font-size:2.1rem; font-weight:800; text-align:center; line-height:56px;}
+  .irasbeli .jel{color:var(--lila-s);}
+  .acella{
+    height:26px; font-size:1rem; font-weight:700; color:#b3283e; text-align:center;
+    border:1.5px dashed #d8d2f0; border-radius:7px; cursor:pointer; line-height:24px;
+    align-self:end; user-select:none;
+  }
+  .acella.ures{border:none; cursor:default;}
+  .vonal{grid-column:1/-1; border-bottom:4px solid var(--szoveg); border-radius:2px;}
+  .rcella{
+    height:56px; font-size:2.1rem; font-weight:800; text-align:center; line-height:54px;
+    border:2.5px dashed #c9c4e2; border-radius:10px; background:#faf9ff; color:var(--szoveg);
+  }
+  .rcella.aktiv{border:2.5px solid var(--lila); background:#efeaff;}
+  .rcella.jo{border-color:var(--zold); background:#dff7ec; color:#177a4f;}
+  .rcella.rossz{border-color:var(--piros); background:#ffe3e8; color:#b3283e;
+                animation:remeg .3s;}
+  .rcella.ures{border:none; background:none;}
+  @keyframes remeg{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+
   /* ---- EREDMÉNY ---- */
   .csillagok{font-size:3rem; text-align:center; margin:14px 0 4px;}
   .eredmeny-szoveg{text-align:center; font-size:1.25rem; font-weight:700; margin-bottom:12px;}
@@ -118,6 +141,10 @@
       <span>Helyiérték és számok<small>százasok-tízesek-egyesek, kerekítés, szomszédok</small></span></button>
     <button class="modul" onclick="megnyit('muvelet')"><span class="ikon">➕➖</span>
       <span>Összeadás és kivonás<small>1000-ig, átlépéssel vagy anélkül</small></span></button>
+    <button class="modul" onclick="megnyit('irasbeli')"><span class="ikon">✍️</span>
+      <span>Írásbeli számolás<small>egymás alatt, számjegyenként – mint a füzetben</small></span></button>
+    <button class="modul" onclick="megnyit('potlas')"><span class="ikon">🎯</span>
+      <span>Pótlás<small>mennyi hiányzik 100-ig, 1000-ig?</small></span></button>
     <button class="modul" onclick="inditVegyes()"><span class="ikon">🎲</span>
       <span>Vegyes kör<small>mindenből egy kicsit</small></span></button>
     <div class="statsor" id="stat-sor"></div>
@@ -140,6 +167,18 @@
       <h2>Összeadás és kivonás</h2>
       <div class="valaszto" id="muvelet-valaszto"></div>
       <button class="fo-gomb" onclick="inditMuvelet()">Indítás! 🚀</button>
+    </div>
+    <div class="panel" id="setup-irasbeli" style="display:none">
+      <h2>Írásbeli számolás</h2>
+      <div class="valaszto" id="irasbeli-muv-valaszto" style="margin-bottom:10px"></div>
+      <div class="valaszto" id="irasbeli-nehez-valaszto" style="margin-bottom:10px"></div>
+      <div class="valaszto" id="irasbeli-atvitel-valaszto"></div>
+      <button class="fo-gomb" onclick="inditIrasbeli()">Indítás! 🚀</button>
+    </div>
+    <div class="panel" id="setup-potlas" style="display:none">
+      <h2>Pótlás – mennyi hiányzik?</h2>
+      <div class="valaszto" id="potlas-valaszto"></div>
+      <button class="fo-gomb" onclick="inditPotlas()">Indítás! 🚀</button>
     </div>
     <button class="vissza" onclick="menu()">← vissza a menübe</button>
   </div>
@@ -188,13 +227,15 @@ const nevelo = x => (x>=100 ? Math.floor(x/100)===5 : (x===1||x===5)) ? "az" : "
 const Nevelo = x => nevelo(x)==="az" ? "Az" : "A";
 
 /* ================= állapot ================= */
-const KOR_HOSSZ = 10;
+let korHossz = 10;
 let mod = null, opts = {}, kerdesek = 0, jok = 0, sorozat = 0, maxSorozat = 0;
 let aktKerdes = null, bevitel = "", zarolva = false, hibak = [];
 // adaptív szorzótábla: a rontott tények itt gyűlnek, és gyakrabban jönnek vissza
 let gyengeTenyek = [];
+// írásbeli mód futó állapota
+let ir = null;
 // session-statisztika (bezáráskor törlődik)
-const stat = { szorzas:[0,0], helyi:[0,0], muvelet:[0,0] }; // [jó, összes]
+const stat = { szorzas:[0,0], helyi:[0,0], muvelet:[0,0], potlas:[0,0], irasbeli:[0,0] }; // [jó, összes]
 
 /* ================= képernyőváltás ================= */
 function mutat(id){
@@ -203,8 +244,7 @@ function mutat(id){
 }
 function menu(){ mutat("scr-menu"); frissitStat(); }
 function frissitStat(){
-  const o = stat.szorzas[1]+stat.helyi[1]+stat.muvelet[1];
-  const j = stat.szorzas[0]+stat.helyi[0]+stat.muvelet[0];
+  let o=0,j=0; Object.values(stat).forEach(s=>{ j+=s[0]; o+=s[1]; });
   $("stat-sor").textContent = o ? `Ma eddig: ${j} jó válasz ${o} feladatból` : "";
 }
 
@@ -212,14 +252,54 @@ function frissitStat(){
 const kivTablak = new Set([3,4]);
 const helyiTipusok = new Set(["bontas","ertek","kerekit","szomszed","hasonlit"]);
 let muveletNehez = "vegyes"; // konnyu | nehez | vegyes
+let irasbeliMuv = "vegyes";  // ossz | kiv | vegyes
+let atvitelSor = true;
+const potlasTipusok = new Set(["t100","t1000","kerek10","kerek100"]);
 
 function megnyit(m){
   mod = m; mutat("scr-setup");
-  ["setup-szorzas","setup-helyi","setup-muvelet"].forEach(x=>$(x).style.display="none");
+  ["setup-szorzas","setup-helyi","setup-muvelet","setup-irasbeli","setup-potlas"]
+    .forEach(x=>$(x).style.display="none");
   $("setup-"+m).style.display="block";
   if(m==="szorzas") rajzolTablak();
   if(m==="helyi") rajzolHelyi();
   if(m==="muvelet") rajzolMuvelet();
+  if(m==="irasbeli") rajzolIrasbeli();
+  if(m==="potlas") rajzolPotlas();
+}
+function chipsor(cel, opciok, aktualis, beallit){ // egyválasztós chip-sor
+  const c = $(cel); c.innerHTML="";
+  opciok.forEach(([k,n])=>{
+    const b=document.createElement("button");
+    b.className="chip"+(aktualis()===k?" on":"");
+    b.textContent=n; b.onclick=()=>{ beallit(k); chipsor(cel,opciok,aktualis,beallit); };
+    c.appendChild(b);
+  });
+}
+function rajzolIrasbeli(){
+  chipsor("irasbeli-muv-valaszto",
+    [["ossz","összeadás"],["kiv","kivonás"],["vegyes","vegyesen"]],
+    ()=>irasbeliMuv, v=>{irasbeliMuv=v;});
+  chipsor("irasbeli-nehez-valaszto",
+    [["konnyu","átlépés nélkül"],["nehez","átlépéssel"],["vegyes","vegyes"]],
+    ()=>muveletNehez, v=>{muveletNehez=v;});
+  chipsor("irasbeli-atvitel-valaszto",
+    [["be","maradék-sor: van"],["ki","maradék-sor: nincs"]],
+    ()=>atvitelSor?"be":"ki", v=>{atvitelSor=(v==="be");});
+}
+function rajzolPotlas(){
+  const nevek = {t10:"10-re", t100:"100-ra", t1000:"1000-re",
+                 kerek10:"kerek tízesre", kerek100:"kerek százasra"};
+  const c = $("potlas-valaszto"); c.innerHTML="";
+  for(const [k,n] of Object.entries(nevek)){
+    const b=document.createElement("button");
+    b.className="chip"+(potlasTipusok.has(k)?" on":"");
+    b.textContent=n;
+    b.onclick=()=>{ if(potlasTipusok.has(k)&&potlasTipusok.size===1) return;
+                    potlasTipusok.has(k)?potlasTipusok.delete(k):potlasTipusok.add(k);
+                    b.classList.toggle("on"); };
+    c.appendChild(b);
+  }
 }
 function rajzolTablak(){
   const c = $("tabla-valaszto"); c.innerHTML="";
@@ -395,8 +475,40 @@ function muveletKerdes(a,b,jel){
            modul:"muvelet", cimke:`${a} ${jel} ${b}` };
 }
 
+function genPotlas(){
+  const t = valaszt([...potlasTipusok]);
+  let a, cel;
+  if(t==="t10"){ a=rnd(1,9); cel=10; }
+  else if(t==="t100"){ a=rnd(11,99); cel=100; }
+  else if(t==="t1000"){
+    a = Math.random()<0.6 ? 10*rnd(11,99) : rnd(101,999); cel=1000;
+  }
+  else if(t==="kerek10"){ do{ a=rnd(11,98); }while(a%10===0); cel=Math.ceil(a/10)*10; }
+  else { do{ a=rnd(101,899); }while(a%100===0); cel=Math.ceil(a/100)*100; }
+  const v = cel - a;
+  // tipp: először a következő kerek tízesig, aztán tovább
+  const d1 = (10 - a%10) % 10;
+  const hint = (d1>0 && v>d1)
+    ? `Lépésben: ${a} + ${d1} = ${a+d1}, majd + ${v-d1} = ${cel} → összesen ${v}`
+    : `${a} + ${v} = ${cel}`;
+  return { szoveg:`<span class="nagy">${a} + ? = ${cel}</span>`, valasz:v,
+           hint, modul:"potlas", cimke:`${a} + ? = ${cel}` };
+}
+
+function genIrasbeli(){
+  // a genMuvelet-et használjuk, csak a művelet-típust szűrjük
+  let q;
+  do{ q = genMuvelet(); }
+  while( irasbeliMuv!=="vegyes" &&
+         ((irasbeliMuv==="ossz") !== q.cimke.includes("+")) );
+  const [aS,,bS] = q.cimke.split(" ");
+  return { a:+aS, b:+bS, jel:q.cimke.includes("+")?"+":"−", eredmeny:q.valasz,
+           modul:"irasbeli", cimke:q.cimke };
+}
+
 function genVegyes(){
-  const m = valaszt(["szorzas","helyi","muvelet"]);
+  const m = valaszt(["szorzas","helyi","muvelet","potlas"]);
+  if(m==="potlas") return genPotlas();
   if(m==="szorzas"){
     const mentett = new Set(kivTablak);
     for(let t=2;t<=10;t++) kivTablak.add(t);
@@ -412,27 +524,36 @@ function inditKor(){
   kerdesek=0; jok=0; sorozat=0; maxSorozat=0; hibak=[];
   mutat("scr-game"); rajzolPontok(); kovetkezo(true);
 }
-function inditSzorzas(){ if(kivTablak.size===0) return; mod="szorzas"; inditKor(); }
-function inditHelyi(){ mod="helyi"; inditKor(); }
-function inditMuvelet(){ mod="muvelet"; inditKor(); }
-function inditVegyes(){ mod="vegyes"; inditKor(); }
+function inditSzorzas(){ if(kivTablak.size===0) return; mod="szorzas"; korHossz=10; inditKor(); }
+function inditHelyi(){ mod="helyi"; korHossz=10; inditKor(); }
+function inditMuvelet(){ mod="muvelet"; korHossz=10; inditKor(); }
+function inditVegyes(){ mod="vegyes"; korHossz=10; inditKor(); }
+function inditIrasbeli(){ mod="irasbeli"; korHossz=6; inditKor(); }
+function inditPotlas(){ mod="potlas"; korHossz=10; inditKor(); }
 
 function ujKerdes(){
-  if(mod==="szorzas") return genSzorzas();
-  if(mod==="helyi")   return genHelyi();
-  if(mod==="muvelet") return genMuvelet();
+  if(mod==="szorzas")  return genSzorzas();
+  if(mod==="helyi")    return genHelyi();
+  if(mod==="muvelet")  return genMuvelet();
+  if(mod==="potlas")   return genPotlas();
+  if(mod==="irasbeli") return genIrasbeli();
   return genVegyes();
 }
 function rajzolPontok(){
   const c=$("pontok"); c.innerHTML="";
-  for(let i=0;i<KOR_HOSSZ;i++){ const d=document.createElement("div"); d.className="pont"; c.appendChild(d);}
+  for(let i=0;i<korHossz;i++){ const d=document.createElement("div"); d.className="pont"; c.appendChild(d);}
 }
 function kovetkezo(elso){
-  if(!elso && kerdesek>=KOR_HOSSZ){ vege(); return; }
-  aktKerdes = ujKerdes(); bevitel=""; zarolva=false;
-  $("kerdes").innerHTML = aktKerdes.szoveg;
+  if(!elso && kerdesek>=korHossz){ vege(); return; }
+  aktKerdes = ujKerdes(); bevitel=""; zarolva=false; ir=null;
   $("visszajelzes").className="visszajelzes"; $("visszajelzes").innerHTML="";
   $("tovabb").style.display="none";
+  if(aktKerdes.modul==="irasbeli"){
+    $("keypad").style.display="grid"; $("kijelzo").style.display="none";
+    $("valaszgombok").style.display="none";
+    rajzolIrasbeliKerdes(); frissitSorozat(); return;
+  }
+  $("kerdes").innerHTML = aktKerdes.szoveg;
   const valasztos = aktKerdes.tipus==="valaszto";
   $("keypad").style.display = valasztos? "none":"grid";
   $("kijelzo").style.display = valasztos? "none":"block";
@@ -447,17 +568,81 @@ function kovetkezo(elso){
   }
   frissitKijelzo(); frissitSorozat();
 }
+
+/* ---- írásbeli mód ---- */
+function rajzolIrasbeliKerdes(){
+  const {a,b,jel,eredmeny} = aktKerdes;
+  const A=String(a).padStart(3," "), B=String(b).padStart(3," "), R=String(eredmeny);
+  let h = '<div class="irasbeli">';
+  if(atvitelSor){
+    h += '<div class="acella ures"></div>';
+    for(let i=0;i<3;i++) h += '<div class="acella" onclick="atvitelValt(this)" title="maradék"></div>';
+  }
+  h += '<div class="szj"></div>';
+  for(const ch of A) h += `<div class="szj">${ch.trim()}</div>`;
+  h += `<div class="jel">${jel}</div>`;
+  for(const ch of B) h += `<div class="szj">${ch.trim()}</div>`;
+  h += '<div class="vonal"></div><div class="szj"></div>';
+  for(let i=0;i<3-R.length;i++) h += '<div class="rcella ures"></div>';
+  for(let i=0;i<R.length;i++) h += `<div class="rcella" id="rc${R.length-1-i}"></div>`;
+  h += '</div>';
+  $("kerdes").innerHTML = h;
+  ir = { digits: [...R].reverse().map(Number), pos:0, hibas:false };
+  jelolAktiv();
+}
+function jelolAktiv(){
+  for(let i=0;i<ir.digits.length;i++) $("rc"+i).classList.toggle("aktiv", i===ir.pos);
+}
+function atvitelValt(el){ el.textContent = el.textContent ? "" : "1"; }
+function irGomb(n){
+  const c = $("rc"+ir.pos);
+  c.textContent = n;
+  if(n === ir.digits[ir.pos]){
+    c.classList.remove("rossz"); c.classList.add("jo");
+    ir.pos++;
+    if(ir.pos >= ir.digits.length){ irKesz(); return; }
+    jelolAktiv();
+  } else { c.classList.remove("rossz"); void c.offsetWidth; c.classList.add("rossz"); ir.hibas=true; }
+}
+function irKesz(){
+  zarolva = true; kerdesek++;
+  const s = stat.irasbeli; s[1]++;
+  const p = $("pontok").children[kerdesek-1];
+  const v = $("visszajelzes");
+  if(!ir.hibas){
+    jok++; sorozat++; maxSorozat=Math.max(maxSorozat,sorozat); s[0]++;
+    p.classList.add("jo");
+    v.className="visszajelzes jo"; v.innerHTML=valaszt(DICSERET);
+    setTimeout(kovetkezo, 900);
+  } else {
+    sorozat=0; p.classList.add("rossz");
+    hibak.push(`${aktKerdes.cimke} → helyesen: ${aktKerdes.eredmeny}`);
+    v.className="visszajelzes rossz";
+    v.innerHTML=`Kijött a végeredmény, de volt piros számjegy.<span class="hint">${aktKerdes.cimke} = ${aktKerdes.eredmeny} — nézzétek meg, melyik oszlopnál akadt el!</span>`;
+    $("tovabb").style.display="block";
+  }
+  frissitSorozat();
+}
 function frissitKijelzo(){
   $("kijelzo").innerHTML = bevitel.length? bevitel : '<span class="kurzor">_</span>';
 }
 function frissitSorozat(){
   $("sorozat").textContent = sorozat>=3 ? `🔥 ${sorozat}` : (sorozat>0? `⭐ ${sorozat}`:"");
 }
-function gomb(n){ if(zarolva||bevitel.length>=4) return; bevitel+=String(n); frissitKijelzo(); }
-function torol(){ if(zarolva) return; bevitel=bevitel.slice(0,-1); frissitKijelzo(); }
+function gomb(n){
+  if(zarolva) return;
+  if(ir){ irGomb(n); return; }
+  if(bevitel.length>=4) return;
+  bevitel+=String(n); frissitKijelzo();
+}
+function torol(){
+  if(zarolva) return;
+  if(ir){ const c=$("rc"+ir.pos); c.textContent=""; c.classList.remove("rossz"); return; }
+  bevitel=bevitel.slice(0,-1); frissitKijelzo();
+}
 
 function ellenoriz(){
-  if(zarolva || bevitel==="") return;
+  if(zarolva || ir || bevitel==="") return;
   zarolva = true; kerdesek++;
   const tipp = parseInt(bevitel,10);
   const jo = tipp===aktKerdes.valasz;
@@ -484,13 +669,13 @@ function ellenoriz(){
 }
 function vege(){
   mutat("scr-end");
-  const csillag = jok>=10? 3 : jok>=8? 2 : jok>=6? 1 : 0;
+  const csillag = jok===korHossz? 3 : jok/korHossz>=0.8? 2 : jok/korHossz>=0.6? 1 : 0;
   $("csillagok").textContent = "⭐".repeat(csillag) + "☆".repeat(3-csillag);
   const uzenet = csillag===3? "Hibátlan! Fantasztikus! 🏆"
               : csillag===2? "Nagyon ügyes voltál! 🎉"
               : csillag===1? "Jó munka, egyre jobban megy! 💪"
               : "Semmi baj, a gyakorlás teszi a mestert! 🌱";
-  $("eredmeny-szoveg").innerHTML = `${jok} / ${KOR_HOSSZ} jó válasz<br><small>leghosszabb sorozat: ${maxSorozat}</small><br>${uzenet}`;
+  $("eredmeny-szoveg").innerHTML = `${jok} / ${korHossz} jó válasz<br><small>leghosszabb sorozat: ${maxSorozat}</small><br>${uzenet}`;
   const h=$("hibalista");
   if(hibak.length){ h.style.display="block";
     h.innerHTML = "<h3>Ezeket nézzétek át együtt:</h3>" + hibak.map(x=>`<div>${x}</div>`).join("");
