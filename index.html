@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matek Gyakorló</title>
+<style>
+  :root{
+    --lila:#7c5cff; --lila-s:#5b3fd9; --turkiz:#00c2a8; --sarga:#ffb830;
+    --piros:#ff5d73; --zold:#2ec27e; --hatter:#f4f1ff; --kartya:#ffffff;
+    --szoveg:#2b2350; --halvany:#8a82b0;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  body{
+    font-family:"Segoe UI", Arial, sans-serif; background:var(--hatter);
+    color:var(--szoveg); min-height:100vh; display:flex; justify-content:center;
+  }
+  .app{width:100%; max-width:520px; padding:16px; display:flex; flex-direction:column; min-height:100vh;}
+  h1{font-size:1.6rem; text-align:center; color:var(--lila-s); margin:10px 0 2px;}
+  .alcim{text-align:center; color:var(--halvany); font-size:.9rem; margin-bottom:14px;}
+  .screen{display:none; flex-direction:column; flex:1;}
+  .screen.aktiv{display:flex;}
+
+  /* ---- MENÜ ---- */
+  .modul{
+    background:var(--kartya); border:none; border-radius:18px; padding:16px 18px;
+    margin:7px 0; font-size:1.15rem; font-weight:600; color:var(--szoveg);
+    display:flex; align-items:center; gap:14px; cursor:pointer;
+    box-shadow:0 3px 10px rgba(90,63,217,.10); text-align:left; width:100%;
+    transition:transform .1s;
+  }
+  .modul:active{transform:scale(.97);}
+  .modul .ikon{font-size:1.7rem;}
+  .modul small{display:block; font-weight:400; color:var(--halvany); font-size:.82rem;}
+  .tipp{margin-top:auto; padding:12px; font-size:.8rem; color:var(--halvany); text-align:center;}
+  .statsor{font-size:.85rem; color:var(--halvany); text-align:center; margin-top:8px;}
+
+  /* ---- BEÁLLÍTÁS ---- */
+  .panel{background:var(--kartya); border-radius:18px; padding:18px; margin-top:8px;
+         box-shadow:0 3px 10px rgba(90,63,217,.10);}
+  .panel h2{font-size:1.15rem; margin-bottom:12px;}
+  .valaszto{display:flex; flex-wrap:wrap; gap:8px;}
+  .chip{
+    border:2px solid var(--lila); background:#fff; color:var(--lila-s);
+    border-radius:999px; padding:8px 15px; font-size:1.05rem; font-weight:700; cursor:pointer;
+  }
+  .chip.on{background:var(--lila); color:#fff;}
+  .fo-gomb{
+    margin-top:16px; width:100%; background:var(--turkiz); color:#fff; border:none;
+    border-radius:16px; padding:14px; font-size:1.2rem; font-weight:700; cursor:pointer;
+  }
+  .fo-gomb:disabled{background:#c9c4e2;}
+  .vissza{background:none; border:none; color:var(--halvany); font-size:.95rem;
+          margin-top:10px; cursor:pointer; align-self:center;}
+
+  /* ---- JÁTÉK ---- */
+  .fejlec{display:flex; justify-content:space-between; align-items:center; margin:6px 0 10px;}
+  .pontok{display:flex; gap:5px;}
+  .pont{width:13px; height:13px; border-radius:50%; background:#ddd7f5;}
+  .pont.jo{background:var(--zold);}
+  .pont.rossz{background:var(--piros);}
+  .sorozat{font-weight:700; color:var(--sarga); font-size:1.05rem;}
+  .kerdes{
+    background:var(--kartya); border-radius:20px; padding:26px 16px; text-align:center;
+    font-size:1.5rem; font-weight:700; box-shadow:0 3px 10px rgba(90,63,217,.10);
+    min-height:110px; display:flex; align-items:center; justify-content:center; line-height:1.35;
+  }
+  .kerdes .nagy{font-size:2.1rem;}
+  .valasz-kijelzo{
+    text-align:center; font-size:2.2rem; font-weight:800; letter-spacing:2px;
+    min-height:56px; margin:12px 0 4px; color:var(--lila-s);
+  }
+  .valasz-kijelzo .kurzor{color:var(--halvany); font-weight:300;}
+  .keypad{display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-top:4px;}
+  .keypad button{
+    font-size:1.5rem; font-weight:700; padding:14px 0; border:none; border-radius:14px;
+    background:#fff; color:var(--szoveg); box-shadow:0 2px 6px rgba(90,63,217,.12); cursor:pointer;
+  }
+  .keypad button:active{transform:scale(.94);}
+  .keypad .torol{color:var(--piros);}
+  .keypad .kesz{background:var(--zold); color:#fff;}
+  .valaszgombok{display:flex; flex-direction:column; gap:10px; margin-top:14px;}
+  .valaszgombok button{
+    font-size:1.5rem; font-weight:800; padding:16px; border:none; border-radius:16px;
+    background:#fff; color:var(--szoveg); box-shadow:0 2px 6px rgba(90,63,217,.12); cursor:pointer;
+  }
+  .visszajelzes{
+    margin-top:12px; border-radius:16px; padding:14px; text-align:center;
+    font-size:1.05rem; font-weight:600; display:none;
+  }
+  .visszajelzes.jo{display:block; background:#dff7ec; color:#177a4f;}
+  .visszajelzes.rossz{display:block; background:#ffe3e8; color:#b3283e;}
+  .visszajelzes .hint{display:block; font-weight:400; font-size:.92rem; margin-top:6px;}
+  .tovabb{margin-top:10px; background:var(--lila); color:#fff; border:none;
+          border-radius:14px; padding:12px; font-size:1.1rem; font-weight:700;
+          width:100%; cursor:pointer; display:none;}
+
+  /* ---- EREDMÉNY ---- */
+  .csillagok{font-size:3rem; text-align:center; margin:14px 0 4px;}
+  .eredmeny-szoveg{text-align:center; font-size:1.25rem; font-weight:700; margin-bottom:12px;}
+  .hibalista{background:var(--kartya); border-radius:16px; padding:14px;
+             box-shadow:0 3px 10px rgba(90,63,217,.10); margin-bottom:12px;}
+  .hibalista h3{font-size:1rem; margin-bottom:8px; color:var(--piros);}
+  .hibalista div{font-size:1.02rem; padding:4px 0; border-bottom:1px dashed #eee;}
+  .hibalista div:last-child{border:none;}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>🦊 Matek Gyakorló</h1>
+  <div class="alcim">Ezres számkör · napi 10–15 perc</div>
+
+  <!-- MENÜ -->
+  <div class="screen aktiv" id="scr-menu">
+    <button class="modul" onclick="megnyit('szorzas')"><span class="ikon">✖️</span>
+      <span>Szorzótábla<small>2-től 10-ig, a nehezebbeket többször kérdezi</small></span></button>
+    <button class="modul" onclick="megnyit('helyi')"><span class="ikon">🏗️</span>
+      <span>Helyiérték és számok<small>százasok-tízesek-egyesek, kerekítés, szomszédok</small></span></button>
+    <button class="modul" onclick="megnyit('muvelet')"><span class="ikon">➕➖</span>
+      <span>Összeadás és kivonás<small>1000-ig, átlépéssel vagy anélkül</small></span></button>
+    <button class="modul" onclick="inditVegyes()"><span class="ikon">🎲</span>
+      <span>Vegyes kör<small>mindenből egy kicsit</small></span></button>
+    <div class="statsor" id="stat-sor"></div>
+    <div class="tipp">💡 Egy kör = 10 feladat. A rövid, mindennapos gyakorlás ér a legtöbbet!</div>
+  </div>
+
+  <!-- BEÁLLÍTÁS -->
+  <div class="screen" id="scr-setup">
+    <div class="panel" id="setup-szorzas" style="display:none">
+      <h2>Melyik szorzótáblát gyakoroljuk?</h2>
+      <div class="valaszto" id="tabla-valaszto"></div>
+      <button class="fo-gomb" id="szorzas-start" onclick="inditSzorzas()">Indítás! 🚀</button>
+    </div>
+    <div class="panel" id="setup-helyi" style="display:none">
+      <h2>Helyiérték és számok</h2>
+      <div class="valaszto" id="helyi-valaszto"></div>
+      <button class="fo-gomb" onclick="inditHelyi()">Indítás! 🚀</button>
+    </div>
+    <div class="panel" id="setup-muvelet" style="display:none">
+      <h2>Összeadás és kivonás</h2>
+      <div class="valaszto" id="muvelet-valaszto"></div>
+      <button class="fo-gomb" onclick="inditMuvelet()">Indítás! 🚀</button>
+    </div>
+    <button class="vissza" onclick="menu()">← vissza a menübe</button>
+  </div>
+
+  <!-- JÁTÉK -->
+  <div class="screen" id="scr-game">
+    <div class="fejlec">
+      <div class="pontok" id="pontok"></div>
+      <div class="sorozat" id="sorozat"></div>
+    </div>
+    <div class="kerdes" id="kerdes"></div>
+    <div class="valasz-kijelzo" id="kijelzo"></div>
+    <div class="keypad" id="keypad">
+      <button onclick="gomb(1)">1</button><button onclick="gomb(2)">2</button><button onclick="gomb(3)">3</button>
+      <button onclick="gomb(4)">4</button><button onclick="gomb(5)">5</button><button onclick="gomb(6)">6</button>
+      <button onclick="gomb(7)">7</button><button onclick="gomb(8)">8</button><button onclick="gomb(9)">9</button>
+      <button class="torol" onclick="torol()">⌫</button><button onclick="gomb(0)">0</button>
+      <button class="kesz" onclick="ellenoriz()">✔</button>
+    </div>
+    <div class="valaszgombok" id="valaszgombok" style="display:none"></div>
+    <div class="visszajelzes" id="visszajelzes"></div>
+    <button class="tovabb" id="tovabb" onclick="kovetkezo()">Tovább →</button>
+    <button class="vissza" onclick="menu()">✕ kör megszakítása</button>
+  </div>
+
+  <!-- EREDMÉNY -->
+  <div class="screen" id="scr-end">
+    <div class="csillagok" id="csillagok"></div>
+    <div class="eredmeny-szoveg" id="eredmeny-szoveg"></div>
+    <div class="hibalista" id="hibalista" style="display:none"></div>
+    <button class="fo-gomb" onclick="ujraKor()">Még egy kör! 🔁</button>
+    <button class="vissza" onclick="menu()">← vissza a menübe</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ================= segédek ================= */
+const $ = id => document.getElementById(id);
+const rnd = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+const valaszt = arr => arr[rnd(0,arr.length-1)];
+const DICSERET = ["Szuper! 🌟","Ügyes vagy! 👏","Pontosan! ✨","Remek! 🎉","Nagyon jó! 💪","Ez az! 🙌"];
+const RAG = {1:"es",2:"es",3:"as",4:"es",5:"ös",6:"os",7:"es",8:"as",9:"es",10:"es"};
+// névelő: "az" ha a szám kiejtése magánhangzóval kezdődik (1, 5, 5xx)
+const nevelo = x => (x>=100 ? Math.floor(x/100)===5 : (x===1||x===5)) ? "az" : "a";
+const Nevelo = x => nevelo(x)==="az" ? "Az" : "A";
+
+/* ================= állapot ================= */
+const KOR_HOSSZ = 10;
+let mod = null, opts = {}, kerdesek = 0, jok = 0, sorozat = 0, maxSorozat = 0;
+let aktKerdes = null, bevitel = "", zarolva = false, hibak = [];
+// adaptív szorzótábla: a rontott tények itt gyűlnek, és gyakrabban jönnek vissza
+let gyengeTenyek = [];
+// session-statisztika (bezáráskor törlődik)
+const stat = { szorzas:[0,0], helyi:[0,0], muvelet:[0,0] }; // [jó, összes]
+
+/* ================= képernyőváltás ================= */
+function mutat(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("aktiv"));
+  $(id).classList.add("aktiv");
+}
+function menu(){ mutat("scr-menu"); frissitStat(); }
+function frissitStat(){
+  const o = stat.szorzas[1]+stat.helyi[1]+stat.muvelet[1];
+  const j = stat.szorzas[0]+stat.helyi[0]+stat.muvelet[0];
+  $("stat-sor").textContent = o ? `Ma eddig: ${j} jó válasz ${o} feladatból` : "";
+}
+
+/* ================= beállító képernyők ================= */
+const kivTablak = new Set([3,4]);
+const helyiTipusok = new Set(["bontas","ertek","kerekit","szomszed","hasonlit"]);
+let muveletNehez = "vegyes"; // konnyu | nehez | vegyes
+
+function megnyit(m){
+  mod = m; mutat("scr-setup");
+  ["setup-szorzas","setup-helyi","setup-muvelet"].forEach(x=>$(x).style.display="none");
+  $("setup-"+m).style.display="block";
+  if(m==="szorzas") rajzolTablak();
+  if(m==="helyi") rajzolHelyi();
+  if(m==="muvelet") rajzolMuvelet();
+}
+function rajzolTablak(){
+  const c = $("tabla-valaszto"); c.innerHTML="";
+  for(let t=2;t<=10;t++){
+    const b = document.createElement("button");
+    b.className = "chip"+(kivTablak.has(t)?" on":"");
+    b.textContent = t+"-"+RAG[t];
+    b.onclick = ()=>{ kivTablak.has(t)?kivTablak.delete(t):kivTablak.add(t);
+                      b.classList.toggle("on"); $("szorzas-start").disabled = kivTablak.size===0; };
+    c.appendChild(b);
+  }
+  const mind = document.createElement("button");
+  mind.className="chip"; mind.textContent="mind";
+  mind.onclick = ()=>{ for(let t=2;t<=10;t++) kivTablak.add(t); rajzolTablak();
+                       $("szorzas-start").disabled=false; };
+  c.appendChild(mind);
+  $("szorzas-start").disabled = kivTablak.size===0;
+}
+function rajzolHelyi(){
+  const nevek = {bontas:"számépítés", ertek:"számjegy értéke", kerekit:"kerekítés",
+                 szomszed:"szomszédok", hasonlit:"melyik nagyobb?"};
+  const c = $("helyi-valaszto"); c.innerHTML="";
+  for(const [k,n] of Object.entries(nevek)){
+    const b = document.createElement("button");
+    b.className = "chip"+(helyiTipusok.has(k)?" on":"");
+    b.textContent = n;
+    b.onclick = ()=>{ if(helyiTipusok.has(k)&&helyiTipusok.size===1) return;
+                      helyiTipusok.has(k)?helyiTipusok.delete(k):helyiTipusok.add(k);
+                      b.classList.toggle("on"); };
+    c.appendChild(b);
+  }
+}
+function rajzolMuvelet(){
+  const c = $("muvelet-valaszto"); c.innerHTML="";
+  [["konnyu","átlépés nélkül"],["nehez","átlépéssel"],["vegyes","vegyesen"]].forEach(([k,n])=>{
+    const b = document.createElement("button");
+    b.className = "chip"+(muveletNehez===k?" on":"");
+    b.textContent = n;
+    b.onclick = ()=>{ muveletNehez=k; rajzolMuvelet(); };
+    c.appendChild(b);
+  });
+}
+
+/* ================= feladatgenerátorok =================
+   Minden kérdés: {szoveg, valasz, tipus:"szam"|"valaszto", opciok?, hint, modul, cimke} */
+
+function genSzorzas(){
+  let a,b;
+  if(gyengeTenyek.length && Math.random()<0.5){
+    const f = valaszt(gyengeTenyek); a=f[0]; b=f[1];
+  } else {
+    a = valaszt([...kivTablak]); b = rnd(1,10);
+  }
+  if(Math.random()<0.25){ // hiányzó tényező
+    return { szoveg:`<span class="nagy">${a} × ? = ${a*b}</span>`, valasz:b,
+             hint:`${a} × ${b} = ${a*b}, tehát a hiányzó szám: ${b}`,
+             modul:"szorzas", cimke:`${a} × ? = ${a*b}`, teny:[a,b] };
+  }
+  return { szoveg:`<span class="nagy">${a} × ${b} = ?</span>`, valasz:a*b,
+           hint: b>1 ? `Segít a szomszédja: ${a} × ${b-1} = ${a*(b-1)}, és még ${a} → ${a*b}`
+                     : `Bármit 1-gyel szorozva önmagát kapod.`,
+           modul:"szorzas", cimke:`${a} × ${b}`, teny:[a,b] };
+}
+
+function genHelyi(){
+  const t = valaszt([...helyiTipusok]);
+  if(t==="bontas"){
+    const n = rnd(101,999), sz=Math.floor(n/100), ti=Math.floor(n/10)%10, e=n%10;
+    const reszek=[`${sz} százas`]; if(ti) reszek.push(`${ti} tízes`); if(e) reszek.push(`${e} egyes`);
+    return { szoveg:`${reszek.join(" + ")}<br>Melyik szám ez?`, valasz:n,
+             hint:`${sz}·100 ${ti?`+ ${ti}·10 `:""}${e?`+ ${e} `:""}= ${n}`,
+             modul:"helyi", cimke:reszek.join(" + ") };
+  }
+  if(t==="ertek"){
+    let n, jegy, hely;
+    do{ n = rnd(102,987); const j=[...String(n)];
+        hely = rnd(0,2); jegy = +j[hely];
+    } while(jegy===0 || [...String(n)].filter(x=>+x===jegy).length>1);
+    const szorzo = [100,10,1][hely];
+    return { szoveg:`${Nevelo(n)} <b>${n}</b> számban<br>mennyit ér ${nevelo(jegy)} <b>${jegy}-${RAG[jegy]}</b> számjegy?`,
+             valasz:jegy*szorzo,
+             hint:`A ${["százasok","tízesek","egyesek"][hely]} helyén áll, ezért ${jegy} × ${szorzo} = ${jegy*szorzo}-t ér.`,
+             modul:"helyi", cimke:`${n}-ban a ${jegy}-es értéke` };
+  }
+  if(t==="kerekit"){
+    if(Math.random()<0.5){
+      let n; do{ n=rnd(101,989); }while(n%10===0);
+      return { szoveg:`Kerekítsd <b>tízesre</b>:<br><span class="nagy">${n}</span>`,
+               valasz:Math.round(n/10)*10,
+               hint:`Az egyesek helyén ${n%10} áll → ${n%10>=5?"felfelé":"lefelé"} kerekítünk: ${Math.round(n/10)*10}`,
+               modul:"helyi", cimke:`${n} tízesre kerekítve` };
+    }
+    let n; do{ n=rnd(101,949); }while(n%100===0);
+    return { szoveg:`Kerekítsd <b>százasra</b>:<br><span class="nagy">${n}</span>`,
+             valasz:Math.round(n/100)*100,
+             hint:`A tízesek helyén ${Math.floor(n/10)%10} áll → ${Math.floor(n/10)%10>=5?"felfelé":"lefelé"}: ${Math.round(n/100)*100}`,
+             modul:"helyi", cimke:`${n} százasra kerekítve` };
+  }
+  if(t==="szomszed"){
+    const fajta = valaszt(["egyes","tizes","szazas"]);
+    if(fajta==="egyes"){
+      const n = rnd(100,998), kisebb = Math.random()<0.5;
+      return { szoveg:`Mi ${nevelo(n)} <b>${n}</b> szám<br><b>${kisebb?"kisebb":"nagyobb"}</b> egyes szomszédja?`,
+               valasz: kisebb? n-1 : n+1,
+               hint:`Az egyes szomszédok: ${n-1} és ${n+1}.`,
+               modul:"helyi", cimke:`${n} ${kisebb?"kisebb":"nagyobb"} szomszédja` };
+    }
+    if(fajta==="tizes"){
+      let n; do{ n=rnd(101,989); }while(n%10===0);
+      const kisebb = Math.random()<0.5, also = Math.floor(n/10)*10;
+      return { szoveg:`Mi ${nevelo(n)} <b>${n}</b> szám<br><b>${kisebb?"kisebb":"nagyobb"}</b> tízes szomszédja?`,
+               valasz: kisebb? also : also+10,
+               hint:`A tízes szomszédok: ${also} és ${also+10}.`,
+               modul:"helyi", cimke:`${n} ${kisebb?"kisebb":"nagyobb"} tízes szomszédja` };
+    }
+    let n; do{ n=rnd(101,899); }while(n%100===0);
+    const kisebb = Math.random()<0.5, also = Math.floor(n/100)*100;
+    return { szoveg:`Mi ${nevelo(n)} <b>${n}</b> szám<br><b>${kisebb?"kisebb":"nagyobb"}</b> százas szomszédja?`,
+             valasz: kisebb? also : also+100,
+             hint:`A százas szomszédok: ${also} és ${also+100}.`,
+             modul:"helyi", cimke:`${n} ${kisebb?"kisebb":"nagyobb"} százas szomszédja` };
+  }
+  // hasonlit
+  let a=rnd(100,999), b;
+  do{ b = Math.random()<0.4 ? a - rnd(1,9)*(valaszt([1,10,100])) : rnd(100,999); } while(b===a || b<1);
+  return { szoveg:`Melyik szám a <b>nagyobb</b>?`, tipus:"valaszto",
+           opciok:[a,b], valasz:Math.max(a,b),
+           hint:`Először a százasokat hasonlítsd, ha egyenlők, a tízeseket!`,
+           modul:"helyi", cimke:`${a} vagy ${b}` };
+}
+
+function genMuvelet(){
+  let nehez = muveletNehez==="vegyes" ? (Math.random()<0.5?"konnyu":"nehez") : muveletNehez;
+  const osszead = Math.random()<0.5;
+  // 20% kerek tízesekkel
+  if(Math.random()<0.2){
+    if(osszead){
+      const a=10*rnd(3,80), b=10*rnd(2,Math.floor((990-a)/10));
+      return muveletKerdes(a,b,"+");
+    }
+    const a=10*rnd(10,99), b=10*rnd(2,Math.floor(a/10)-1);
+    return muveletKerdes(a,b,"−");
+  }
+  if(osszead){
+    let a,b;
+    if(nehez==="konnyu"){ // oszloponként nincs átlépés
+      const a1=rnd(1,8), b1=rnd(0,8-a1)||0, a2=rnd(0,9), b2=rnd(0,9-a2), a3=rnd(0,9), b3=rnd(0,9-a3);
+      a = a1*100+a2*10+a3; b = b1*100+b2*10+b3;
+      if(b<10) b += 10*(b2===0 && 9-a2>0 ? 1:0); // ne legyen túl pici
+      if(b===0) b = 9-a3>0 ? rnd(1,9-a3) : 100;
+    } else {
+      do{ a=rnd(115,860); b=rnd(46,999-a); }
+      while( (a%10 + b%10 < 10) && (Math.floor(a/10)%10 + Math.floor(b/10)%10 < 10) );
+    }
+    return muveletKerdes(a,b,"+");
+  }
+  let a,b;
+  if(nehez==="konnyu"){ // nincs átlépés: b minden jegye <= a jegye
+    a = rnd(200,999);
+    const j=[Math.floor(a/100), Math.floor(a/10)%10, a%10];
+    do{ b = rnd(0,j[0]-1)*100 + rnd(0,j[1])*10 + rnd(0,j[2]); } while(b<11);
+  } else {
+    do{ a=rnd(200,999); b=rnd(28,a-15); }
+    while( (a%10 >= b%10) && (Math.floor(a/10)%10 >= Math.floor(b/10)%10) );
+  }
+  return muveletKerdes(a,b,"−");
+}
+function muveletKerdes(a,b,jel){
+  const eredmeny = jel==="+" ? a+b : a-b;
+  return { szoveg:`<span class="nagy">${a} ${jel} ${b} = ?</span>`, valasz:eredmeny,
+           hint: jel==="+" ? `Bonthatod: ${a} + ${Math.floor(b/10)*10} = ${a+Math.floor(b/10)*10}, majd + ${b%10} = ${eredmeny}`
+                           : `Bonthatod: ${a} − ${Math.floor(b/10)*10} = ${a-Math.floor(b/10)*10}, majd − ${b%10} = ${eredmeny}`,
+           modul:"muvelet", cimke:`${a} ${jel} ${b}` };
+}
+
+function genVegyes(){
+  const m = valaszt(["szorzas","helyi","muvelet"]);
+  if(m==="szorzas"){
+    const mentett = new Set(kivTablak);
+    for(let t=2;t<=10;t++) kivTablak.add(t);
+    const k = genSzorzas();
+    kivTablak.clear(); mentett.forEach(t=>kivTablak.add(t));
+    return k;
+  }
+  return m==="helyi" ? genHelyi() : genMuvelet();
+}
+
+/* ================= körvezérlés ================= */
+function inditKor(){
+  kerdesek=0; jok=0; sorozat=0; maxSorozat=0; hibak=[];
+  mutat("scr-game"); rajzolPontok(); kovetkezo(true);
+}
+function inditSzorzas(){ if(kivTablak.size===0) return; mod="szorzas"; inditKor(); }
+function inditHelyi(){ mod="helyi"; inditKor(); }
+function inditMuvelet(){ mod="muvelet"; inditKor(); }
+function inditVegyes(){ mod="vegyes"; inditKor(); }
+
+function ujKerdes(){
+  if(mod==="szorzas") return genSzorzas();
+  if(mod==="helyi")   return genHelyi();
+  if(mod==="muvelet") return genMuvelet();
+  return genVegyes();
+}
+function rajzolPontok(){
+  const c=$("pontok"); c.innerHTML="";
+  for(let i=0;i<KOR_HOSSZ;i++){ const d=document.createElement("div"); d.className="pont"; c.appendChild(d);}
+}
+function kovetkezo(elso){
+  if(!elso && kerdesek>=KOR_HOSSZ){ vege(); return; }
+  aktKerdes = ujKerdes(); bevitel=""; zarolva=false;
+  $("kerdes").innerHTML = aktKerdes.szoveg;
+  $("visszajelzes").className="visszajelzes"; $("visszajelzes").innerHTML="";
+  $("tovabb").style.display="none";
+  const valasztos = aktKerdes.tipus==="valaszto";
+  $("keypad").style.display = valasztos? "none":"grid";
+  $("kijelzo").style.display = valasztos? "none":"block";
+  $("valaszgombok").style.display = valasztos? "flex":"none";
+  if(valasztos){
+    const c=$("valaszgombok"); c.innerHTML="";
+    aktKerdes.opciok.forEach(o=>{
+      const b=document.createElement("button"); b.textContent=o;
+      b.onclick=()=>{ if(!zarolva){ bevitel=String(o); ellenoriz(); } };
+      c.appendChild(b);
+    });
+  }
+  frissitKijelzo(); frissitSorozat();
+}
+function frissitKijelzo(){
+  $("kijelzo").innerHTML = bevitel.length? bevitel : '<span class="kurzor">_</span>';
+}
+function frissitSorozat(){
+  $("sorozat").textContent = sorozat>=3 ? `🔥 ${sorozat}` : (sorozat>0? `⭐ ${sorozat}`:"");
+}
+function gomb(n){ if(zarolva||bevitel.length>=4) return; bevitel+=String(n); frissitKijelzo(); }
+function torol(){ if(zarolva) return; bevitel=bevitel.slice(0,-1); frissitKijelzo(); }
+
+function ellenoriz(){
+  if(zarolva || bevitel==="") return;
+  zarolva = true; kerdesek++;
+  const tipp = parseInt(bevitel,10);
+  const jo = tipp===aktKerdes.valasz;
+  const s = stat[aktKerdes.modul]; s[1]++;
+  const p = $("pontok").children[kerdesek-1];
+  const v = $("visszajelzes");
+  if(jo){
+    jok++; sorozat++; maxSorozat=Math.max(maxSorozat,sorozat); s[0]++;
+    p.classList.add("jo");
+    v.className="visszajelzes jo"; v.innerHTML = valaszt(DICSERET);
+    // gyenge tény javítva → kivesszük
+    if(aktKerdes.teny) gyengeTenyek = gyengeTenyek.filter(f=>!(f[0]===aktKerdes.teny[0]&&f[1]===aktKerdes.teny[1]));
+    setTimeout(kovetkezo, 900);
+  } else {
+    sorozat=0; p.classList.add("rossz");
+    hibak.push(`${aktKerdes.cimke} → helyesen: ${aktKerdes.valasz}`);
+    if(aktKerdes.teny && !gyengeTenyek.some(f=>f[0]===aktKerdes.teny[0]&&f[1]===aktKerdes.teny[1]))
+      gyengeTenyek.push(aktKerdes.teny);
+    v.className="visszajelzes rossz";
+    v.innerHTML = `Nem baj! A helyes válasz: <b>${aktKerdes.valasz}</b><span class="hint">${aktKerdes.hint}</span>`;
+    $("tovabb").style.display="block";
+  }
+  frissitSorozat();
+}
+function vege(){
+  mutat("scr-end");
+  const csillag = jok>=10? 3 : jok>=8? 2 : jok>=6? 1 : 0;
+  $("csillagok").textContent = "⭐".repeat(csillag) + "☆".repeat(3-csillag);
+  const uzenet = csillag===3? "Hibátlan! Fantasztikus! 🏆"
+              : csillag===2? "Nagyon ügyes voltál! 🎉"
+              : csillag===1? "Jó munka, egyre jobban megy! 💪"
+              : "Semmi baj, a gyakorlás teszi a mestert! 🌱";
+  $("eredmeny-szoveg").innerHTML = `${jok} / ${KOR_HOSSZ} jó válasz<br><small>leghosszabb sorozat: ${maxSorozat}</small><br>${uzenet}`;
+  const h=$("hibalista");
+  if(hibak.length){ h.style.display="block";
+    h.innerHTML = "<h3>Ezeket nézzétek át együtt:</h3>" + hibak.map(x=>`<div>${x}</div>`).join("");
+  } else h.style.display="none";
+  frissitStat();
+}
+function ujraKor(){ inditKor(); }
+
+/* billentyűzet-támogatás */
+document.addEventListener("keydown", e=>{
+  if(!$("scr-game").classList.contains("aktiv")) return;
+  if($("tovabb").style.display==="block" && (e.key==="Enter"||e.key===" ")){ kovetkezo(); return; }
+  if(e.key>="0" && e.key<="9") gomb(+e.key);
+  else if(e.key==="Backspace") torol();
+  else if(e.key==="Enter") ellenoriz();
+});
+menu();
+</script>
+</body>
+</html>
