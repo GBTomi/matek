@@ -60,6 +60,9 @@
   .pont.jo{background:var(--zold);}
   .pont.rossz{background:var(--piros);}
   .sorozat{font-weight:700; color:var(--sarga); font-size:1.05rem;}
+  .tipus-sor{text-align:center; margin-bottom:7px; min-height:24px;}
+  .tipus-sor span{display:inline-block; background:#e9e4fb; color:var(--lila-s);
+    font-size:.85rem; font-weight:700; padding:3px 12px; border-radius:999px;}
   .kerdes{
     background:var(--kartya); border-radius:20px; padding:26px 16px; text-align:center;
     font-size:1.5rem; font-weight:700; box-shadow:0 3px 10px rgba(90,63,217,.10);
@@ -189,6 +192,7 @@
       <div class="pontok" id="pontok"></div>
       <div class="sorozat" id="sorozat"></div>
     </div>
+    <div class="tipus-sor" id="tipus-sor"></div>
     <div class="kerdes" id="kerdes"></div>
     <div class="valasz-kijelzo" id="kijelzo"></div>
     <div class="keypad" id="keypad">
@@ -356,12 +360,14 @@ function genSzorzas(){
   if(Math.random()<0.25){ // hiányzó tényező
     return { szoveg:`<span class="nagy">${a} × ? = ${a*b}</span>`, valasz:b,
              hint:`${a} × ${b} = ${a*b}, tehát a hiányzó szám: ${b}`,
-             modul:"szorzas", cimke:`${a} × ? = ${a*b}`, teny:[a,b] };
+             modul:"szorzas", cimke:`${a} × ? = ${a*b}`, teny:[a,b],
+             tf:`Szorzótábla · hiányzó szám (${a}-${RAG[a]})` };
   }
   return { szoveg:`<span class="nagy">${a} × ${b} = ?</span>`, valasz:a*b,
            hint: b>1 ? `Segít a szomszédja: ${a} × ${b-1} = ${a*(b-1)}, és még ${a} → ${a*b}`
                      : `Bármit 1-gyel szorozva önmagát kapod.`,
-           modul:"szorzas", cimke:`${a} × ${b}`, teny:[a,b] };
+           modul:"szorzas", cimke:`${a} × ${b}`, teny:[a,b],
+           tf:`Szorzótábla · ${a}-${RAG[a]}` };
 }
 
 function genHelyi(){
@@ -371,7 +377,7 @@ function genHelyi(){
     const reszek=[`${sz} százas`]; if(ti) reszek.push(`${ti} tízes`); if(e) reszek.push(`${e} egyes`);
     return { szoveg:`${reszek.join(" + ")}<br>Melyik szám ez?`, valasz:n,
              hint:`${sz}·100 ${ti?`+ ${ti}·10 `:""}${e?`+ ${e} `:""}= ${n}`,
-             modul:"helyi", cimke:reszek.join(" + ") };
+             modul:"helyi", cimke:reszek.join(" + "), tf:"Helyiérték · számépítés" };
   }
   if(t==="ertek"){
     let n, jegy, hely;
@@ -382,7 +388,7 @@ function genHelyi(){
     return { szoveg:`${Nevelo(n)} <b>${n}</b> számban<br>mennyit ér ${nevelo(jegy)} <b>${jegy}-${RAG[jegy]}</b> számjegy?`,
              valasz:jegy*szorzo,
              hint:`A ${["százasok","tízesek","egyesek"][hely]} helyén áll, ezért ${jegy} × ${szorzo} = ${jegy*szorzo}-t ér.`,
-             modul:"helyi", cimke:`${n}-ban a ${jegy}-es értéke` };
+             modul:"helyi", cimke:`${n}-ban a ${jegy}-es értéke`, tf:"Helyiérték · számjegy értéke" };
   }
   if(t==="kerekit"){
     if(Math.random()<0.5){
@@ -390,13 +396,13 @@ function genHelyi(){
       return { szoveg:`Kerekítsd <b>tízesre</b>:<br><span class="nagy">${n}</span>`,
                valasz:Math.round(n/10)*10,
                hint:`Az egyesek helyén ${n%10} áll → ${n%10>=5?"felfelé":"lefelé"} kerekítünk: ${Math.round(n/10)*10}`,
-               modul:"helyi", cimke:`${n} tízesre kerekítve` };
+               modul:"helyi", cimke:`${n} tízesre kerekítve`, tf:"Kerekítés · tízesre" };
     }
     let n; do{ n=rnd(101,949); }while(n%100===0);
     return { szoveg:`Kerekítsd <b>százasra</b>:<br><span class="nagy">${n}</span>`,
              valasz:Math.round(n/100)*100,
              hint:`A tízesek helyén ${Math.floor(n/10)%10} áll → ${Math.floor(n/10)%10>=5?"felfelé":"lefelé"}: ${Math.round(n/100)*100}`,
-             modul:"helyi", cimke:`${n} százasra kerekítve` };
+             modul:"helyi", cimke:`${n} százasra kerekítve`, tf:"Kerekítés · százasra" };
   }
   if(t==="szomszed"){
     const fajta = valaszt(["egyes","tizes","szazas"]);
@@ -405,7 +411,7 @@ function genHelyi(){
       return { szoveg:`Mi ${nevelo(n)} <b>${n}</b> szám<br><b>${kisebb?"kisebb":"nagyobb"}</b> egyes szomszédja?`,
                valasz: kisebb? n-1 : n+1,
                hint:`Az egyes szomszédok: ${n-1} és ${n+1}.`,
-               modul:"helyi", cimke:`${n} ${kisebb?"kisebb":"nagyobb"} szomszédja` };
+               modul:"helyi", cimke:`${n} ${kisebb?"kisebb":"nagyobb"} szomszédja`, tf:"Szomszédok · egyes" };
     }
     if(fajta==="tizes"){
       let n; do{ n=rnd(101,989); }while(n%10===0);
@@ -413,14 +419,14 @@ function genHelyi(){
       return { szoveg:`Mi ${nevelo(n)} <b>${n}</b> szám<br><b>${kisebb?"kisebb":"nagyobb"}</b> tízes szomszédja?`,
                valasz: kisebb? also : also+10,
                hint:`A tízes szomszédok: ${also} és ${also+10}.`,
-               modul:"helyi", cimke:`${n} ${kisebb?"kisebb":"nagyobb"} tízes szomszédja` };
+               modul:"helyi", cimke:`${n} ${kisebb?"kisebb":"nagyobb"} tízes szomszédja`, tf:"Szomszédok · tízes" };
     }
     let n; do{ n=rnd(101,899); }while(n%100===0);
     const kisebb = Math.random()<0.5, also = Math.floor(n/100)*100;
     return { szoveg:`Mi ${nevelo(n)} <b>${n}</b> szám<br><b>${kisebb?"kisebb":"nagyobb"}</b> százas szomszédja?`,
              valasz: kisebb? also : also+100,
              hint:`A százas szomszédok: ${also} és ${also+100}.`,
-             modul:"helyi", cimke:`${n} ${kisebb?"kisebb":"nagyobb"} százas szomszédja` };
+             modul:"helyi", cimke:`${n} ${kisebb?"kisebb":"nagyobb"} százas szomszédja`, tf:"Szomszédok · százas" };
   }
   // hasonlit
   let a=rnd(100,999), b;
@@ -428,7 +434,7 @@ function genHelyi(){
   return { szoveg:`Melyik szám a <b>nagyobb</b>?`, tipus:"valaszto",
            opciok:[a,b], valasz:Math.max(a,b),
            hint:`Először a százasokat hasonlítsd, ha egyenlők, a tízeseket!`,
-           modul:"helyi", cimke:`${a} vagy ${b}` };
+           modul:"helyi", cimke:`${a} vagy ${b}`, tf:"Összehasonlítás" };
 }
 
 function genMuvelet(){
@@ -467,12 +473,18 @@ function genMuvelet(){
   }
   return muveletKerdes(a,b,"−");
 }
+function vanAtlepes(a,b,jel){
+  const j=(n,p)=>Math.floor(n/Math.pow(10,p))%10;
+  return jel==="+" ? (j(a,0)+j(b,0)>=10 || j(a,1)+j(b,1)>=10)
+                   : (j(a,0)<j(b,0) || j(a,1)<j(b,1));
+}
 function muveletKerdes(a,b,jel){
   const eredmeny = jel==="+" ? a+b : a-b;
   return { szoveg:`<span class="nagy">${a} ${jel} ${b} = ?</span>`, valasz:eredmeny,
            hint: jel==="+" ? `Bonthatod: ${a} + ${Math.floor(b/10)*10} = ${a+Math.floor(b/10)*10}, majd + ${b%10} = ${eredmeny}`
                            : `Bonthatod: ${a} − ${Math.floor(b/10)*10} = ${a-Math.floor(b/10)*10}, majd − ${b%10} = ${eredmeny}`,
-           modul:"muvelet", cimke:`${a} ${jel} ${b}` };
+           modul:"muvelet", cimke:`${a} ${jel} ${b}`,
+           tf:`${jel==="+"?"Összeadás":"Kivonás"} · ${vanAtlepes(a,b,jel)?"átlépéssel":"átlépés nélkül"}` };
 }
 
 function genPotlas(){
@@ -492,7 +504,7 @@ function genPotlas(){
     ? `Lépésben: ${a} + ${d1} = ${a+d1}, majd + ${v-d1} = ${cel} → összesen ${v}`
     : `${a} + ${v} = ${cel}`;
   return { szoveg:`<span class="nagy">${a} + ? = ${cel}</span>`, valasz:v,
-           hint, modul:"potlas", cimke:`${a} + ? = ${cel}` };
+           hint, modul:"potlas", cimke:`${a} + ? = ${cel}`, tf:`Pótlás · ${ {t10:"10-re",t100:"100-ra",t1000:"1000-re",kerek10:"kerek tízesre",kerek100:"kerek százasra"}[t] }` };
 }
 
 function genIrasbeli(){
@@ -502,8 +514,10 @@ function genIrasbeli(){
   while( irasbeliMuv!=="vegyes" &&
          ((irasbeliMuv==="ossz") !== q.cimke.includes("+")) );
   const [aS,,bS] = q.cimke.split(" ");
-  return { a:+aS, b:+bS, jel:q.cimke.includes("+")?"+":"−", eredmeny:q.valasz,
-           modul:"irasbeli", cimke:q.cimke };
+  const jel = q.cimke.includes("+")?"+":"−";
+  return { a:+aS, b:+bS, jel, eredmeny:q.valasz,
+           modul:"irasbeli", cimke:q.cimke,
+           tf:`Írásbeli ${jel==="+"?"összeadás":"kivonás"} · ${vanAtlepes(+aS,+bS,jel)?"átlépéssel":"átlépés nélkül"}` };
 }
 
 function genVegyes(){
@@ -546,6 +560,7 @@ function rajzolPontok(){
 function kovetkezo(elso){
   if(!elso && kerdesek>=korHossz){ vege(); return; }
   aktKerdes = ujKerdes(); bevitel=""; zarolva=false; ir=null;
+  $("tipus-sor").innerHTML = aktKerdes.tf ? `<span>${aktKerdes.tf}</span>` : "";
   $("visszajelzes").className="visszajelzes"; $("visszajelzes").innerHTML="";
   $("tovabb").style.display="none";
   if(aktKerdes.modul==="irasbeli"){
@@ -587,22 +602,52 @@ function rajzolIrasbeliKerdes(){
   for(let i=0;i<R.length;i++) h += `<div class="rcella" id="rc${R.length-1-i}"></div>`;
   h += '</div>';
   $("kerdes").innerHTML = h;
-  ir = { digits: [...R].reverse().map(Number), pos:0, hibas:false };
+  ir = { digits: [...R].reverse().map(Number), pos:0, hibas:false,
+         magy: oszlopMagyarazat(a,b,jel) };
   jelolAktiv();
+}
+// oszloponkénti levezetés az írásbeli hibaüzenethez (0=egyesek, 1=tízesek, 2=százasok)
+function oszlopMagyarazat(a,b,jel){
+  const j=(n,p)=>Math.floor(n/Math.pow(10,p))%10;
+  const nev=["az egyeseknél","a tízeseknél","a százasoknál"];
+  const out=[];
+  if(jel==="+"){
+    let c=0;
+    for(let i=0;i<3;i++){
+      const s=j(a,i)+j(b,i)+c;
+      let t=`${nev[i]}: ${j(a,i)} + ${j(b,i)}${c?` + 1 (maradék)`:""} = ${s}`;
+      if(s>=10) t+=` → ${s%10} kerül ide, az 1-et a következő oszlophoz jegyezzük`;
+      out.push(t); c = s>=10?1:0;
+    }
+  } else {
+    let k=0;
+    for(let i=0;i<3;i++){
+      const felso=j(a,i)-k, also=j(b,i);
+      const BOL={0:"ból",1:"ből",2:"ből",3:"ból",4:"ből",5:"ből",6:"ból",7:"ből",8:"ból",9:"ből"};
+      if(felso>=also){ out.push(`${nev[i]}: ${felso}${k?` (${j(a,i)} mínusz a kölcsön)`:""} − ${also} = ${felso-also}`); k=0; }
+      else { out.push(`${nev[i]}: ${felso}-${BOL[felso]} nem megy a ${also}, kölcsönkérünk: ${felso+10} − ${also} = ${felso+10-also}`); k=1; }
+    }
+  }
+  return out;
 }
 function jelolAktiv(){
   for(let i=0;i<ir.digits.length;i++) $("rc"+i).classList.toggle("aktiv", i===ir.pos);
 }
 function atvitelValt(el){ el.textContent = el.textContent ? "" : "1"; }
 function irGomb(n){
-  const c = $("rc"+ir.pos);
+  const c = $("rc"+ir.pos), v = $("visszajelzes");
   c.textContent = n;
   if(n === ir.digits[ir.pos]){
     c.classList.remove("rossz"); c.classList.add("jo");
+    v.className="visszajelzes"; v.innerHTML="";   // segítség eltüntetése
     ir.pos++;
     if(ir.pos >= ir.digits.length){ irKesz(); return; }
     jelolAktiv();
-  } else { c.classList.remove("rossz"); void c.offsetWidth; c.classList.add("rossz"); ir.hibas=true; }
+  } else {
+    c.classList.remove("rossz"); void c.offsetWidth; c.classList.add("rossz"); ir.hibas=true;
+    v.className="visszajelzes rossz";
+    v.innerHTML = `Ez nem jó ide.<span class="hint">Segítek: ${ir.magy[ir.pos]}</span>`;
+  }
 }
 function irKesz(){
   zarolva = true; kerdesek++;
