@@ -34,7 +34,7 @@
   .modul .ikon{font-size:1.7rem;}
   .modul small{display:block; font-weight:400; color:var(--halvany); font-size:.82rem;}
   .tipp{margin-top:auto; padding:12px; font-size:.8rem; color:var(--halvany); text-align:center;}
-  .beallito{display:flex; gap:10px; margin-top:10px;}
+  .beallito{display:flex; flex-direction:column; gap:8px; margin-top:10px;}
   .lepteto{flex:1; background:var(--kartya); border-radius:14px; padding:7px 9px;
            display:flex; align-items:center; justify-content:space-between; gap:4px;
            box-shadow:0 3px 10px rgba(90,63,217,.10); font-size:.85rem;}
@@ -449,14 +449,18 @@ function rajzolTablakBe(cid){ // közös táblaválasztó (szorzás, osztás, vi
     const b = document.createElement("button");
     b.className = "chip"+(kivTablak.has(t)?" on":"");
     b.textContent = t+"-"+RAG[t];
-    b.onclick = ()=>{ if(kivTablak.has(t) && kivTablak.size===1) return; // legalább egy maradjon
-                      kivTablak.has(t)?kivTablak.delete(t):kivTablak.add(t);
-                      b.classList.toggle("on"); };
+    b.onclick = ()=>{ kivTablak.has(t)?kivTablak.delete(t):kivTablak.add(t);
+                      rajzolTablakBe(cid); };
     c.appendChild(b);
   }
   const mind = document.createElement("button");
-  mind.className="chip"; mind.textContent="mind";
-  mind.onclick = ()=>{ for(let t=2;t<=10;t++) kivTablak.add(t); rajzolTablakBe(cid); };
+  mind.className = "chip"+(kivTablak.size===9?" on":"");
+  mind.textContent = "mind";
+  mind.onclick = ()=>{ // váltó: mind kijelöl <-> minden jelölés le
+    if(kivTablak.size===9) kivTablak.clear();
+    else for(let t=2;t<=10;t++) kivTablak.add(t);
+    rajzolTablakBe(cid);
+  };
   c.appendChild(mind);
 }
 function rajzolHelyi(){
@@ -937,7 +941,7 @@ function genVegyes(){
 
 /* ================= körvezérlés ================= */
 function inditKor(){
-  kerdesek=0; jok=0; sorozat=0; maxSorozat=0; hibak=[];
+  kerdesek=0; jok=0; sorozat=0; maxSorozat=0; hibak=[]; korId=Date.now();
   mutat("scr-game"); rajzolPontok(); kovetkezo(true);
 }
 function inditSzorzas(){ if(kivTablak.size===0) return; mod="szorzas"; korHossz=beall.dbKor; inditKor(); }
@@ -946,14 +950,15 @@ function inditMuvelet(){ mod="muvelet"; korHossz=beall.dbKor; inditKor(); }
 function inditVegyes(){ mod="vegyes"; korHossz=beall.dbKor; inditKor(); }
 function inditIrasbeli(){ mod="irasbeli"; korHossz=Math.max(4,Math.round(beall.dbKor*0.6)); inditKor(); }
 function inditPotlas(){ mod="potlas"; korHossz=beall.dbKor; inditKor(); }
-function inditOsztas(){ mod="osztas"; korHossz=beall.dbKor; inditKor(); }
+function inditOsztas(){ if(kivTablak.size===0) return; mod="osztas"; korHossz=beall.dbKor; inditKor(); }
 function inditSzamegyenes(){ mod="szamegyenes"; korHossz=beall.dbKor; inditKor(); }
 function inditLanc(){ mod="lanc"; korHossz=beall.dbKor; inditKor(); }
 function inditSzoveges(){ mod="szoveges"; korHossz=Math.max(5,Math.round(beall.dbKor*0.8)); inditKor(); }
 
 function inditVillam(){
+  if(kivTablak.size===0) return;
   mod="villam"; korHossz=9999;
-  kerdesek=0; jok=0; sorozat=0; maxSorozat=0; hibak=[];
+  kerdesek=0; jok=0; sorozat=0; maxSorozat=0; hibak=[]; korId=Date.now();
   mutat("scr-game");
   $("pontok").innerHTML = `<span class="ido" id="ido">⏱ ${villamIdo}</span>`;
   const veg = Date.now() + villamIdo*1000;
@@ -982,7 +987,7 @@ function villamVege(){
   if(hibak.length){ h.style.display="block";
     h.innerHTML = "<h3>Ezeket nézzétek át együtt:</h3>" + hibak.map(x=>`<div>${x.c}</div>`).join("");
   } else h.style.display="none";
-  naploMent({ t:Date.now(), mod:"villam", jok, ossz:kerdesek, maxSor:maxSorozat, hibak:[...hibak] });
+  naploFrissit();
   frissitStat();
 }
 
@@ -1107,7 +1112,7 @@ function irKesz(){
     jok++; sorozat++; maxSorozat=Math.max(maxSorozat,sorozat); s[0]++;
     p.classList.add("jo");
     v.className="visszajelzes jo"; v.innerHTML=valaszt(DICSERET);
-    setTimeout(kovetkezo, 900);
+    keszNyil();
   } else {
     sorozat=0; p.classList.add("rossz");
     hibak.push({ c:`${aktKerdes.cimke} → helyesen: ${aktKerdes.eredmeny}`,
@@ -1117,6 +1122,7 @@ function irKesz(){
     v.innerHTML=`Kijött a végeredmény, de volt piros számjegy.<span class="hint">${aktKerdes.cimke} = ${aktKerdes.eredmeny} — nézzétek meg, melyik oszlopnál akadt el!</span>`;
     keszNyil();
   }
+  naploFrissit();
   frissitSorozat();
 }
 function frissitKijelzo(){
@@ -1145,7 +1151,7 @@ function keszGomb(){
 function keszNyil(){ // hibás válasz után a pipa nyíllá válik, 3 mp-ig tiltva
   const g=$("kesz-gomb"); g.textContent="→"; g.classList.add("nyil");
   keszVar=true; keszTiltva=true;
-  setTimeout(()=>{ keszTiltva=false; g.classList.add("aktiv"); }, 3000);
+  setTimeout(()=>{ keszTiltva=false; g.classList.add("aktiv"); }, 2000);
 }
 function keszVisszaall(){
   const g=$("kesz-gomb"); g.textContent="✔"; g.classList.remove("nyil","aktiv");
@@ -1153,7 +1159,7 @@ function keszVisszaall(){
 }
 function tovabbMutat(){ // választós feladatoknál marad a Tovább, 3 mp zárral
   const t=$("tovabb"); t.style.display="block"; t.disabled=true;
-  setTimeout(()=>{ t.disabled=false; }, 3000);
+  setTimeout(()=>{ t.disabled=false; }, 2000);
 }
 function ellenoriz(){
   if(zarolva || ir || keszVar || bevitel==="") return;
@@ -1169,7 +1175,9 @@ function ellenoriz(){
     v.className="visszajelzes jo"; v.innerHTML = valaszt(DICSERET);
     // gyenge tény javítva → kivesszük
     if(aktKerdes.teny) gyengeTenyek = gyengeTenyek.filter(f=>!(f[0]===aktKerdes.teny[0]&&f[1]===aktKerdes.teny[1]));
-    setTimeout(kovetkezo, mod==="villam" ? 350 : 900);
+    if(mod==="villam") setTimeout(kovetkezo, 350);
+    else if(aktKerdes.tipus==="valaszto") tovabbMutat();
+    else keszNyil();
   } else {
     sorozat=0; if(p && p.classList) p.classList.add("rossz");
     if(aktKerdes.teny && !gyengeTenyek.some(f=>f[0]===aktKerdes.teny[0]&&f[1]===aktKerdes.teny[1]))
@@ -1183,6 +1191,7 @@ function ellenoriz(){
     else if(aktKerdes.tipus==="valaszto") tovabbMutat();
     else keszNyil();
   }
+  naploFrissit();
   frissitSorozat();
 }
 function vege(){
@@ -1198,7 +1207,7 @@ function vege(){
   if(hibak.length){ h.style.display="block";
     h.innerHTML = "<h3>Ezeket nézzétek át együtt:</h3>" + hibak.map(x=>`<div>${x.c}</div>`).join("");
   } else h.style.display="none";
-  naploMent({ t:Date.now(), mod, jok, ossz:korHossz, maxSor:maxSorozat, hibak:[...hibak] });
+  naploFrissit();
   frissitStat();
 }
 function ujraKor(){ mod==="villam" ? inditVillam() : inditKor(); }
@@ -1210,11 +1219,18 @@ const MODNEV = {szorzas:"Szorzótábla", helyi:"Helyiérték", muvelet:"Összead
                 lanc:"Láncszámolás", szoveges:"Szöveges"};
 // localStorage csak a weben él; az asztali artifact-nézetben tiltott lehet -> try/catch
 function naploOlvas(){ try{ return JSON.parse(localStorage.getItem("matekNaplo")||"[]"); }catch(e){ return null; } }
-function naploMent(e){ try{
-  const n = JSON.parse(localStorage.getItem("matekNaplo")||"[]");
-  n.push(e); while(n.length>300) n.shift();
-  localStorage.setItem("matekNaplo", JSON.stringify(n));
-}catch(err){} }
+let korId = null; // az aktuális kör napló-azonosítója
+function naploFrissit(){ // MINDEN megválaszolt feladat után fut - félbehagyott kör is számít
+  if(!korId || !kerdesek) return;
+  try{
+    const n = JSON.parse(localStorage.getItem("matekNaplo")||"[]");
+    const e = { t:korId, mod, jok, ossz:kerdesek, maxSor:maxSorozat, hibak:[...hibak] };
+    const i = n.findIndex(x=>x.t===korId);
+    if(i>=0) n[i]=e; else n.push(e);
+    while(n.length>300) n.shift();
+    localStorage.setItem("matekNaplo", JSON.stringify(n));
+  }catch(err){}
+}
 
 function korSzoveg(){
   const d = new Date();
