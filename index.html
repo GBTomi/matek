@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Matek Gyakorló</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦊</text></svg>">
 <style>
   :root{
     --lila:#7c5cff; --lila-s:#5b3fd9; --turkiz:#00c2a8; --sarga:#ffb830;
@@ -33,6 +34,15 @@
   .modul .ikon{font-size:1.7rem;}
   .modul small{display:block; font-weight:400; color:var(--halvany); font-size:.82rem;}
   .tipp{margin-top:auto; padding:12px; font-size:.8rem; color:var(--halvany); text-align:center;}
+  .beallito{display:flex; gap:10px; margin-top:10px;}
+  .lepteto{flex:1; background:var(--kartya); border-radius:14px; padding:7px 9px;
+           display:flex; align-items:center; justify-content:space-between; gap:4px;
+           box-shadow:0 3px 10px rgba(90,63,217,.10); font-size:.85rem;}
+  .lepteto span{color:var(--halvany); font-weight:600;}
+  .lepteto button{width:32px; height:32px; border:none; border-radius:50%; background:#e9e4fb;
+                  color:var(--lila-s); font-size:1.25rem; font-weight:800; cursor:pointer; flex:none;}
+  .lepteto button:active{transform:scale(.9);}
+  .lepteto b{font-size:1rem; min-width:44px; text-align:center;}
   .statsor{font-size:.85rem; color:var(--halvany); text-align:center; margin-top:8px;}
 
   /* ---- BEÁLLÍTÁS ---- */
@@ -82,6 +92,9 @@
   .keypad button:active{transform:scale(.94);}
   .keypad .torol{color:var(--piros);}
   .keypad .kesz{background:var(--zold); color:#fff;}
+  .keypad .kesz.nyil{background:#c9c4e2; color:#fff;}
+  .keypad .kesz.nyil.aktiv{background:var(--lila);}
+  .tovabb:disabled{opacity:.45; cursor:default;}
   .valaszgombok{display:flex; flex-direction:column; gap:8px; margin-top:10px;}
   .valaszgombok button{
     font-size:1.35rem; font-weight:800; padding:11px; border:none; border-radius:14px;
@@ -132,7 +145,7 @@
   .szulo-sor.hiba{cursor:pointer;}
   .szulo-sor.hiba:active{background:#f3f0ff;}
   .szulo-sor.megnezve{color:var(--halvany);}
-  .szulo-sor.megnezve::before{content:"✓ "; color:var(--zold); font-weight:800;}
+  .szulo-sor.megnezve span:first-child::after{content:" ✓"; color:var(--zold); font-weight:800;}
   .szulo-torol{background:none; border:none; cursor:pointer; font-size:.95rem; padding:0 2px;}
   .pin-input{width:100%; text-align:center; font-size:1.4rem; letter-spacing:8px;
              padding:8px; border:2px solid var(--lila); border-radius:12px; margin-top:8px;}
@@ -162,7 +175,7 @@
 <body>
 <div class="app">
   <h1>🦊 Matek Gyakorló</h1>
-  <div class="alcim">Ezres számkör · napi 10–15 perc</div>
+  <div class="alcim" id="alcim">Ezres számkör · napi 10–15 perc</div>
 
   <!-- MENÜ -->
   <div class="screen aktiv" id="scr-menu">
@@ -189,6 +202,12 @@
     <button class="modul" onclick="inditVegyes()"><span class="ikon">🎲</span>
       <span>Vegyes kör<small>mindenből egy kicsit</small></span></button>
     <div class="statsor" id="stat-sor"></div>
+    <div class="beallito">
+      <div class="lepteto"><span>Életkor</span>
+        <button onclick="leptet('kor',-1)">−</button><b id="kor-kijelzo">9 év</b><button onclick="leptet('kor',1)">+</button></div>
+      <div class="lepteto"><span>Feladat/kör</span>
+        <button onclick="leptet('db',-1)">−</button><b id="db-kijelzo">10</b><button onclick="leptet('db',1)">+</button></div>
+    </div>
     <div class="tipp">💡 Egy kör = 10 feladat. A rövid, mindennapos gyakorlás ér a legtöbbet!<br>
       <button class="szulo-link" onclick="szuloNezet()">👨‍👩‍👧 Szülőknek</button></div>
   </div>
@@ -280,7 +299,7 @@
       <button onclick="gomb(4)">4</button><button onclick="gomb(5)">5</button><button onclick="gomb(6)">6</button>
       <button onclick="gomb(7)">7</button><button onclick="gomb(8)">8</button><button onclick="gomb(9)">9</button>
       <button class="torol" onclick="torol()">⌫</button><button onclick="gomb(0)">0</button>
-      <button class="kesz" onclick="ellenoriz()">✔</button>
+      <button class="kesz" id="kesz-gomb" onclick="keszGomb()">✔</button>
     </div>
     <div class="valaszgombok" id="valaszgombok" style="display:none"></div>
     <div class="visszajelzes" id="visszajelzes"></div>
@@ -308,8 +327,34 @@ const valaszt = arr => arr[rnd(0,arr.length-1)];
 const DICSERET = ["Szuper! 🌟","Ügyes vagy! 👏","Pontosan! ✨","Remek! 🎉","Nagyon jó! 💪","Ez az! 🙌"];
 const RAG = {1:"es",2:"es",3:"as",4:"es",5:"ös",6:"os",7:"es",8:"as",9:"es",10:"es"};
 // névelő: "az" ha a szám kiejtése magánhangzóval kezdődik (1, 5, 5xx)
-const nevelo = x => (x>=100 ? Math.floor(x/100)===5 : (x===1||x===5)) ? "az" : "a";
+const nevelo = x => { const sz=Math.floor(x/100)%10, t=Math.floor(x/10)%10;
+  if(x>=100) return sz===5?"az":"a";
+  if(x>=10) return t===5?"az":"a";
+  return (x===1||x===5)?"az":"a"; };
 const Nevelo = x => nevelo(x)==="az" ? "Az" : "A";
+
+/* ================= beállítások (életkor, kör-hossz) ================= */
+let beall = { kor:9, dbKor:10 };
+function beallMent(){ try{ localStorage.setItem("matekBeall", JSON.stringify(beall)); }catch(e){} }
+function beallTolt(){ try{ const x=JSON.parse(localStorage.getItem("matekBeall"));
+  if(x && x.kor>=7 && x.kor<=11 && x.dbKor>=5 && x.dbKor<=20) beall=x; }catch(e){} }
+const szamkor = () => beall.kor<=7 ? 20 : beall.kor===8 ? 100 : 1000;
+const nehezKor = () => beall.kor>=10;
+function korTablak(){ kivTablak.clear();
+  (beall.kor<=7?[2,5,10]:beall.kor===8?[2,3,4,5,10]:[3,4]).forEach(t=>kivTablak.add(t)); }
+function leptet(mez,d){
+  if(mez==="kor"){ const regi=beall.kor;
+    beall.kor=Math.min(11,Math.max(7,beall.kor+d));
+    if(beall.kor!==regi) korTablak(); }
+  else beall.dbKor=Math.min(20,Math.max(5,beall.dbKor+d));
+  beallMent(); beallKijelez();
+}
+function beallKijelez(){
+  $("kor-kijelzo").textContent = beall.kor+" év";
+  $("db-kijelzo").textContent = beall.dbKor;
+  const m = szamkor();
+  $("alcim").textContent = `${m===20?"Húszas":m===100?"Százas":"Ezres"} számkör · napi 10–15 perc`;
+}
 
 /* ================= állapot ================= */
 let korHossz = 10;
@@ -463,6 +508,9 @@ function genSzorzas(){
 }
 
 function genHelyi(){
+  const m = szamkor();
+  if(m===20) return genHelyi20();
+  if(m===100) return genHelyi100();
   const t = valaszt([...helyiTipusok]);
   if(t==="bontas"){
     const n = rnd(101,999), sz=Math.floor(n/100), ti=Math.floor(n/10)%10, e=n%10;
@@ -528,10 +576,104 @@ function genHelyi(){
            hint:`Először a százasokat hasonlítsd, ha egyenlők, a tízeseket!`,
            modul:"helyi", cimke:`${a} vagy ${b}`, tf:"Összehasonlítás" };
 }
+function genHelyi20(){ // 7 éveseknek: 20-as számkör
+  const t = valaszt(["bontas","szomszed","hasonlit"]);
+  if(t==="bontas"){
+    const e=rnd(1,9), n=10+e;
+    return { szoveg:`1 tízes + ${e} egyes<br>Melyik szám ez?`, valasz:n,
+             hint:`10 + ${e} = ${n}`, modul:"helyi", cimke:`1 tízes + ${e} egyes`,
+             tf:"Helyiérték · számépítés" };
+  }
+  if(t==="szomszed"){
+    const n=rnd(1,19), kisebb=Math.random()<0.5;
+    return { szoveg:`Mi ${nevelo(n)} <b>${n}</b> szám<br><b>${kisebb?"kisebb":"nagyobb"}</b> szomszédja?`,
+             valasz:kisebb?n-1:n+1, hint:`A szomszédok: ${n-1} és ${n+1}.`,
+             modul:"helyi", cimke:`${n} ${kisebb?"kisebb":"nagyobb"} szomszédja`, tf:"Szomszédok · egyes" };
+  }
+  const a=rnd(1,20); let b; do{ b=rnd(1,20); }while(b===a);
+  return { szoveg:`Melyik szám a <b>nagyobb</b>?`, tipus:"valaszto", opciok:[a,b].sort((x,y)=>x-y),
+           valasz:Math.max(a,b), hint:`Számolj el ${Math.min(a,b)}-ig, aztán tovább!`,
+           modul:"helyi", cimke:`${a} vagy ${b}`, tf:"Összehasonlítás" };
+}
+function genHelyi100(){ // 8 éveseknek: 100-as számkör
+  const t = valaszt([...helyiTipusok]);
+  if(t==="bontas"){
+    const ti=rnd(1,9), e=rnd(0,9), n=ti*10+e;
+    const reszek=[`${ti} tízes`]; if(e) reszek.push(`${e} egyes`);
+    return { szoveg:`${reszek.join(" + ")}<br>Melyik szám ez?`, valasz:n,
+             hint:`${ti}·10 ${e?`+ ${e} `:""}= ${n}`, modul:"helyi",
+             cimke:reszek.join(" + "), tf:"Helyiérték · számépítés" };
+  }
+  if(t==="ertek"){
+    let n, jegy, hely;
+    do{ n=rnd(12,98); const j=[...String(n)]; hely=rnd(0,1); jegy=+j[hely];
+    }while(jegy===0 || [...String(n)].filter(x=>+x===jegy).length>1);
+    const szorzo=[10,1][hely];
+    return { szoveg:`${Nevelo(n)} <b>${n}</b> számban<br>mennyit ér ${nevelo(jegy)} <b>${jegy}-${RAG[jegy]}</b> számjegy?`,
+             valasz:jegy*szorzo, hint:`A ${["tízesek","egyesek"][hely]} helyén áll: ${jegy} × ${szorzo} = ${jegy*szorzo}.`,
+             modul:"helyi", cimke:`${n}-ban a ${jegy}-es értéke`, tf:"Helyiérték · számjegy értéke" };
+  }
+  if(t==="kerekit"){
+    let n; do{ n=rnd(11,99); }while(n%10===0);
+    return { szoveg:`Kerekítsd <b>tízesre</b>:<br><span class="nagy">${n}</span>`, valasz:Math.round(n/10)*10,
+             hint:`Az egyesek helyén ${n%10} áll → ${n%10>=5?"felfelé":"lefelé"}: ${Math.round(n/10)*10}`,
+             modul:"helyi", cimke:`${n} tízesre kerekítve`, tf:"Kerekítés · tízesre" };
+  }
+  if(t==="szomszed"){
+    if(Math.random()<0.5){
+      const n=rnd(10,98), kisebb=Math.random()<0.5;
+      return { szoveg:`Mi ${nevelo(n)} <b>${n}</b> szám<br><b>${kisebb?"kisebb":"nagyobb"}</b> egyes szomszédja?`,
+               valasz:kisebb?n-1:n+1, hint:`Az egyes szomszédok: ${n-1} és ${n+1}.`,
+               modul:"helyi", cimke:`${n} ${kisebb?"kisebb":"nagyobb"} szomszédja`, tf:"Szomszédok · egyes" };
+    }
+    let n; do{ n=rnd(11,89); }while(n%10===0);
+    const kisebb=Math.random()<0.5, also=Math.floor(n/10)*10;
+    return { szoveg:`Mi ${nevelo(n)} <b>${n}</b> szám<br><b>${kisebb?"kisebb":"nagyobb"}</b> tízes szomszédja?`,
+             valasz:kisebb?also:also+10, hint:`A tízes szomszédok: ${also} és ${also+10}.`,
+             modul:"helyi", cimke:`${n} ${kisebb?"kisebb":"nagyobb"} tízes szomszédja`, tf:"Szomszédok · tízes" };
+  }
+  const a=rnd(10,99); let b;
+  do{ b = Math.random()<0.4 ? a - rnd(1,9)*valaszt([1,10]) : rnd(10,99); }while(b===a || b<1);
+  return { szoveg:`Melyik szám a <b>nagyobb</b>?`, tipus:"valaszto", opciok:[a,b], valasz:Math.max(a,b),
+           hint:`Először a tízeseket hasonlítsd, ha egyenlők, az egyeseket!`,
+           modul:"helyi", cimke:`${a} vagy ${b}`, tf:"Összehasonlítás" };
+}
 
 function genMuvelet(){
   let nehez = muveletNehez==="vegyes" ? (Math.random()<0.5?"konnyu":"nehez") : muveletNehez;
+  if(nehezKor() && muveletNehez==="vegyes" && Math.random()<0.4) nehez="nehez"; // 10-11 évnél több átlépés
   const osszead = Math.random()<0.5;
+  const m = szamkor();
+  if(m===20){ // 7 évesek: 20-as számkör
+    let a,b;
+    if(osszead){
+      if(nehez==="konnyu"){ do{ a=rnd(2,18); b=rnd(1,20-a); }while(a%10+b%10>=10); }
+      else { do{ a=rnd(2,18); b=rnd(2,20-a); }while(a%10+b%10<10); }
+      return muveletKerdes(a,b,"+");
+    }
+    if(nehez==="konnyu"){ do{ a=rnd(3,20); b=rnd(1,a-1); }while(a%10<b%10); }
+    else { do{ a=rnd(11,20); b=rnd(2,a-1); }while(a%10>=b%10); }
+    return muveletKerdes(a,b,"−");
+  }
+  if(m===100){ // 8 évesek: 100-as számkör
+    let a,b;
+    if(Math.random()<0.2){ // kerek tízesek
+      if(osszead){ a=10*rnd(2,7); b=10*rnd(1,Math.floor((90-a)/10)); return muveletKerdes(a,b,"+"); }
+      a=10*rnd(3,9); b=10*rnd(1,a/10-1); return muveletKerdes(a,b,"−");
+    }
+    if(osszead){
+      if(nehez==="konnyu"){
+        do{ const a1=rnd(1,8), b1=rnd(0,8-a1), a2=rnd(0,9), b2=rnd(0,9-a2);
+            a=a1*10+a2; b=b1*10+b2; }while(b<2);
+      } else { do{ a=rnd(13,86); b=rnd(5,99-a); }while(a%10+b%10<10); }
+      return muveletKerdes(a,b,"+");
+    }
+    if(nehez==="konnyu"){
+      a=rnd(21,99);
+      do{ b=rnd(0,Math.floor(a/10)-1)*10 + rnd(0,a%10); }while(b<2);
+    } else { do{ a=rnd(22,99); b=rnd(3,a-2); }while(a%10>=b%10); }
+    return muveletKerdes(a,b,"−");
+  }
   // 20% kerek tízesekkel
   if(Math.random()<0.2){
     if(osszead){
@@ -580,9 +722,16 @@ function muveletKerdes(a,b,jel){
 }
 
 function genPotlas(){
-  const t = valaszt([...potlasTipusok]);
+  const m = szamkor();
+  let lista = [...potlasTipusok];
+  if(m===20) lista = ["t10","t20","kerek10k"];
+  else if(m===100){ lista = lista.filter(x=>["t10","t100","kerek10"].includes(x));
+                    if(!lista.length) lista = ["t100","kerek10"]; }
+  const t = valaszt(lista);
   let a, cel;
-  if(t==="t10"){ a=rnd(1,9); cel=10; }
+  if(t==="t20"){ a=rnd(11,19); cel=20; }
+  else if(t==="kerek10k"){ do{ a=rnd(1,19); }while(a%10===0); cel=Math.ceil(a/10)*10; }
+  else if(t==="t10"){ a=rnd(1,9); cel=10; }
   else if(t==="t100"){ a=rnd(11,99); cel=100; }
   else if(t==="t1000"){
     a = Math.random()<0.6 ? 10*rnd(11,99) : rnd(101,999); cel=1000;
@@ -632,13 +781,13 @@ function genOsztas(maradekosIs){
            modul:"osztas", cimke:`${a} : ${b} (maradék?)`, tf:"Osztás · maradékos" };
 }
 
-function szamegyenesSVG(v){
-  const x = c => 20 + 300*c/1000;
+function szamegyenesSVG(v, max, lepes, cimkek){
+  const x = c => 20 + 300*c/max;
   let s = `<div class="szamegyenes"><svg viewBox="0 0 340 64">`;
   s += `<line x1="20" y1="40" x2="320" y2="40" stroke="#2b2350" stroke-width="3"/>`;
-  for(let c=0;c<=1000;c+=100){
+  for(let c=0;c<=max;c+=lepes){
     s += `<line x1="${x(c)}" y1="33" x2="${x(c)}" y2="47" stroke="#2b2350" stroke-width="2"/>`;
-    if(c===0||c===500||c===1000)
+    if(cimkek.includes(c))
       s += `<text x="${x(c)}" y="62" font-size="12" font-weight="700" text-anchor="middle" fill="#8a82b0">${c}</text>`;
   }
   s += `<path d="M ${x(v)} 30 l -7 -13 l 14 0 z" fill="#ff5d73"/>`;
@@ -646,33 +795,42 @@ function szamegyenesSVG(v){
   return s + `</svg></div>`;
 }
 function genSzamegyenes(){
-  const also = v => Math.floor(v/100)*100;
+  const m = szamkor();
+  const lepes = m===20 ? 1 : m===100 ? 10 : 100;
+  const cimkek = m===20 ? [0,10,20] : m===100 ? [0,50,100] : [0,500,1000];
+  const also = v => Math.floor(v/lepes)*lepes;
+  const svg = v => szamegyenesSVG(v, m, lepes, cimkek);
   if(Math.random()<0.5){ // választós
-    let v; do{ v = 10*rnd(2,98); }while(v%100===0);
-    const jeloltek = [v-100,v+100,v-50,v+50,v-10,v+10].filter(x=>x>=0&&x<=1000&&x!==v);
+    let v; do{ v = m===20 ? rnd(1,19) : m===100 ? rnd(2,98) : 10*rnd(2,98); }while(lepes>1 && v%lepes===0);
+    const kozel = m===20 ? [v-1,v+1,v-2,v+2,v-5,v+5]
+                : m===100 ? [v-10,v+10,v-5,v+5,v-1,v+1]
+                : [v-100,v+100,v-50,v+50,v-10,v+10];
+    const jeloltek = kozel.filter(x=>x>=0&&x<=m&&x!==v);
     const opciok = [v];
     while(opciok.length<3){ const d=valaszt(jeloltek); if(!opciok.includes(d)) opciok.push(d); }
     opciok.sort((p,q)=>p-q);
-    return { szoveg:`<div style="width:100%">${szamegyenesSVG(v)}Melyik számot jelöli a nyíl?</div>`, tipus:"valaszto",
+    return { szoveg:`<div style="width:100%">${svg(v)}Melyik számot jelöli a nyíl?</div>`, tipus:"valaszto",
              opciok, valasz:v,
-             hint:`A vonások 100-anként vannak: a nyíl ${also(v)} és ${also(v)+100} között van, ${v%100}-ra a ${also(v)}-tól.`,
+             hint:`A vonások ${lepes}-anként vannak: a nyíl ${also(v)} és ${also(v)+lepes} között van.`,
              modul:"szamegyenes", cimke:`számegyenes: ${v}`, tf:"Számegyenes · melyik szám?" };
   }
-  const v = 50*rnd(1,19); // beírós: 50-es rács
-  return { szoveg:`<div style="width:100%">${szamegyenesSVG(v)}Írd be, melyik számnál van a nyíl!</div>`, valasz:v,
-           hint: v%100===0 ? `A nyíl pont egy vonáson áll: ${v}.`
-                          : `A nyíl ${also(v)} és ${also(v)+100} között félúton van: ${v}.`,
+  const v = m===20 ? rnd(1,19) : m===100 ? 5*rnd(1,19) : 50*rnd(1,19); // beírós rács: 1 / 5 / 50
+  return { szoveg:`<div style="width:100%">${svg(v)}Írd be, melyik számnál van a nyíl!</div>`, valasz:v,
+           hint: v%lepes===0 ? `A nyíl pont egy vonáson áll: ${v}.`
+                            : `A nyíl ${also(v)} és ${also(v)+lepes} között van: ${v}.`,
            modul:"szamegyenes", cimke:`számegyenes: ${v}`, tf:"Számegyenes · írd be!" };
 }
 
 function genLanc(){
-  let cur = 10*rnd(10,60), kif = `${cur}`;
+  const m = szamkor();
+  let cur = m===20 ? rnd(5,15) : m===100 ? rnd(20,60) : 10*rnd(10,60);
+  let kif = `${cur}`;
   const lepesek = [];
   for(let i=0;i<lancLepes;i++){
-    const d = 10*rnd(1,15);
+    const d = m===20 ? rnd(1,9) : m===100 ? valaszt([rnd(2,9), 10*rnd(1,3)]) : 10*rnd(1,15);
     let plusz = Math.random()<0.5;
     if(cur - d < 0) plusz = true;
-    if(cur + d > 1000) plusz = false;
+    if(cur + d > m) plusz = false;
     const elozo = cur;
     cur = plusz ? cur+d : cur-d;
     kif += ` ${plusz?"+":"−"} ${d}`;
@@ -687,6 +845,48 @@ const NEVEK = [["Marci","Marcinak"],["Juli","Julinak"],["Bence","Bencének"],
                ["Panni","Panninak"],["Dani","Daninak"],["Sári","Sárinak"]];
 function genSzoveges(){
   const [nev, nevD] = valaszt(NEVEK);
+  const m = szamkor();
+  if(m===20){
+    const kicsik = [
+      ()=>{ const a=rnd(3,12), b=rnd(2,20-a);
+        return { sz:`${nevD} ${a} szem cukorkája van, kap még ${b} szemet. Mennyi lesz összesen?`,
+                 v:a+b, h:`Összeadás: ${a} + ${b} = ${a+b}`, tf:"Szöveges · összeadás" }; },
+      ()=>{ const a=rnd(6,20), b=rnd(2,a-1);
+        return { sz:`${nevD} ${a} matricája volt, elajándékozott ${b} darabot. Mennyi maradt?`,
+                 v:a-b, h:`Kivonás: ${a} − ${b} = ${a-b}`, tf:"Szöveges · kivonás" }; },
+      ()=>{ const a=rnd(3,10), b=rnd(3,Math.min(10,20-a));
+        return { sz:`Az asztalon ${a} alma és ${b} körte van. Hány gyümölcs ez összesen?`,
+                 v:a+b, h:`Összeadás: ${a} + ${b} = ${a+b}`, tf:"Szöveges · összeadás" }; },
+      ()=>{ const a=rnd(8,15), b=rnd(2,6);
+        return { sz:`${nev} ${a} éves, a testvére ${b} évvel fiatalabb. Hány éves a testvére?`,
+                 v:a-b, h:`Kivonás: ${a} − ${b} = ${a-b}`, tf:"Szöveges · kivonás" }; },
+    ];
+    const f = valaszt(kicsik)();
+    return { szoveg:`<span class="szoveges-szoveg">${f.sz}</span>`, valasz:f.v, hint:f.h,
+             modul:"szoveges", cimke:f.sz.length>60? f.sz.slice(0,57)+"…" : f.sz, tf:f.tf };
+  }
+  if(m===100){
+    const kozepesek = [
+      ()=>{ const a=10*rnd(2,6), b=10*rnd(1,Math.floor((100-a)/10));
+        return { sz:`${nevD} ${a} forintja van, kap még ${b} forintot. Mennyi pénze lesz?`,
+                 v:a+b, h:`Összeadás: ${a} + ${b} = ${a+b}`, tf:"Szöveges · összeadás" }; },
+      ()=>{ const a=rnd(30,95), b=rnd(5,25);
+        return { sz:`${nevD} ${a} matricája volt, elajándékozott ${b} darabot. Mennyi maradt?`,
+                 v:a-b, h:`Kivonás: ${a} − ${b} = ${a-b}`, tf:"Szöveges · kivonás" }; },
+      ()=>{ const a=rnd(3,10), b=rnd(2,Math.floor(100/10));
+        return { sz:`Egy dobozban ${a} színes ceruza van. Hány ceruza van ${b} ugyanilyen dobozban?`,
+                 v:a*b, h:`Szorzás: ${b} × ${a} = ${a*b}`, tf:"Szöveges · szorzás" }; },
+      ()=>{ const b=rnd(2,8), q=rnd(2,10), a=b*q;
+        return { sz:`${a} szem cseresznyét ${b} gyerek között osztunk el egyenlően. Hány szem jut egynek?`,
+                 v:q, h:`Osztás: ${a} : ${b} = ${q}`, tf:"Szöveges · osztás" }; },
+      ()=>{ const a=rnd(15,85);
+        return { sz:`${nev} ${a} forintért vásárol, és 100 forintossal fizet. Mennyi visszajárót kap?`,
+                 v:100-a, h:`Kivonás (pótlás): ${a} + ${100-a} = 100`, tf:"Szöveges · visszajáró" }; },
+    ];
+    const f = valaszt(kozepesek)();
+    return { szoveg:`<span class="szoveges-szoveg">${f.sz}</span>`, valasz:f.v, hint:f.h,
+             modul:"szoveges", cimke:f.sz.length>60? f.sz.slice(0,57)+"…" : f.sz, tf:f.tf };
+  }
   const sablonok = [
     ()=>{ const a=10*rnd(10,60), b=10*rnd(5,30);
       return { sz:`${nevD} ${a} forintja van, kap még ${b} forintot. Mennyi pénze lesz?`,
@@ -740,16 +940,16 @@ function inditKor(){
   kerdesek=0; jok=0; sorozat=0; maxSorozat=0; hibak=[];
   mutat("scr-game"); rajzolPontok(); kovetkezo(true);
 }
-function inditSzorzas(){ if(kivTablak.size===0) return; mod="szorzas"; korHossz=10; inditKor(); }
-function inditHelyi(){ mod="helyi"; korHossz=10; inditKor(); }
-function inditMuvelet(){ mod="muvelet"; korHossz=10; inditKor(); }
-function inditVegyes(){ mod="vegyes"; korHossz=10; inditKor(); }
-function inditIrasbeli(){ mod="irasbeli"; korHossz=6; inditKor(); }
-function inditPotlas(){ mod="potlas"; korHossz=10; inditKor(); }
-function inditOsztas(){ mod="osztas"; korHossz=10; inditKor(); }
-function inditSzamegyenes(){ mod="szamegyenes"; korHossz=10; inditKor(); }
-function inditLanc(){ mod="lanc"; korHossz=10; inditKor(); }
-function inditSzoveges(){ mod="szoveges"; korHossz=8; inditKor(); }
+function inditSzorzas(){ if(kivTablak.size===0) return; mod="szorzas"; korHossz=beall.dbKor; inditKor(); }
+function inditHelyi(){ mod="helyi"; korHossz=beall.dbKor; inditKor(); }
+function inditMuvelet(){ mod="muvelet"; korHossz=beall.dbKor; inditKor(); }
+function inditVegyes(){ mod="vegyes"; korHossz=beall.dbKor; inditKor(); }
+function inditIrasbeli(){ mod="irasbeli"; korHossz=Math.max(4,Math.round(beall.dbKor*0.6)); inditKor(); }
+function inditPotlas(){ mod="potlas"; korHossz=beall.dbKor; inditKor(); }
+function inditOsztas(){ mod="osztas"; korHossz=beall.dbKor; inditKor(); }
+function inditSzamegyenes(){ mod="szamegyenes"; korHossz=beall.dbKor; inditKor(); }
+function inditLanc(){ mod="lanc"; korHossz=beall.dbKor; inditKor(); }
+function inditSzoveges(){ mod="szoveges"; korHossz=Math.max(5,Math.round(beall.dbKor*0.8)); inditKor(); }
 
 function inditVillam(){
   mod="villam"; korHossz=9999;
@@ -807,6 +1007,7 @@ function kovetkezo(elso){
   if(mod==="villam" && !villamAktiv){ villamVege(); return; }
   if(!elso && kerdesek>=korHossz){ vege(); return; }
   aktKerdes = ujKerdes(); bevitel=""; zarolva=false; ir=null;
+  keszVisszaall(); $("tovabb").disabled=false;
   $("tipus-sor").innerHTML = aktKerdes.tf ? `<span>${aktKerdes.tf}</span>` : "";
   $("visszajelzes").className="visszajelzes"; $("visszajelzes").innerHTML="";
   $("tovabb").style.display="none";
@@ -914,7 +1115,7 @@ function irKesz(){
                  f:ir.snap?ir.snap.f:"", b:"", g:"" });
     v.className="visszajelzes rossz";
     v.innerHTML=`Kijött a végeredmény, de volt piros számjegy.<span class="hint">${aktKerdes.cimke} = ${aktKerdes.eredmeny} — nézzétek meg, melyik oszlopnál akadt el!</span>`;
-    $("tovabb").style.display="block";
+    keszNyil();
   }
   frissitSorozat();
 }
@@ -936,8 +1137,26 @@ function torol(){
   bevitel=bevitel.slice(0,-1); frissitKijelzo();
 }
 
+let keszVar=false, keszTiltva=false;
+function keszGomb(){
+  if(keszVar){ if(!keszTiltva){ keszVisszaall(); kovetkezo(); } return; }
+  ellenoriz();
+}
+function keszNyil(){ // hibás válasz után a pipa nyíllá válik, 3 mp-ig tiltva
+  const g=$("kesz-gomb"); g.textContent="→"; g.classList.add("nyil");
+  keszVar=true; keszTiltva=true;
+  setTimeout(()=>{ keszTiltva=false; g.classList.add("aktiv"); }, 3000);
+}
+function keszVisszaall(){
+  const g=$("kesz-gomb"); g.textContent="✔"; g.classList.remove("nyil","aktiv");
+  keszVar=false; keszTiltva=false;
+}
+function tovabbMutat(){ // választós feladatoknál marad a Tovább, 3 mp zárral
+  const t=$("tovabb"); t.style.display="block"; t.disabled=true;
+  setTimeout(()=>{ t.disabled=false; }, 3000);
+}
 function ellenoriz(){
-  if(zarolva || ir || bevitel==="") return;
+  if(zarolva || ir || keszVar || bevitel==="") return;
   zarolva = true; kerdesek++;
   const tipp = parseInt(bevitel,10);
   const jo = tipp===aktKerdes.valasz;
@@ -961,7 +1180,8 @@ function ellenoriz(){
                  tf:aktKerdes.tf||"", k:$("kerdes").innerHTML, f:v.innerHTML,
                  b:bevitel, g: aktKerdes.tipus==="valaszto" ? $("valaszgombok").innerHTML : "" });
     if(mod==="villam") setTimeout(kovetkezo, 1500);
-    else $("tovabb").style.display="block";
+    else if(aktKerdes.tipus==="valaszto") tovabbMutat();
+    else keszNyil();
   }
   frissitSorozat();
 }
@@ -1105,11 +1325,14 @@ function hetiKuldes(g){
 /* billentyűzet-támogatás */
 document.addEventListener("keydown", e=>{
   if(!$("scr-game").classList.contains("aktiv")) return;
-  if($("tovabb").style.display==="block" && (e.key==="Enter"||e.key===" ")){ kovetkezo(); return; }
+  if($("tovabb").style.display==="block" && (e.key==="Enter"||e.key===" ")){ if(!$("tovabb").disabled) kovetkezo(); return; }
   if(e.key>="0" && e.key<="9") gomb(+e.key);
   else if(e.key==="Backspace") torol();
-  else if(e.key==="Enter") ellenoriz();
+  else if(e.key==="Enter") keszGomb();
 });
+beallTolt();
+if(beall.kor!==9) korTablak();
+beallKijelez();
 menu();
 </script>
 </body>
