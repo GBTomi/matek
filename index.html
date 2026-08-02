@@ -121,6 +121,16 @@
   .rcella.ures{border:none; background:none;}
   @keyframes remeg{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
 
+  /* ---- SZÜLŐI ---- */
+  .szulo-link{background:none; border:none; color:var(--lila-s); font-size:.85rem;
+              font-weight:700; cursor:pointer; margin-top:6px; text-decoration:underline;}
+  .megoszto{background:var(--lila); margin-top:10px;}
+  .szulo-cim{font-weight:700; margin:12px 0 6px; color:var(--lila-s);}
+  .szulo-sor{font-size:.95rem; padding:4px 0; border-bottom:1px dashed #eee;
+             display:flex; justify-content:space-between; gap:8px;}
+  .szulo-sor small{color:var(--halvany);}
+  .szulo-ures{color:var(--halvany); font-size:.95rem;}
+
   /* ---- EREDMÉNY ---- */
   .csillagok{font-size:3rem; text-align:center; margin:14px 0 4px;}
   .eredmeny-szoveg{text-align:center; font-size:1.25rem; font-weight:700; margin-bottom:12px;}
@@ -151,7 +161,16 @@
     <button class="modul" onclick="inditVegyes()"><span class="ikon">🎲</span>
       <span>Vegyes kör<small>mindenből egy kicsit</small></span></button>
     <div class="statsor" id="stat-sor"></div>
-    <div class="tipp">💡 Egy kör = 10 feladat. A rövid, mindennapos gyakorlás ér a legtöbbet!</div>
+    <div class="tipp">💡 Egy kör = 10 feladat. A rövid, mindennapos gyakorlás ér a legtöbbet!<br>
+      <button class="szulo-link" onclick="szuloNezet()">👨‍👩‍👧 Szülőknek</button></div>
+  </div>
+
+  <!-- SZÜLŐI NÉZET -->
+  <div class="screen" id="scr-szulo">
+    <div class="panel"><h2>👨‍👩‍👧 Szülői áttekintés</h2><div id="szulo-tartalom"></div></div>
+    <button class="fo-gomb" onclick="hetiKuldes(this)">📤 Összefoglaló küldése</button>
+    <button class="vissza" onclick="naploTorles(this)">🗑 Napló törlése</button>
+    <button class="vissza" onclick="menu()">← vissza a menübe</button>
   </div>
 
   <!-- BEÁLLÍTÁS -->
@@ -214,6 +233,7 @@
     <div class="eredmeny-szoveg" id="eredmeny-szoveg"></div>
     <div class="hibalista" id="hibalista" style="display:none"></div>
     <button class="fo-gomb" onclick="ujraKor()">Még egy kör! 🔁</button>
+    <button class="fo-gomb megoszto" onclick="korKuldes(this)">📤 Küldés szülőnek</button>
     <button class="vissza" onclick="menu()">← vissza a menübe</button>
   </div>
 </div>
@@ -725,9 +745,85 @@ function vege(){
   if(hibak.length){ h.style.display="block";
     h.innerHTML = "<h3>Ezeket nézzétek át együtt:</h3>" + hibak.map(x=>`<div>${x}</div>`).join("");
   } else h.style.display="none";
+  naploMent({ t:Date.now(), mod, jok, ossz:korHossz, maxSor:maxSorozat, hibak:[...hibak] });
   frissitStat();
 }
 function ujraKor(){ inditKor(); }
+
+/* ================= napló + szülői nézet ================= */
+const MODNEV = {szorzas:"Szorzótábla", helyi:"Helyiérték", muvelet:"Összeadás-kivonás",
+                potlas:"Pótlás", irasbeli:"Írásbeli", vegyes:"Vegyes kör"};
+// localStorage csak a weben él; az asztali artifact-nézetben tiltott lehet -> try/catch
+function naploOlvas(){ try{ return JSON.parse(localStorage.getItem("matekNaplo")||"[]"); }catch(e){ return null; } }
+function naploMent(e){ try{
+  const n = JSON.parse(localStorage.getItem("matekNaplo")||"[]");
+  n.push(e); while(n.length>300) n.shift();
+  localStorage.setItem("matekNaplo", JSON.stringify(n));
+}catch(err){} }
+
+function korSzoveg(){
+  const d = new Date();
+  let t = `🦊 Matek Gyakorló – ${d.toLocaleDateString("hu-HU")} ${d.toLocaleTimeString("hu-HU",{hour:"2-digit",minute:"2-digit"})}\n`;
+  t += `${MODNEV[mod]||mod}: ${jok}/${korHossz} jó, leghosszabb sorozat: ${maxSorozat}\n`;
+  t += hibak.length ? "Átnézendő:\n" + hibak.map(x=>"• "+x.replace(/→/,"–")).join("\n")
+                    : "Hibátlan kör! 🎉";
+  return t;
+}
+async function megoszt(szoveg, gomb){
+  try{
+    if(navigator.share){ await navigator.share({text:szoveg}); return; }
+    await navigator.clipboard.writeText(szoveg);
+    gomb.textContent = "Vágólapra másolva ✔";
+  }catch(e){ /* megszakított megosztás */ }
+}
+function korKuldes(g){ megoszt(korSzoveg(), g); }
+
+function szuloNezet(){
+  mutat("scr-szulo");
+  const c = $("szulo-tartalom"), n = naploOlvas();
+  if(n===null){ c.innerHTML = '<div class="szulo-ures">A napló ezen az eszközön nem érhető el (a böngészős változatban működik).</div>'; return; }
+  if(!n.length){ c.innerHTML = '<div class="szulo-ures">Még nincs mentett kör. A befejezett körök ide automatikusan bekerülnek.</div>'; return; }
+  let h = '<div class="szulo-cim">Utolsó 7 nap</div>';
+  const maNap = new Date(); maNap.setHours(0,0,0,0);
+  const napok = {};
+  n.forEach(e=>{ const k = new Date(e.t).toLocaleDateString("hu-HU"); (napok[k]=napok[k]||[]).push(e); });
+  const kulcsok = Object.keys(napok).slice(-7).reverse();
+  kulcsok.forEach(k=>{
+    const l = napok[k], j = l.reduce((s,e)=>s+e.jok,0), o = l.reduce((s,e)=>s+e.ossz,0);
+    h += `<div class="szulo-sor"><span>${k}</span><span>${l.length} kör · <b>${j}/${o}</b> jó</span></div>`;
+  });
+  h += '<div class="szulo-cim">Modulonként (összesen)</div>';
+  const m = {};
+  n.forEach(e=>{ const x = m[e.mod]=m[e.mod]||[0,0]; x[0]+=e.jok; x[1]+=e.ossz; });
+  Object.entries(m).forEach(([k,[j,o]])=>{
+    h += `<div class="szulo-sor"><span>${MODNEV[k]||k}</span><span><b>${Math.round(100*j/o)}%</b> <small>(${j}/${o})</small></span></div>`;
+  });
+  const utolsoHibak = n.slice(-20).flatMap(e=>e.hibak.map(x=>({d:new Date(e.t).toLocaleDateString("hu-HU"),x}))).slice(-12).reverse();
+  if(utolsoHibak.length){
+    h += '<div class="szulo-cim">Legutóbbi hibák</div>';
+    utolsoHibak.forEach(f=>{ h += `<div class="szulo-sor"><span>${f.x}</span><small>${f.d}</small></div>`; });
+  }
+  c.innerHTML = h;
+}
+function hetiKuldes(g){
+  const n = naploOlvas() || [];
+  const hatar = Date.now() - 7*24*3600*1000;
+  const heti = n.filter(e=>e.t>=hatar);
+  if(!heti.length){ g.textContent = "Nincs adat az elmúlt 7 napból"; return; }
+  const j = heti.reduce((s,e)=>s+e.jok,0), o = heti.reduce((s,e)=>s+e.ossz,0);
+  let t = `🦊 Matek Gyakorló – heti összefoglaló\n${heti.length} kör, ${j}/${o} jó (${Math.round(100*j/o)}%)\n`;
+  const m = {};
+  heti.forEach(e=>{ const x = m[e.mod]=m[e.mod]||[0,0]; x[0]+=e.jok; x[1]+=e.ossz; });
+  t += Object.entries(m).map(([k,[a,b]])=>`• ${MODNEV[k]||k}: ${Math.round(100*a/b)}%`).join("\n");
+  const hib = heti.flatMap(e=>e.hibak).slice(-8);
+  if(hib.length) t += "\nGyakori átnézendők:\n" + hib.map(x=>"• "+x.replace(/→/,"–")).join("\n");
+  megoszt(t, g);
+}
+function naploTorles(g){
+  if(g.dataset.biztos){ try{ localStorage.removeItem("matekNaplo"); }catch(e){}
+    delete g.dataset.biztos; g.textContent="🗑 Napló törölve"; szuloNezet(); return; }
+  g.dataset.biztos="1"; g.textContent="Biztosan törlöd? Kattints még egyszer!";
+}
 
 /* billentyűzet-támogatás */
 document.addEventListener("keydown", e=>{
