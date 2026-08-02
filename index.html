@@ -64,44 +64,44 @@
   .tipus-sor span{display:inline-block; background:#e9e4fb; color:var(--lila-s);
     font-size:.85rem; font-weight:700; padding:3px 12px; border-radius:999px;}
   .kerdes{
-    background:var(--kartya); border-radius:20px; padding:26px 16px; text-align:center;
-    font-size:1.5rem; font-weight:700; box-shadow:0 3px 10px rgba(90,63,217,.10);
-    min-height:110px; display:flex; align-items:center; justify-content:center; line-height:1.35;
+    background:var(--kartya); border-radius:18px; padding:16px 14px; text-align:center;
+    font-size:1.4rem; font-weight:700; box-shadow:0 3px 10px rgba(90,63,217,.10);
+    min-height:84px; display:flex; align-items:center; justify-content:center; line-height:1.3;
   }
   .kerdes .nagy{font-size:2.1rem;}
   .valasz-kijelzo{
-    text-align:center; font-size:2.2rem; font-weight:800; letter-spacing:2px;
-    min-height:56px; margin:12px 0 4px; color:var(--lila-s);
+    text-align:center; font-size:1.9rem; font-weight:800; letter-spacing:2px;
+    min-height:40px; margin:6px 0 2px; color:var(--lila-s);
   }
   .valasz-kijelzo .kurzor{color:var(--halvany); font-weight:300;}
-  .keypad{display:grid; grid-template-columns:repeat(3,1fr); gap:9px; margin-top:4px;}
+  .keypad{display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin-top:4px;}
   .keypad button{
-    font-size:1.5rem; font-weight:700; padding:14px 0; border:none; border-radius:14px;
+    font-size:1.3rem; font-weight:700; padding:9px 0; border:none; border-radius:12px;
     background:#fff; color:var(--szoveg); box-shadow:0 2px 6px rgba(90,63,217,.12); cursor:pointer;
   }
   .keypad button:active{transform:scale(.94);}
   .keypad .torol{color:var(--piros);}
   .keypad .kesz{background:var(--zold); color:#fff;}
-  .valaszgombok{display:flex; flex-direction:column; gap:10px; margin-top:14px;}
+  .valaszgombok{display:flex; flex-direction:column; gap:8px; margin-top:10px;}
   .valaszgombok button{
-    font-size:1.5rem; font-weight:800; padding:16px; border:none; border-radius:16px;
+    font-size:1.35rem; font-weight:800; padding:11px; border:none; border-radius:14px;
     background:#fff; color:var(--szoveg); box-shadow:0 2px 6px rgba(90,63,217,.12); cursor:pointer;
   }
   .visszajelzes{
-    margin-top:12px; border-radius:16px; padding:14px; text-align:center;
-    font-size:1.05rem; font-weight:600; display:none;
+    margin-top:8px; border-radius:14px; padding:9px 12px; text-align:center;
+    font-size:1rem; font-weight:600; display:none;
   }
   .visszajelzes.jo{display:block; background:#dff7ec; color:#177a4f;}
   .visszajelzes.rossz{display:block; background:#ffe3e8; color:#b3283e;}
   .visszajelzes .hint{display:block; font-weight:400; font-size:.92rem; margin-top:6px;}
-  .tovabb{margin-top:10px; background:var(--lila); color:#fff; border:none;
-          border-radius:14px; padding:12px; font-size:1.1rem; font-weight:700;
+  .tovabb{margin-top:8px; background:var(--lila); color:#fff; border:none;
+          border-radius:12px; padding:9px; font-size:1.05rem; font-weight:700;
           width:100%; cursor:pointer; display:none;}
 
   /* ---- ÍRÁSBELI ---- */
-  .irasbeli{display:inline-grid; grid-template-columns:repeat(4,56px); gap:5px 6px;
+  .irasbeli{display:inline-grid; grid-template-columns:repeat(4,50px); gap:4px 5px;
             justify-content:center; font-variant-numeric:tabular-nums;}
-  .irasbeli .szj, .irasbeli .jel{font-size:2.1rem; font-weight:800; text-align:center; line-height:56px;}
+  .irasbeli .szj, .irasbeli .jel{font-size:1.9rem; font-weight:800; text-align:center; line-height:48px;}
   .irasbeli .jel{color:var(--lila-s);}
   .acella{
     height:26px; font-size:1rem; font-weight:700; color:#b3283e; text-align:center;
@@ -111,7 +111,7 @@
   .acella.ures{border:none; cursor:default;}
   .vonal{grid-column:1/-1; border-bottom:4px solid var(--szoveg); border-radius:2px;}
   .rcella{
-    height:56px; font-size:2.1rem; font-weight:800; text-align:center; line-height:54px;
+    height:48px; font-size:1.9rem; font-weight:800; text-align:center; line-height:46px;
     border:2.5px dashed #c9c4e2; border-radius:10px; background:#faf9ff; color:var(--szoveg);
   }
   .rcella.aktiv{border:2.5px solid var(--lila); background:#efeaff;}
@@ -127,6 +127,17 @@
   .szamegyenes svg{width:100%; height:auto; display:block;}
   .lanc-kifejezes{font-size:1.6rem; font-weight:800; letter-spacing:1px;}
   .szoveges-szoveg{font-size:1.15rem; font-weight:600; line-height:1.5; text-align:left;}
+
+  /* ---- HIBA-VISSZANÉZÉS + PIN ---- */
+  .szulo-sor.hiba{cursor:pointer;}
+  .szulo-sor.hiba:active{background:#f3f0ff;}
+  .szulo-sor.megnezve{color:var(--halvany);}
+  .szulo-sor.megnezve::before{content:"✓ "; color:var(--zold); font-weight:800;}
+  .szulo-torol{background:none; border:none; cursor:pointer; font-size:.95rem; padding:0 2px;}
+  .pin-input{width:100%; text-align:center; font-size:1.4rem; letter-spacing:8px;
+             padding:8px; border:2px solid var(--lila); border-radius:12px; margin-top:8px;}
+  .pin-input.rossz{border-color:var(--piros); animation:remeg .3s;}
+  #scr-hiba .kerdes, #scr-hiba .valaszgombok, #scr-hiba .keypad{pointer-events:none; opacity:.95;}
 
   /* ---- SZÜLŐI ---- */
   .szulo-link{background:none; border:none; color:var(--lila-s); font-size:.85rem;
@@ -185,9 +196,25 @@
   <!-- SZÜLŐI NÉZET -->
   <div class="screen" id="scr-szulo">
     <div class="panel"><h2>👨‍👩‍👧 Szülői áttekintés</h2><div id="szulo-tartalom"></div></div>
+    <div class="panel" id="pin-panel" style="display:none">
+      <div id="pin-szoveg" style="font-weight:700"></div>
+      <input id="pin-input" class="pin-input" type="password" inputmode="numeric" maxlength="4" placeholder="PIN">
+      <button class="fo-gomb" onclick="pinOk()">Törlés</button>
+      <button class="vissza" onclick="pinMegse()">Mégse</button>
+    </div>
     <button class="fo-gomb" onclick="hetiKuldes(this)">📤 Összefoglaló küldése</button>
-    <button class="vissza" onclick="naploTorles(this)">🗑 Napló törlése</button>
+    <button class="vissza" onclick="torlesKer('mind')">🗑 Teljes napló törlése (PIN)</button>
     <button class="vissza" onclick="menu()">← vissza a menübe</button>
+  </div>
+
+  <!-- HIBA-VISSZANÉZÉS (pillanatkép) -->
+  <div class="screen" id="scr-hiba">
+    <div class="tipus-sor" id="hiba-tipus"></div>
+    <div class="kerdes" id="hiba-kerdes"></div>
+    <div class="valasz-kijelzo" id="hiba-kijelzo" style="color:#b3283e"></div>
+    <div class="valaszgombok" id="hiba-gombok" style="display:none"></div>
+    <div class="visszajelzes rossz" id="hiba-uzenet" style="display:block"></div>
+    <button class="fo-gomb" onclick="szuloNezet()">← vissza a naplóhoz</button>
   </div>
 
   <!-- BEÁLLÍTÁS -->
@@ -753,7 +780,7 @@ function villamVege(){
     (uj ? "🏆 Új rekord!" : rekord ? `Rekordod: ${rekord}` : "");
   const h=$("hibalista");
   if(hibak.length){ h.style.display="block";
-    h.innerHTML = "<h3>Ezeket nézzétek át együtt:</h3>" + hibak.map(x=>`<div>${x}</div>`).join("");
+    h.innerHTML = "<h3>Ezeket nézzétek át együtt:</h3>" + hibak.map(x=>`<div>${x.c}</div>`).join("");
   } else h.style.display="none";
   naploMent({ t:Date.now(), mod:"villam", jok, ossz:kerdesek, maxSor:maxSorozat, hibak:[...hibak] });
   frissitStat();
@@ -867,6 +894,7 @@ function irGomb(n){
     c.classList.remove("rossz"); void c.offsetWidth; c.classList.add("rossz"); ir.hibas=true;
     v.className="visszajelzes rossz";
     v.innerHTML = `Ez nem jó ide.<span class="hint">Segítek: ${ir.magy[ir.pos]}</span>`;
+    if(!ir.snap) ir.snap = { k:$("kerdes").innerHTML, f:v.innerHTML };
   }
 }
 function irKesz(){
@@ -881,7 +909,9 @@ function irKesz(){
     setTimeout(kovetkezo, 900);
   } else {
     sorozat=0; p.classList.add("rossz");
-    hibak.push(`${aktKerdes.cimke} → helyesen: ${aktKerdes.eredmeny}`);
+    hibak.push({ c:`${aktKerdes.cimke} → helyesen: ${aktKerdes.eredmeny}`,
+                 tf:aktKerdes.tf||"", k:ir.snap?ir.snap.k:$("kerdes").innerHTML,
+                 f:ir.snap?ir.snap.f:"", b:"", g:"" });
     v.className="visszajelzes rossz";
     v.innerHTML=`Kijött a végeredmény, de volt piros számjegy.<span class="hint">${aktKerdes.cimke} = ${aktKerdes.eredmeny} — nézzétek meg, melyik oszlopnál akadt el!</span>`;
     $("tovabb").style.display="block";
@@ -923,11 +953,13 @@ function ellenoriz(){
     setTimeout(kovetkezo, mod==="villam" ? 350 : 900);
   } else {
     sorozat=0; if(p && p.classList) p.classList.add("rossz");
-    hibak.push(`${aktKerdes.cimke} → helyesen: ${aktKerdes.valasz}`);
     if(aktKerdes.teny && !gyengeTenyek.some(f=>f[0]===aktKerdes.teny[0]&&f[1]===aktKerdes.teny[1]))
       gyengeTenyek.push(aktKerdes.teny);
     v.className="visszajelzes rossz";
     v.innerHTML = `Nem baj! A helyes válasz: <b>${aktKerdes.valasz}</b><span class="hint">${aktKerdes.hint}</span>`;
+    hibak.push({ c:`${aktKerdes.cimke} → helyesen: ${aktKerdes.valasz}`,
+                 tf:aktKerdes.tf||"", k:$("kerdes").innerHTML, f:v.innerHTML,
+                 b:bevitel, g: aktKerdes.tipus==="valaszto" ? $("valaszgombok").innerHTML : "" });
     if(mod==="villam") setTimeout(kovetkezo, 1500);
     else $("tovabb").style.display="block";
   }
@@ -944,7 +976,7 @@ function vege(){
   $("eredmeny-szoveg").innerHTML = `${jok} / ${korHossz} jó válasz<br><small>leghosszabb sorozat: ${maxSorozat}</small><br>${uzenet}`;
   const h=$("hibalista");
   if(hibak.length){ h.style.display="block";
-    h.innerHTML = "<h3>Ezeket nézzétek át együtt:</h3>" + hibak.map(x=>`<div>${x}</div>`).join("");
+    h.innerHTML = "<h3>Ezeket nézzétek át együtt:</h3>" + hibak.map(x=>`<div>${x.c}</div>`).join("");
   } else h.style.display="none";
   naploMent({ t:Date.now(), mod, jok, ossz:korHossz, maxSor:maxSorozat, hibak:[...hibak] });
   frissitStat();
@@ -968,7 +1000,7 @@ function korSzoveg(){
   const d = new Date();
   let t = `🦊 Matek Gyakorló – ${d.toLocaleDateString("hu-HU")} ${d.toLocaleTimeString("hu-HU",{hour:"2-digit",minute:"2-digit"})}\n`;
   t += `${MODNEV[mod]||mod}: ${jok}/${korHossz} jó, leghosszabb sorozat: ${maxSorozat}\n`;
-  t += hibak.length ? "Átnézendő:\n" + hibak.map(x=>"• "+x.replace(/→/,"–")).join("\n")
+  t += hibak.length ? "Átnézendő:\n" + hibak.map(x=>"• "+x.c.replace(/→/,"–")).join("\n")
                     : "Hibátlan kör! 🎉";
   return t;
 }
@@ -981,17 +1013,16 @@ async function megoszt(szoveg, gomb){
 }
 function korKuldes(g){ megoszt(korSzoveg(), g); }
 
+function naploIr(n){ try{ localStorage.setItem("matekNaplo", JSON.stringify(n)); }catch(e){} }
 function szuloNezet(){
-  mutat("scr-szulo");
+  mutat("scr-szulo"); pinMegse();
   const c = $("szulo-tartalom"), n = naploOlvas();
   if(n===null){ c.innerHTML = '<div class="szulo-ures">A napló ezen az eszközön nem érhető el (a böngészős változatban működik).</div>'; return; }
   if(!n.length){ c.innerHTML = '<div class="szulo-ures">Még nincs mentett kör. A befejezett körök ide automatikusan bekerülnek.</div>'; return; }
   let h = '<div class="szulo-cim">Utolsó 7 nap</div>';
-  const maNap = new Date(); maNap.setHours(0,0,0,0);
   const napok = {};
   n.forEach(e=>{ const k = new Date(e.t).toLocaleDateString("hu-HU"); (napok[k]=napok[k]||[]).push(e); });
-  const kulcsok = Object.keys(napok).slice(-7).reverse();
-  kulcsok.forEach(k=>{
+  Object.keys(napok).slice(-7).reverse().forEach(k=>{
     const l = napok[k], j = l.reduce((s,e)=>s+e.jok,0), o = l.reduce((s,e)=>s+e.ossz,0);
     h += `<div class="szulo-sor"><span>${k}</span><span>${l.length} kör · <b>${j}/${o}</b> jó</span></div>`;
   });
@@ -999,14 +1030,61 @@ function szuloNezet(){
   const m = {};
   n.forEach(e=>{ const x = m[e.mod]=m[e.mod]||[0,0]; x[0]+=e.jok; x[1]+=e.ossz; });
   Object.entries(m).forEach(([k,[j,o]])=>{
-    h += `<div class="szulo-sor"><span>${MODNEV[k]||k}</span><span><b>${Math.round(100*j/o)}%</b> <small>(${j}/${o})</small></span></div>`;
+    h += `<div class="szulo-sor"><span>${MODNEV[k]||k}</span><span><b>${Math.round(100*j/o)}%</b> <small>(${j}/${o})</small>` +
+         ` <button class="szulo-torol" onclick="torlesKer('${k}')" title="Modul naplójának törlése">🗑</button></span></div>`;
   });
-  const utolsoHibak = n.slice(-20).flatMap(e=>e.hibak.map(x=>({d:new Date(e.t).toLocaleDateString("hu-HU"),x}))).slice(-12).reverse();
-  if(utolsoHibak.length){
-    h += '<div class="szulo-cim">Legutóbbi hibák</div>';
-    utolsoHibak.forEach(f=>{ h += `<div class="szulo-sor"><span>${f.x}</span><small>${f.d}</small></div>`; });
+  // hibák: kattintható pillanatképek (a régi, szöveges bejegyzések nem kattinthatók)
+  const hibaSorok = [];
+  n.forEach((e,ei)=> e.hibak.forEach((x,hi)=>
+    hibaSorok.push({ ei, hi, d:new Date(e.t).toLocaleDateString("hu-HU"), x })));
+  const utolso = hibaSorok.slice(-12).reverse();
+  if(utolso.length){
+    h += '<div class="szulo-cim">Legutóbbi hibák – koppints a visszanézéshez</div>';
+    utolso.forEach(f=>{
+      const obj = typeof f.x !== "string";
+      const cim = obj ? f.x.c : f.x;
+      const cls = "szulo-sor" + (obj && f.x.k ? " hiba":"") + (obj && f.x.m ? " megnezve":"");
+      const katt = obj && f.x.k ? ` onclick="hibaMutat(${f.ei},${f.hi})"` : "";
+      h += `<div class="${cls}"${katt}><span>${cim}</span><small>${f.d}</small></div>`;
+    });
   }
   c.innerHTML = h;
+}
+
+/* ---- hiba-visszanézés (pillanatkép) ---- */
+function hibaMutat(ei,hi){
+  const n = naploOlvas(); if(!n || !n[ei] || !n[ei].hibak[hi]) return;
+  const x = n[ei].hibak[hi];
+  if(typeof x === "string" || !x.k) return;
+  $("hiba-tipus").innerHTML = x.tf ? `<span>${x.tf}</span>` : "";
+  $("hiba-kerdes").innerHTML = x.k;
+  $("hiba-kijelzo").textContent = x.b || "";
+  $("hiba-kijelzo").style.display = x.b ? "block" : "none";
+  $("hiba-gombok").innerHTML = x.g || "";
+  $("hiba-gombok").style.display = x.g ? "flex" : "none";
+  $("hiba-uzenet").innerHTML = x.f || x.c;
+  mutat("scr-hiba");
+  if(!x.m){ x.m = 1; naploIr(n); } // olvasottság-jelölés
+}
+
+/* ---- PIN-védett törlések (PIN: 9999) ---- */
+let fuggoTorles = null;
+function torlesKer(mit){
+  fuggoTorles = mit;
+  $("pin-szoveg").textContent = mit==="mind"
+    ? "Teljes napló törlése – add meg a szülői PIN-t:"
+    : `${MODNEV[mit]||mit} naplójának törlése – add meg a szülői PIN-t:`;
+  const i = $("pin-input"); i.value=""; i.classList.remove("rossz");
+  $("pin-panel").style.display="block"; i.focus();
+}
+function pinMegse(){ fuggoTorles=null; $("pin-panel").style.display="none"; }
+function pinOk(){
+  const i = $("pin-input");
+  if(i.value !== "9999"){ i.classList.remove("rossz"); void i.offsetWidth;
+    i.classList.add("rossz"); i.value=""; return; }
+  if(fuggoTorles==="mind"){ try{ localStorage.removeItem("matekNaplo"); }catch(e){} }
+  else { const n = naploOlvas()||[]; naploIr(n.filter(e=>e.mod!==fuggoTorles)); }
+  szuloNezet(); // pinMegse-t is meghívja, és újraszámolja a statisztikát
 }
 function hetiKuldes(g){
   const n = naploOlvas() || [];
@@ -1018,15 +1096,11 @@ function hetiKuldes(g){
   const m = {};
   heti.forEach(e=>{ const x = m[e.mod]=m[e.mod]||[0,0]; x[0]+=e.jok; x[1]+=e.ossz; });
   t += Object.entries(m).map(([k,[a,b]])=>`• ${MODNEV[k]||k}: ${Math.round(100*a/b)}%`).join("\n");
-  const hib = heti.flatMap(e=>e.hibak).slice(-8);
+  const hib = heti.flatMap(e=>e.hibak).map(x=>typeof x==="string"?x:x.c).slice(-8);
   if(hib.length) t += "\nGyakori átnézendők:\n" + hib.map(x=>"• "+x.replace(/→/,"–")).join("\n");
   megoszt(t, g);
 }
-function naploTorles(g){
-  if(g.dataset.biztos){ try{ localStorage.removeItem("matekNaplo"); }catch(e){}
-    delete g.dataset.biztos; g.textContent="🗑 Napló törölve"; szuloNezet(); return; }
-  g.dataset.biztos="1"; g.textContent="Biztosan törlöd? Kattints még egyszer!";
-}
+
 
 /* billentyűzet-támogatás */
 document.addEventListener("keydown", e=>{
