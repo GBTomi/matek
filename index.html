@@ -254,7 +254,7 @@
     <button class="fo-gomb megoszto" onclick="naploKuldes(this)" style="margin-top:8px">📤 Napló küldése</button>
     <button class="masol-gomb" onclick="naploMasol(this)">📋 Formázott másolás (e-mailhez)</button>
     <div class="tipp">💡 Egy kör = 10 feladat. A rövid, mindennapos gyakorlás ér a legtöbbet!<br>
-      <button class="szulo-link" onclick="szuloKer()">👨‍👩‍👧 Szülőknek (PIN)</button></div>
+      <button class="szulo-link" onclick="szuloNezet()">👨‍👩‍👧 Szülőknek</button></div>
   </div>
 
   <!-- SZÜLŐI NÉZET -->
@@ -2229,7 +2229,6 @@ function naploKuldes(g){
 
 function naploIr(n){ try{ localStorage.setItem("matekNaplo", JSON.stringify(n)); }catch(e){} }
 function szuloNezet(){
-  if(!szuloBelepve){ szuloKer(); return; }
   mutat("scr-szulo"); pinMegse();
   $("szulo-kuldes").style.display="block";
   $("szulo-mindtorles").style.display="inline-block";
@@ -2255,7 +2254,8 @@ function szuloNezet(){
   });
   // hibák: kattintható pillanatképek; szűrő: mind / csak új
   const osszes = [];
-  n.forEach((e,ei)=> e.hibak.forEach((x,hi)=> osszes.push({ ei, hi, x })));
+  n.forEach((e,ei)=> e.hibak.forEach((x,hi)=> osszes.push({ ei, hi, x, t:e.t||0 })));
+  osszes.sort((p,q)=> p.t - q.t || p.hi - q.hi); // időrend, a megjelenítés fordítva (legújabb elöl)
   if(hibaCache===null){ // a lista csak szűrő-váltáskor vagy új belépéskor számolódik újra
     let szurt = osszes;
     if(hibaSzuro==="uj") szurt = osszes.filter(f=> !(typeof f.x!=="string" && f.x.m));
@@ -2302,21 +2302,9 @@ function hibaMutat(ei,hi){
 }
 
 /* ---- PIN-védett belépés és törlések (PIN: 9999) ---- */
-let fuggoTorles = null, szuloBelepve = false;
+let fuggoTorles = null;
 let hibaSzuro = "mind", hibaCache = null; // a lista csak új szűrésre frissül, visszanézéskor nem
 function hibaSzures(f){ hibaSzuro = f; hibaCache = null; szuloNezet(); }
-function szuloKer(){ // Szülőknek link: első alkalommal PIN kell
-  if(szuloBelepve){ szuloNezet(); return; }
-  mutat("scr-szulo");
-  $("szulo-tartalom").innerHTML = '<div class="szulo-ures">🔒 A szülői nézet PIN-kóddal védett.</div>';
-  $("szulo-kuldes").style.display="none";
-  $("szulo-mindtorles").style.display="none";
-  fuggoTorles = "belep";
-  $("pin-szoveg").textContent = "Add meg a szülői PIN-t:";
-  $("pin-ok").textContent = "Belépés";
-  const i = $("pin-input"); i.value=""; i.classList.remove("rossz");
-  $("pin-panel").style.display="block"; i.focus();
-}
 function torlesKer(mit){
   fuggoTorles = mit;
   let nev = "Teljes napló";
@@ -2327,21 +2315,16 @@ function torlesKer(mit){
   const i = $("pin-input"); i.value=""; i.classList.remove("rossz");
   $("pin-panel").style.display="block"; i.focus();
 }
-function pinMegse(){
-  const belepesVolt = fuggoTorles==="belep";
-  fuggoTorles=null; $("pin-panel").style.display="none";
-  if(belepesVolt && !szuloBelepve) menu();
-}
+function pinMegse(){ fuggoTorles=null; $("pin-panel").style.display="none"; }
 function pinOk(){
   const i = $("pin-input");
   if(i.value !== "9999"){ i.classList.remove("rossz"); void i.offsetWidth;
     i.classList.add("rossz"); i.value=""; return; }
-  if(fuggoTorles==="belep"){ szuloBelepve = true; }
-  else if(fuggoTorles==="mind"){ try{ localStorage.removeItem("matekNaplo"); }catch(e){} }
+  if(fuggoTorles==="mind"){ try{ localStorage.removeItem("matekNaplo"); }catch(e){} }
   else if(fuggoTorles){ const [md,kr] = fuggoTorles.split("|");
     const n = naploOlvas()||[];
     naploIr(n.filter(e=>!(e.mod===md && String(e.kor||0)===kr))); }
-  if(fuggoTorles!=="belep") hibaCache=null; // törlés után friss lista
+  hibaCache=null; // törlés után friss lista
   szuloNezet(); // pinMegse-t is meghívja, és újraszámolja a statisztikát
 }
 
