@@ -175,6 +175,10 @@
              display:flex; justify-content:space-between; gap:8px;}
   .szulo-sor small{color:var(--halvany);}
   .szulo-ures{color:var(--halvany); font-size:.95rem;}
+  .szulo-kerdes{background:#e6f7f3; border-left:4px solid var(--turkiz); border-radius:10px;
+    padding:9px 12px; font-size:.92rem; font-weight:600; color:#0d6e5f; margin-bottom:10px;
+    cursor:pointer;}
+  .szulo-kerdes::before{content:"💬 Kérdezd így: "; font-weight:700;}
 
   /* ---- EREDMÉNY ---- */
   .csillagok{font-size:3rem; text-align:center; margin:14px 0 4px;}
@@ -260,7 +264,9 @@
 
   <!-- SZÜLŐI NÉZET -->
   <div class="screen" id="scr-szulo">
-    <div class="panel"><h2>👨‍👩‍👧 Szülői áttekintés</h2><div id="szulo-tartalom"></div></div>
+    <div class="panel"><h2>👨‍👩‍👧 Szülői áttekintés</h2>
+      <div class="szulo-kerdes" id="szulo-kerdes" onclick="ujSzuloKerdes()" title="Kattints egy másik kérdésért"></div>
+      <div id="szulo-tartalom"></div></div>
     <div class="panel" id="pin-panel" style="display:none">
       <div id="pin-szoveg" style="font-weight:700"></div>
       <input id="pin-input" class="pin-input" type="password" inputmode="numeric" maxlength="4" placeholder="PIN">
@@ -386,12 +392,15 @@ const DICSERET = ["Szuper! 🌟","Ügyes vagy! 👏","Pontosan! ✨","Remek! �
                   "Ez az! 🙌","Zseniális! 🤩","Telitalálat! 🎯","Mesteri! 🥇","Így kell ezt! 🔥"];
 function nevOlvas(){ try{ return localStorage.getItem("matekNev"); }catch(e){ return ""; } }
 function dicseret(){
+  // hangsúly a FOLYAMAT-dicséreten (kitartás, módszer), nem a személy minősítésén
   const n = nevOlvas(), r = Math.random();
-  if(n && r<0.2)
-    return valaszt([`Ez az, ${n}! 🙌`,`${n}, ez profi volt! 😎`,`Ügyes vagy, ${n}! 🌟`,
-                    `${n}, te matekbajnok vagy! 🏆`,`Így kell ezt, ${n}! 🔥`,
-                    `${n}, a számok barátja! 🤝`,`Micsoda agy, ${n}! 🧠`]);
-  return r<0.65 ? valaszt(DICSERET_HP) : valaszt(DICSERET);
+  if(r<0.5) return valaszt(DICSERET_FOLYAMAT);
+  if(r<0.72) return valaszt(DICSERET_HP);
+  if(n && r<0.85)
+    return valaszt([`Ez az, ${n}! 🙌`,`${n}, ez kitartó munka volt! 😎`,`Ügyes vagy, ${n}! 🌟`,
+                    `${n}, a gyakorlásod meghozta! 🏆`,`Így kell ezt, ${n}! 🔥`,
+                    `${n}, jól gondolkodtál! 🤝`,`Szép munka, ${n}! 🧠`]);
+  return valaszt(DICSERET);
 }
 const KOSZONTOK_NEVES = [
   "Szia {n}! Jó munkát! 💪","Hajrá {n}, ma is menni fog! 🚀",
@@ -750,6 +759,24 @@ const DICSERET_HP = [
   "A bájital pont jó arányú! ⚗️","Óriásléptű haladás! 🏔️","A thesztrálok is odanéztek! 🐴",
   "Kentaur-pontosságú! 🏹","Világító, mint a Lumos Maxima! 💡","A kviddicskommentátor ujjong! 📣",
   "Bátor, mint egy éjféli kaland! 🌙","A 9 és ¾. vágányon a helyed! 🚂","Varázslóvizsga: kitüntetéssel! 🎓"
+];
+const DICSERET_FOLYAAMAT_HELYETT = null; // (név-ütközés elkerülése)
+const DICSERET_FOLYAMAT = [
+  "Végigcsináltad – ez a lényeg! 💪","Nem adtad fel, és meglett! 🧗",
+  "Szépen, lépésről lépésre gondolkodtál! 🪜","Figyelmesen olvastad a feladatot – ez a titok! 👀",
+  "Jó módszert választottál! 🧭","Látszik a sok gyakorlás! 🌱",
+  "Egyre gyorsabban megy – a munkád gyümölcse! 🍎","Nyugodtan, sorban számoltál – profi hozzáállás! 🧘",
+  "Ezt a fajta feladatot már magabiztosan hozod! 🏗️","Okos úton indultál el! 🛤️",
+  "Előbb gondolkodtál, aztán válaszoltál – így kell! 🤔","A kitartásod hozta meg az eredményt! 🔑",
+  "Ma is edzettél egyet az agyaddal! 🧠","Pontosan dolgoztál – erre büszke lehetsz! 🎯",
+  "Újra próbáltad, és sikerült – ez az igazi erő! 🔁","Szép munka: a nehezén is átrágtad magad! ⛏️",
+  "Jól beosztottad a lépéseket! 📋","A figyelmed végig kitartott! 🔦",
+  "Egyre kevesebb segítség kell – fejlődsz! 📈","A gyakorlás működik: ma is bizonyítottad! 🧪",
+  "Bátran belevágtál a nehezebbe is! 🦁","Az ellenőrzés is a munkád része volt – ügyes! ✅",
+  "Ma is raktál egy téglát a tudásfaladba! 🧱","A tempód a tiéd volt: nem kapkodtál! 🐢",
+  "Jó kérdést tettél fel magadnak számolás közben! ❓","A múltkori hibából mára tudás lett! 💡",
+  "Következetesen számoltál végig! 🧮","Ezt a megoldást te építetted fel – a tiéd! 🏰",
+  "Minden lépésed a helyén volt! 🧩","A tudásod ma is nőtt egy kicsit! 📔"
 ];
 const VIGASZ_HP = [
   "Még Harry is leesett elsőre a seprűről – aztán bajnok lett! 🧹",
@@ -2302,9 +2329,37 @@ function naploKuldes(g){
   naploMasol(g); // asztali böngészőben: formázott (HTML) vágólapra
 }
 
+const SZULO_KERDESEK = [
+  "Mutasd meg, mi ment ma a legjobban!",
+  "Melyik feladat volt ma a kedvenced?",
+  "Mi volt a legnehezebb – és hogyan győzted le?",
+  "Melyik hibából tanultál ma valami újat?",
+  "Mennyit gyakoroltál a héten? Ez ám a kitartás!",
+  "Mesélj: hogyan jöttél rá a megoldásra?",
+  "Melyik feladatra vagy a legbüszkébb?",
+  "Mit csinálnál ma másképp, mint tegnap?",
+  "Melyik rész megy már simán? Emlékszel, milyen nehéz volt régen?",
+  "Van olyan feladat, amit megmutatnál nekem is?",
+  "Számoljunk együtt egyet? Most te leszel a tanár!",
+  "Mi segített, amikor elakadtál?",
+  "Melyik rekordodra vagy büszke?",
+  "Ha a mai gyakorlás egy varázslat lenne, melyik lenne?",
+  "Mit mondanál egy barátodnak, akinek ez nehezen megy?",
+  "Hányszor próbáltad újra? A kitartás a szupererőd!",
+  "Melyik feladatnál érezted, hogy klikk – megvan?",
+  "Mi volt ma könnyebb, mint a múlt héten?",
+  "Válassz egy hibát, és nyomozzuk ki együtt, mi történt!",
+  "Milyen érzés volt, amikor kijött a jó eredmény?",
+  "Melyik feladatot oldottad meg a leggyorsabban?",
+  "Tanítsd meg nekem a kedvenc trükködet!",
+  "Ha te írnál nekem feladatot, milyet írnál?",
+  "Mi az, amiben ma jobb lettél, mint tegnap?",
+  "A hibáid egyre okosabbak – melyikből lett ma tudás?"
+];
 function naploIr(n){ try{ localStorage.setItem("matekNaplo", JSON.stringify(n)); }catch(e){} }
+function ujSzuloKerdes(){ $("szulo-kerdes").textContent = `„${valaszt(SZULO_KERDESEK)}”`; }
 function szuloNezet(){
-  mutat("scr-szulo"); pinMegse();
+  mutat("scr-szulo"); pinMegse(); ujSzuloKerdes();
   $("szulo-kuldes").style.display="block";
   $("szulo-mindtorles").style.display="inline-block";
   const c = $("szulo-tartalom"), n = naploOlvas();
