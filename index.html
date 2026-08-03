@@ -142,6 +142,10 @@
                 animation:remeg .3s;}
   .rcella.ures{border:none; background:none;}
   @keyframes remeg{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+  .oszto-feladat{display:flex; gap:5px; justify-content:center; align-items:center; width:100%;}
+  .oszto-feladat .szj{font-size:1.9rem; font-weight:800;}
+  .oszto-feladat .jel{font-size:1.9rem; font-weight:800; color:var(--lila-s);}
+  .oszto-feladat .rcella{width:46px; flex:none;}
 
   /* ---- ÚJ MODULOK ---- */
   .ido{font-weight:800; font-size:1.15rem; color:var(--lila-s);}
@@ -220,7 +224,7 @@
       <span>Sorozatok<small>mi a szabály? folytasd a sort!</small></span></button>
     <button class="modul" id="menu-nyitott" onclick="inditNyitott()"><span class="ikon">🔓</span>
       <span>Nyitott mondatok<small>mi kerül a ▢ helyére?</small></span></button>
-    <button class="modul" id="menu-ora" onclick="inditOra()"><span class="ikon">🕒</span>
+    <button class="modul" id="menu-ora" onclick="megnyit('ora')"><span class="ikon">🕒</span>
       <span>Óra<small>hány óra van? mennyi idő telt el?</small></span></button>
     <button class="modul" id="menu-penz" onclick="inditPenz()"><span class="ikon">💰</span>
       <span>Pénzszámolás<small>mennyi pénzed van összesen?</small></span></button>
@@ -238,8 +242,8 @@
       <span>Törtek<small>fele, harmada, negyede</small></span></button>
     <button class="modul" id="menu-negativ" onclick="inditNegativ()"><span class="ikon">❄️</span>
       <span>Negatív számok<small>hőmérséklet és számegyenes a nulla alatt</small></span></button>
-    <button class="modul" onclick="inditVegyes()"><span class="ikon">🎲</span>
-      <span>Vegyes kör<small>mindenből egy kicsit</small></span></button>
+    <button class="modul" onclick="megnyit('vegyes')"><span class="ikon">🎲</span>
+      <span>Vegyes kör<small>mindenből egy kicsit – simán vagy időre</small></span></button>
     <div class="statsor" id="stat-sor"></div>
     <div class="beallito">
       <div class="lepteto"><span>Életkor</span>
@@ -318,6 +322,17 @@
       <div class="valaszto" id="villam-tabla-valaszto" style="margin-bottom:10px"></div>
       <div class="valaszto" id="villam-ido-valaszto"></div>
       <button class="fo-gomb" onclick="inditVillam()">Rajt! ⚡</button>
+    </div>
+    <div class="panel" id="setup-ora" style="display:none">
+      <h2>🕒 Óra – mit gyakoroljunk?</h2>
+      <div class="valaszto" id="ora-valaszto"></div>
+      <button class="fo-gomb" onclick="inditOra()">Indítás! 🚀</button>
+    </div>
+    <div class="panel" id="setup-vegyes" style="display:none">
+      <h2>🎲 Vegyes kör</h2>
+      <div class="valaszto" id="vegyes-mod-valaszto" style="margin-bottom:10px"></div>
+      <div class="valaszto" id="vegyes-ido-valaszto"></div>
+      <button class="fo-gomb" onclick="inditVegyesPanel()">Indítás! 🚀</button>
     </div>
     <div class="panel" id="setup-lanc" style="display:none">
       <h2>Hány lépéses legyen a lánc?</h2>
@@ -835,12 +850,16 @@ let atvitelSor = true;
 const potlasTipusok = new Set(["t100","t1000","kerek10","kerek100"]);
 
 let osztMaradekos = false, villamIdo = 60, lancLepes = 3;
+let vegyesMod = "sima";
+const oraTipusok = new Set(["leolvas","atvalt","allit","eltelt"]);
+const IDO_OPCIOK = [["30","30 mp"],["60","1 perc"],["90","1,5 perc"],
+                    ["120","2 perc"],["150","2,5 perc"],["180","3 perc"]];
 let villamTimer = null, villamAktiv = false;
 
 function megnyit(m){
   mod = m; mutat("scr-setup");
   ["setup-szorzas","setup-helyi","setup-muvelet","setup-irasbeli","setup-potlas",
-   "setup-osztas","setup-villam","setup-lanc"].forEach(x=>$(x).style.display="none");
+   "setup-osztas","setup-villam","setup-lanc","setup-ora","setup-vegyes"].forEach(x=>$(x).style.display="none");
   $("setup-"+m).style.display="block";
   if(m==="szorzas") rajzolTablakBe("tabla-valaszto");
   if(m==="helyi") rajzolHelyi();
@@ -851,10 +870,37 @@ function megnyit(m){
     chipsor("oszt-maradek-valaszto",[["nem","maradék nélkül"],["igen","maradékkal is"]],
       ()=>osztMaradekos?"igen":"nem", v=>{osztMaradekos=(v==="igen");}); }
   if(m==="villam"){ rajzolTablakBe("villam-tabla-valaszto");
-    chipsor("villam-ido-valaszto",[["30","30 mp"],["60","1 perc"],["90","1,5 perc"]],
+    chipsor("villam-ido-valaszto", IDO_OPCIOK,
       ()=>String(villamIdo), v=>{villamIdo=+v;}); }
   if(m==="lanc") chipsor("lanc-valaszto",[["3","3 lépés"],["4","4 lépés"],["5","5 lépés"]],
       ()=>String(lancLepes), v=>{lancLepes=+v;});
+  if(m==="ora") rajzolOra();
+  if(m==="vegyes"){
+    chipsor("vegyes-mod-valaszto",[["sima","sima kör"],["ido","időzítőre ⚡"]],
+      ()=>vegyesMod, v=>{vegyesMod=v; megnyit("vegyes");});
+    $("vegyes-ido-valaszto").style.display = vegyesMod==="ido" ? "flex" : "none";
+    if(vegyesMod==="ido") chipsor("vegyes-ido-valaszto", IDO_OPCIOK,
+      ()=>String(villamIdo), v=>{villamIdo=+v;});
+  }
+}
+function rajzolOra(){
+  const nevek = {leolvas:"leolvasás", atvalt:"átváltás (fél 10 = ?)",
+                 allit:"beállítás", eltelt:"eltelt idő"};
+  const c = $("ora-valaszto"); c.innerHTML="";
+  for(const [k,n] of Object.entries(nevek)){
+    if(!oraEngedett().includes(k)) continue;
+    const b = document.createElement("button");
+    b.className = "chip"+(oraTipusok.has(k)?" on":"");
+    b.textContent = n;
+    b.onclick = ()=>{ if(oraTipusok.has(k)&&oraTipusok.size===1) return;
+                      oraTipusok.has(k)?oraTipusok.delete(k):oraTipusok.add(k);
+                      b.classList.toggle("on"); };
+    c.appendChild(b);
+  }
+}
+function oraEngedett(){
+  return beall.kor<=7 ? ["leolvas"] : beall.kor===8 ? ["leolvas","atvalt"]
+       : ["leolvas","atvalt","allit","eltelt"];
 }
 function chipsor(cel, opciok, aktualis, beallit){ // egyválasztós chip-sor
   const c = $(cel); c.innerHTML="";
@@ -867,7 +913,7 @@ function chipsor(cel, opciok, aktualis, beallit){ // egyválasztós chip-sor
 }
 function rajzolIrasbeli(){
   chipsor("irasbeli-muv-valaszto",
-    [["ossz","összeadás"],["kiv","kivonás"],["vegyes","vegyesen"]],
+    [["ossz","összeadás"],["kiv","kivonás"],["szor","szorzás"],["oszt","osztás"],["vegyes","vegyesen"]],
     ()=>irasbeliMuv, v=>{irasbeliMuv=v;});
   chipsor("irasbeli-nehez-valaszto",
     [["konnyu","átlépés nélkül"],["nehez","átlépéssel"],["vegyes","vegyes"]],
@@ -1209,11 +1255,21 @@ function genPotlas(){
 }
 
 function genIrasbeli(){
-  // a genMuvelet-et használjuk, csak a művelet-típust szűrjük
+  let muv = irasbeliMuv;
+  if(muv==="vegyes") muv = valaszt(["ossz","kiv","szor","oszt"]);
+  if(muv==="szor"){
+    const b2=rnd(2,9), a2=rnd(12, Math.floor(999/b2));
+    return { a:a2, b:b2, jel:"×", eredmeny:a2*b2, modul:"irasbeli", cimke:`${a2} × ${b2}`,
+             tf:`Írásbeli szorzás · ${b2}-${RAG[b2]} szorzó` };
+  }
+  if(muv==="oszt"){
+    const b2=rnd(2,9), q2=rnd(12, Math.floor(999/b2)), a2=q2*b2;
+    return { a:a2, b:b2, jel:":", eredmeny:q2, modul:"irasbeli", cimke:`${a2} : ${b2}`,
+             tf:"Írásbeli osztás · egyjegyűvel" };
+  }
   let q;
   do{ q = genMuvelet(); }
-  while( irasbeliMuv!=="vegyes" &&
-         ((irasbeliMuv==="ossz") !== q.cimke.includes("+")) );
+  while( (muv==="ossz") !== q.cimke.includes("+") );
   const [aS,,bS] = q.cimke.split(" ");
   const jel = q.cimke.includes("+")?"+":"−";
   return { a:+aS, b:+bS, jel, eredmeny:q.valasz,
@@ -1424,20 +1480,67 @@ function oraSVG(h, mp){
   return sv;
 }
 const ketjegyu = x => String(x).padStart(2,"0");
+const SZOFORMA = { negyed:15, "fél":30, "háromnegyed":45 };
+function szovegesIdo(forma, kov){ return `${forma} ${kov}`; }              // pl. fél 10 = 9:30
+function digit(h,m){ return `${h}:${ketjegyu(m)}`; }
 function genOra(){
-  if(beall.kor<=7 || (beall.kor===8 && Math.random()<0.5)){
-    const h=rnd(1,12);
-    return { szoveg:`${oraSVG(h,0)}Hány órát mutat az óra?`, valasz:h,
-             hint:`A rövid mutató ide mutat: ${h} → ${h} óra.`,
-             modul:"ora", cimke:`óra: ${h}:00`, tf:"Óra · egész óra" };
+  let lista = [...oraTipusok].filter(t=>oraEngedett().includes(t));
+  if(!lista.length) lista = oraEngedett();
+  const t = valaszt(lista);
+  if(t==="leolvas"){
+    if(beall.kor<=7){
+      const h=rnd(1,12);
+      return { szoveg:`${oraSVG(h,0)}Hány órát mutat az óra?`, valasz:h,
+               hint:`A rövid mutató ide mutat: ${h} → ${h} óra.`,
+               modul:"ora", cimke:`óra: ${h}:00`, tf:"Óra · egész óra" };
+    }
+    if(beall.kor===8){
+      if(Math.random()<0.5){
+        const h=rnd(1,12);
+        return { szoveg:`${oraSVG(h,0)}Hány órát mutat az óra?`, valasz:h,
+                 hint:`A rövid mutató ide mutat: ${h} → ${h} óra.`,
+                 modul:"ora", cimke:`óra: ${h}:00`, tf:"Óra · egész óra" };
+      }
+      const h=rnd(1,12), kov = h===12?1:h+1, jo=`fél ${kov}`;
+      return { szoveg:`${oraSVG(h,30)}Mennyi az idő?`, tipus:"valaszto",
+               opciok:[jo, `fél ${h}`, `${h} óra`], valasz:jo,
+               hint:`A nagymutató lent áll (fél), a kismutató ${h} és ${kov} között: fél ${kov}.`,
+               modul:"ora", cimke:`óra: ${h}:30`, tf:"Óra · fél órák" };
+    }
+    const h=rnd(1,12), m=5*rnd(0,11), jo=digit(h,m);
+    const opciok=[jo];
+    const jeloltek=[digit(h, (m+5)%60), digit(h, (m+55)%60), digit(h===12?1:h+1, m), digit((m/5===0?h:Math.max(1,(m/5)%12||12)), 5*(h%12))];
+    for(const d of jeloltek) if(opciok.length<3 && !opciok.includes(d)) opciok.push(d);
+    while(opciok.length<3){ const d=digit(rnd(1,12),5*rnd(0,11)); if(!opciok.includes(d)) opciok.push(d); }
+    return { szoveg:`${oraSVG(h,m)}Mennyi az idő?`, tipus:"valaszto", opciok, valasz:jo,
+             hint:`A kismutató: ${h} körül, a nagymutató a ${m/5}-ös vonáson (${m} perc) → ${jo}.`,
+             modul:"ora", cimke:`óra: ${jo}`, tf:"Óra · leolvasás" };
   }
-  if(beall.kor===8){
-    const h=rnd(1,12), kov = h===12?1:h+1;
-    const jo=`fél ${kov}`;
-    const opciok=[jo, `fél ${h}`, `${h} óra`];
-    return { szoveg:`${oraSVG(h,30)}Mennyi az idő?`, tipus:"valaszto", opciok, valasz:jo,
-             hint:`A nagymutató lent áll (fél), a kismutató ${h} és ${kov} között: fél ${kov}.`,
-             modul:"ora", cimke:`óra: ${h}:30`, tf:"Óra · fél órák" };
+  if(t==="atvalt"){
+    const forma = valaszt(Object.keys(SZOFORMA));
+    const kov = rnd(1,12), h = kov===1?12:kov-1, m = SZOFORMA[forma];
+    if(Math.random()<0.5){ // szóban -> digitális
+      const jo = digit(h,m);
+      const opciok=[jo, digit(kov,m), digit(h, m===30?15:30)];
+      return { szoveg:`Melyik digitális idő ez:<br><span class="nagy">${szovegesIdo(forma,kov)}</span> ?`,
+               tipus:"valaszto", opciok:[...new Set(opciok)].slice(0,3), valasz:jo,
+               hint:`A(z) ${forma} ${kov} azt jelenti: a(z) ${kov}. óra felé járunk – ${jo}.`,
+               modul:"ora", cimke:`${szovegesIdo(forma,kov)} = ?`, tf:"Óra · átváltás" };
+    }
+    const jo = szovegesIdo(forma,kov); // digitális -> szóban
+    const masik1 = szovegesIdo(valaszt(Object.keys(SZOFORMA).filter(f=>f!==forma)), kov);
+    const masik2 = szovegesIdo(forma, kov===12?1:kov+1);
+    return { szoveg:`Hogyan mondjuk ezt:<br><span class="nagy">${digit(h,m)}</span> ?`,
+             tipus:"valaszto", opciok:[jo,masik1,masik2], valasz:jo,
+             hint:`${digit(h,m)}: ${m} perccel múlt ${h} – vagyis ${jo}.`,
+             modul:"ora", cimke:`${digit(h,m)} szóban`, tf:"Óra · átváltás" };
+  }
+  if(t==="allit"){
+    const h=rnd(1,12), m=5*rnd(0,11);
+    return { szoveg:`Állítsd be az órát:<br><span class="nagy">${digit(h,m)}</span><div id="allit-ora">${oraSVG(12,0)}</div>`,
+             tipus:"allit", valasz:(h%12)*60+m,
+             hint:`A kismutató a(z) ${h}-hoz, a nagymutató a ${m/5}-ös vonásra (${m} perc).`,
+             modul:"ora", cimke:`állítsd be: ${digit(h,m)}`, tf:"Óra · beállítás" };
   }
   const h=rnd(6,17), m1=5*rnd(0,11), d=5*rnd(1,23);
   const veg=h*60+m1+d, vh=Math.floor(veg/60), vm=veg%60;
@@ -1447,6 +1550,28 @@ function genOra(){
                          : `${ketjegyu(vm)} − ${ketjegyu(m1)} = ${d} perc.`,
            modul:"ora", cimke:`${h}:${ketjegyu(m1)} → ${vh}:${ketjegyu(vm)}`, tf:"Óra · eltelt idő" };
 }
+/* óra-beállító vezérlés */
+let allit = null;
+function allitIndit(){
+  allit = { h:12, m:0 };
+  const c = $("valaszgombok"); c.innerHTML="";
+  [["−1 óra",-1,0],["+1 óra",1,0],["−5 perc",0,-5],["+5 perc",0,5]].forEach(([n,dh,dm])=>{
+    const b=document.createElement("button"); b.textContent=n; b.style.fontSize="1.1rem"; b.style.padding="9px";
+    b.onclick=()=>allitMod(dh,dm); c.appendChild(b);
+  });
+  const kesz=document.createElement("button"); kesz.textContent="Kész ✔";
+  kesz.style.background="var(--zold)"; kesz.style.color="#fff";
+  kesz.onclick=()=>{ if(zarolva) return; bevitel=String((allit.h%12)*60+allit.m); ellenoriz(); };
+  c.appendChild(kesz);
+  allitRajzol();
+}
+function allitMod(dh,dm){
+  if(zarolva || !allit) return;
+  allit.h = ((allit.h-1+dh+12)%12)+1;
+  allit.m = (allit.m+dm+60)%60;
+  allitRajzol();
+}
+function allitRajzol(){ const e=$("allit-ora"); if(e) e.innerHTML = oraSVG(allit.h, allit.m); }
 
 function genPenz(){
   const m = szamkor();
@@ -1659,9 +1784,14 @@ function inditSzamalkotas(){ mod="szamalkotas"; korHossz=beall.dbKor; inditKor()
 function inditTortek(){ mod="tortek"; korHossz=beall.dbKor; inditKor(); }
 function inditNegativ(){ mod="negativ"; korHossz=beall.dbKor; inditKor(); }
 
-function inditVillam(){
-  if(kivTablak.size===0) return;
-  mod="villam"; korHossz=9999;
+const idoMod = () => mod==="villam" || mod==="vegyesido";
+function inditVillam(){ if(kivTablak.size===0) return; inditIdoKor("villam"); }
+function inditVegyesPanel(){
+  if(vegyesMod==="ido") inditIdoKor("vegyesido");
+  else { mod="vegyes"; korHossz=beall.dbKor; inditKor(); }
+}
+function inditIdoKor(uzemmod){
+  mod=uzemmod; korHossz=9999;
   kerdesek=0; jok=0; sorozat=0; maxSorozat=0; hibak=[]; korId=Date.now();
   mutat("scr-game");
   $("pontok").innerHTML = `<span class="ido" id="ido">⏱ ${villamIdo}</span>`;
@@ -1679,11 +1809,12 @@ function inditVillam(){
 function villamVege(){
   clearInterval(villamTimer); villamAktiv=false; zarolva=true;
   mutat("scr-end");
-  $("csillagok").textContent = "⚡";
+  $("csillagok").textContent = mod==="villam" ? "⚡" : "🎲⚡";
+  const kulcs = mod==="villam" ? "matekVillamRekord" : "matekVegyesRekord";
   let rekord = 0;
-  try{ rekord = +localStorage.getItem("matekVillamRekord") || 0; }catch(e){}
+  try{ rekord = +localStorage.getItem(kulcs) || 0; }catch(e){}
   const uj = jok > rekord;
-  if(uj){ try{ localStorage.setItem("matekVillamRekord", String(jok)); }catch(e){} }
+  if(uj){ try{ localStorage.setItem(kulcs, String(jok)); }catch(e){} }
   $("eredmeny-szoveg").innerHTML =
     `${jok} jó válasz ${villamIdo} mp alatt<br><small>${kerdesek} feladatból</small><br>` +
     (uj ? "🏆 Új rekord!" : rekord ? `Rekordod: ${rekord}` : "");
@@ -1698,6 +1829,7 @@ function villamVege(){
 function ujKerdes(){
   if(mod==="szorzas")  return genSzorzas();
   if(mod==="villam")   return genSzorzas();
+  if(mod==="vegyesido") return genVegyes();
   if(mod==="helyi")    return genHelyi();
   if(mod==="muvelet")  return genMuvelet();
   if(mod==="potlas")   return genPotlas();
@@ -1724,7 +1856,7 @@ function rajzolPontok(){
   for(let i=0;i<korHossz;i++){ const d=document.createElement("div"); d.className="pont"; c.appendChild(d);}
 }
 function kovetkezo(elso){
-  if(mod==="villam" && !villamAktiv){ villamVege(); return; }
+  if(idoMod() && !villamAktiv){ villamVege(); return; }
   if(!elso && kerdesek>=korHossz){ vege(); return; }
   aktKerdes = ujKerdes(); bevitel=""; zarolva=false; ir=null;
   frissitKoszonto(); // a felső üzenet pörög: egy feladat, egy üzenet
@@ -1738,10 +1870,11 @@ function kovetkezo(elso){
     rajzolIrasbeliKerdes(); frissitSorozat(); return;
   }
   $("kerdes").innerHTML = `<div class="kerdes-belso">${aktKerdes.szoveg}</div>`;
-  const valasztos = aktKerdes.tipus==="valaszto";
-  $("keypad").style.display = valasztos? "none":"grid";
-  $("kijelzo").style.display = valasztos? "none":"block";
-  $("valaszgombok").style.display = valasztos? "flex":"none";
+  const valasztos = aktKerdes.tipus==="valaszto", allitos = aktKerdes.tipus==="allit";
+  $("keypad").style.display = (valasztos||allitos)? "none":"grid";
+  $("kijelzo").style.display = (valasztos||allitos)? "none":"block";
+  $("valaszgombok").style.display = (valasztos||allitos)? "flex":"none";
+  if(allitos){ allitIndit(); frissitKijelzo(); frissitSorozat(); return; }
   if(valasztos){
     const c=$("valaszgombok"); c.innerHTML="";
     aktKerdes.opciok.forEach(o=>{
@@ -1756,6 +1889,7 @@ function kovetkezo(elso){
 /* ---- írásbeli mód ---- */
 function rajzolIrasbeliKerdes(){
   const {a,b,jel,eredmeny} = aktKerdes;
+  if(jel===":"){ rajzolOsztasKerdes(a,b,eredmeny); return; }
   const A=String(a).padStart(3," "), B=String(b).padStart(3," "), R=String(eredmeny);
   let h = '<div class="irasbeli">';
   if(atvitelSor){
@@ -1780,6 +1914,16 @@ function oszlopMagyarazat(a,b,jel){
   const j=(n,p)=>Math.floor(n/Math.pow(10,p))%10;
   const nev=["az egyeseknél","a tízeseknél","a százasoknál"];
   const out=[];
+  if(jel==="×"){
+    let c=0;
+    for(let i=0;i<3;i++){
+      const sz=j(a,i)*b + c;
+      let t=`${nev[i]}: ${j(a,i)} × ${b}${c?` + ${c} (maradék)`:""} = ${sz}`;
+      if(sz>=10) t+=` → ${sz%10} kerül ide, ${Math.floor(sz/10)} megy tovább`;
+      out.push(t); c = Math.floor(sz/10);
+    }
+    return out;
+  }
   if(jel==="+"){
     let c=0;
     for(let i=0;i<3;i++){
@@ -1796,6 +1940,33 @@ function oszlopMagyarazat(a,b,jel){
       if(felso>=also){ out.push(`${nev[i]}: ${felso}${k?` (${j(a,i)} mínusz a kölcsön)`:""} − ${also} = ${felso-also}`); k=0; }
       else { out.push(`${nev[i]}: ${felso}-${BOL[felso]} nem megy a ${also}, kölcsönkérünk: ${felso+10} − ${also} = ${felso+10-also}`); k=1; }
     }
+  }
+  return out;
+}
+function rajzolOsztasKerdes(a,b,q){ // hányados-jegyek beírása BALRÓL jobbra
+  const Q=String(q);
+  let h = '<div class="oszto-feladat">';
+  for(const ch of String(a)) h += `<div class="szj">${ch}</div>`;
+  h += `<div class="jel">:</div><div class="szj">${b}</div><div class="jel">=</div>`;
+  for(let i=0;i<Q.length;i++) h += `<div class="rcella" id="rc${i}"></div>`;
+  h += '</div>';
+  $("kerdes").innerHTML = h;
+  ir = { digits: [...Q].map(Number), pos:0, hibas:false,
+         magy: osztasMagyarazat(a,b) };
+  jelolAktiv();
+}
+// az írásbeli osztás lépései a hibaüzenethez (a hányados jegyei balról jobbra)
+function osztasMagyarazat(a,b){
+  const aj = [...String(a)].map(Number), lq = String(Math.floor(a/b)).length;
+  const out = [];
+  let cur = 0, i = 0;
+  // az első hányados-jegyhez ennyi jegyet veszünk le
+  const elso = aj.length - lq + 1;
+  for(; i<elso; i++) cur = cur*10 + aj[i];
+  for(let k=0;k<lq;k++){
+    const qd = Math.floor(cur/b), r = cur - qd*b;
+    out.push(`${k+1}. jegy: ${cur} : ${b} = ${qd}, marad ${r}`);
+    cur = r*10 + (i<aj.length ? aj[i] : 0); i++;
   }
   return out;
 }
@@ -1891,8 +2062,8 @@ function ellenoriz(){
     v.className="visszajelzes jo"; v.innerHTML = dicseret();
     // gyenge tény javítva → kivesszük
     if(aktKerdes.teny) gyengeTenyek = gyengeTenyek.filter(f=>!(f[0]===aktKerdes.teny[0]&&f[1]===aktKerdes.teny[1]));
-    if(mod==="villam") setTimeout(kovetkezo, 350);
-    else if(aktKerdes.tipus==="valaszto") tovabbMutat();
+    if(idoMod()) setTimeout(kovetkezo, 350);
+    else if(aktKerdes.tipus==="valaszto"||aktKerdes.tipus==="allit") tovabbMutat();
     else keszNyil();
   } else {
     sorozat=0; if(p && p.classList) p.classList.add("rossz");
@@ -1903,8 +2074,8 @@ function ellenoriz(){
     hibak.push({ c:`${aktKerdes.cimke} → helyesen: ${aktKerdes.valasz}`,
                  tf:aktKerdes.tf||"", k:$("kerdes").innerHTML, f:v.innerHTML,
                  b:bevitel, g: aktKerdes.tipus==="valaszto" ? $("valaszgombok").innerHTML : "" });
-    if(mod==="villam") setTimeout(kovetkezo, 1500);
-    else if(aktKerdes.tipus==="valaszto") tovabbMutat();
+    if(idoMod()) setTimeout(kovetkezo, 1500);
+    else if(aktKerdes.tipus==="valaszto"||aktKerdes.tipus==="allit") tovabbMutat();
     else keszNyil();
   }
   naploFrissit();
@@ -1927,7 +2098,7 @@ function vege(){
   naploFrissit();
   frissitStat();
 }
-function ujraKor(){ mod==="villam" ? inditVillam() : inditKor(); }
+function ujraKor(){ idoMod() ? inditIdoKor(mod) : inditKor(); }
 
 /* ================= napló + szülői nézet ================= */
 const MODNEV = {szorzas:"Szorzótábla", helyi:"Helyiérték", muvelet:"Összeadás-kivonás",
@@ -1936,7 +2107,8 @@ const MODNEV = {szorzas:"Szorzótábla", helyi:"Helyiérték", muvelet:"Összead
                 lanc:"Láncszámolás", szoveges:"Szöveges", sorozat:"Sorozatok",
                 nyitott:"Nyitott mondatok", ora:"Óra", penz:"Pénz", becsles:"Becslés",
                 mertek:"Mértékegység", romai:"Római számok", sorrend:"Műveleti sorrend",
-                szamalkotas:"Számalkotás", tortek:"Törtek", negativ:"Negatív számok"};
+                szamalkotas:"Számalkotás", tortek:"Törtek", negativ:"Negatív számok",
+                vegyesido:"Vegyes ⚡"};
 // localStorage csak a weben él; az asztali artifact-nézetben tiltott lehet -> try/catch
 function naploOlvas(){ try{ return JSON.parse(localStorage.getItem("matekNaplo")||"[]"); }catch(e){ return null; } }
 let korId = null; // az aktuális kör napló-azonosítója
