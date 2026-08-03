@@ -191,6 +191,7 @@
   <h1>🦊 Matek Gyakorló</h1>
   <div class="koszonto" id="koszonto" onclick="nevSzerkeszt()" title="Kattints a név módosításához"></div>
   <div class="alcim" id="alcim">Ezres számkör · napi 10–15 perc</div>
+  <div class="alcim" id="kor-info" style="margin-top:-12px">1 kör = 10 feladat</div>
 
   <!-- MENÜ -->
   <div class="screen aktiv" id="scr-menu">
@@ -253,8 +254,7 @@
         <button onclick="leptet('db',-1)">−</button><b id="db-kijelzo">10</b><button onclick="leptet('db',1)">+</button></div>
     </div>
     <button class="fo-gomb megoszto" onclick="naploKuldes(this)" style="margin-top:8px">📤 Napló küldése</button>
-    <button class="masol-gomb" onclick="naploMasol(this)">📋 Formázott másolás (e-mailhez)</button>
-    <div class="tipp">💡 Egy kör = 10 feladat. A rövid, mindennapos gyakorlás ér a legtöbbet!<br>
+    <div class="tipp">💡 A rövid, mindennapos gyakorlás ér a legtöbbet!<br>
       <button class="szulo-link" onclick="szuloNezet()">👨‍👩‍👧 Szülőknek</button></div>
   </div>
 
@@ -840,6 +840,7 @@ function leptet(mez,d){
 function beallKijelez(){
   $("kor-kijelzo").textContent = beall.kor+" év";
   $("db-kijelzo").textContent = beall.dbKor;
+  $("kor-info").textContent = `1 kör = ${beall.dbKor} feladat`;
   const m = szamkor();
   $("alcim").textContent = `${m===20?"Húszas":m===100?"Százas":"Ezres"} számkör · napi 10–15 perc`;
   menuFrissit();
@@ -2208,6 +2209,13 @@ function naploSzoveg(){ // a szülői áttekintés látható formája szövegké
     const l = napok[k], j = l.reduce((x,e)=>x+e.jok,0), o = l.reduce((x,e)=>x+e.ossz,0);
     t += `• ${k}: ${l.length} kör, ${j}/${o} jó\n`;
   });
+  { const tj = n.reduce((x,e)=>x+e.jok,0), to = n.reduce((x,e)=>x+e.ossz,0);
+    t += `\nTeljes átlag: ${Math.round(100*tj/to)}% (${tj}/${to})\n`; }
+  t += "\nModulonként (összesen):\n";
+  { const mm = {};
+    n.forEach(e=>{ const x = mm[e.mod]=mm[e.mod]||[0,0]; x[0]+=e.jok; x[1]+=e.ossz; });
+    Object.entries(mm).sort().forEach(([md,[j,o]])=>{
+      t += `• ${MODNEV[md]||md}: ${Math.round(100*j/o)}% (${j}/${o})\n`; }); }
   t += "\nModulonként és korosztályonként:\n";
   const m = {};
   n.forEach(e=>{ const kulcs = `${e.mod}|${e.kor||0}`;
@@ -2241,6 +2249,15 @@ function naploHTML(){ // formázott változat e-mailbe illesztéshez (inline st�
     h += `<tr><td style="padding:2px 16px 2px 0;border-bottom:1px dashed #ddd">${k}</td>` +
          `<td style="padding:2px 0;border-bottom:1px dashed #ddd">${l.length} kör · <b>${j}/${o}</b> jó</td></tr>`;
   });
+  h += `</table>`;
+  { const tj = n.reduce((x,e)=>x+e.jok,0), to = n.reduce((x,e)=>x+e.ossz,0);
+    h += `<p style="margin:8px 0"><b>Teljes átlag: ${Math.round(100*tj/to)}%</b> <span style="color:#8a82b0">(${tj}/${to})</span></p>`; }
+  h += `<h3 style="color:#5b3fd9;margin:12px 0 4px">Modulonként (összesen)</h3><table style="border-collapse:collapse">`;
+  { const mm = {};
+    n.forEach(e=>{ const x = mm[e.mod]=mm[e.mod]||[0,0]; x[0]+=e.jok; x[1]+=e.ossz; });
+    Object.entries(mm).sort().forEach(([md,[j,o]])=>{
+      h += `<tr><td style="padding:2px 16px 2px 0;border-bottom:1px dashed #ddd">${MODNEV[md]||md}</td>` +
+           `<td style="padding:2px 0;border-bottom:1px dashed #ddd"><b>${Math.round(100*j/o)}%</b> <span style="color:#8a82b0">(${j}/${o})</span></td></tr>`; }); }
   h += `</table><h3 style="color:#5b3fd9;margin:12px 0 4px">Modulonként és korosztályonként</h3><table style="border-collapse:collapse">`;
   const m = {};
   n.forEach(e=>{ const kulcs = `${e.mod}|${e.kor||0}`;
@@ -2300,6 +2317,16 @@ function szuloNezet(){
     const l = napok[k], j = l.reduce((s,e)=>s+e.jok,0), o = l.reduce((s,e)=>s+e.ossz,0);
     h += `<div class="szulo-sor"><span>${k}</span><span>${l.length} kör · <b>${j}/${o}</b> jó</span></div>`;
   });
+  { const tj = n.reduce((x,e)=>x+e.jok,0), to = n.reduce((x,e)=>x+e.ossz,0);
+    h += `<div class="szulo-sor"><span><b>Teljes átlag</b></span>` +
+         `<span><b>${Math.round(100*tj/to)}%</b> <small>(${tj}/${to})</small></span></div>`; }
+  h += '<div class="szulo-cim">Modulonként (összesen)</div>';
+  { const mm = {};
+    n.forEach(e=>{ const x = mm[e.mod]=mm[e.mod]||[0,0]; x[0]+=e.jok; x[1]+=e.ossz; });
+    Object.entries(mm).sort().forEach(([md,[j,o]])=>{
+      h += `<div class="szulo-sor"><span>${MODNEV[md]||md}</span>` +
+           `<span><b>${Math.round(100*j/o)}%</b> <small>(${j}/${o})</small></span></div>`;
+    }); }
   h += '<div class="szulo-cim">Modulonként és korosztályonként</div>';
   const m = {};
   n.forEach(e=>{ const kulcs = `${e.mod}|${e.kor||0}`;
