@@ -247,8 +247,8 @@
       <div class="lepteto"><span>Feladat/kör</span>
         <button onclick="leptet('db',-1)">−</button><b id="db-kijelzo">10</b><button onclick="leptet('db',1)">+</button></div>
     </div>
-    <button class="fo-gomb megoszto" onclick="emailKuldes(this)" style="margin-top:8px">📧 Napló küldése e-mailben</button>
-    <button class="fo-gomb megoszto" onclick="viberKuldes(this)" style="margin-top:8px; background:#7360f2">💜 Napló küldése Viberen</button>
+    <button class="fo-gomb megoszto" onclick="naploKuldes(this)" style="margin-top:8px">📤 Napló küldése</button>
+    <button class="masol-gomb" onclick="naploMasol(this)">📋 Formázott másolás (e-mailhez)</button>
     <div class="tipp">💡 Egy kör = 10 feladat. A rövid, mindennapos gyakorlás ér a legtöbbet!<br>
       <button class="szulo-link" onclick="szuloKer()">👨‍👩‍👧 Szülőknek (PIN)</button></div>
   </div>
@@ -256,11 +256,6 @@
   <!-- SZÜLŐI NÉZET -->
   <div class="screen" id="scr-szulo">
     <div class="panel"><h2>👨‍👩‍👧 Szülői áttekintés</h2><div id="szulo-tartalom"></div></div>
-    <div class="panel" id="email-panel">
-      <div style="font-weight:700">📧 Címzett e-mail cím<br><small style="font-weight:400;color:var(--halvany)">ide megy a gyerek „Küldés e-mailben" gombja</small></div>
-      <input id="szulo-email" class="nev-input" type="email" placeholder="pl. szulo@gmail.com">
-      <button class="fo-gomb" onclick="emailMentes(this)">Cím mentése</button>
-    </div>
     <div class="panel" id="pin-panel" style="display:none">
       <div id="pin-szoveg" style="font-weight:700"></div>
       <input id="pin-input" class="pin-input" type="password" inputmode="numeric" maxlength="4" placeholder="PIN">
@@ -1681,34 +1676,11 @@ async function naploMasol(g){ // formázott másolat: e-mailbe illesztve megtart
       g.textContent = "Szövegként másolva ✔ (a formázott itt nem támogatott)"; }catch(_){}
   }
 }
-function linkNyit(url){ const a=document.createElement("a"); a.href=url; a.click(); }
-function szuloEmail(){ try{ return localStorage.getItem("matekSzuloEmail")||""; }catch(e){ return ""; } }
-function emailMentes(g){
-  const c = $("szulo-email").value.trim();
-  if(c && !c.includes("@")){ g.textContent="Ez nem tűnik e-mail címnek"; return; }
-  try{ localStorage.setItem("matekSzuloEmail", c); }catch(e){}
-  g.textContent = c ? "Cím elmentve ✔" : "Cím törölve";
-}
-function emailKuldes(g){
-  const t = naploSzoveg();
-  if(!t){ g.textContent = "Még nincs napló-bejegyzés"; return; }
-  const cim = szuloEmail();
-  if(!cim){ g.textContent = "Előbb a Szülőknek nézetben adj meg címet (PIN)"; return; }
-  let body = t;
-  if(body.length > 1600) body = body.slice(0,1600) + "\n… (a teljes napló a Szülőknek nézetben)";
-  linkNyit(`mailto:${cim}?subject=${encodeURIComponent("🦊 Matek napló")}&body=${encodeURIComponent(body)}`);
-}
-function viberKuldes(g){
-  const t = naploSzoveg();
-  if(!t){ g.textContent = "Még nincs napló-bejegyzés"; return; }
-  let body = t;
-  if(body.length > 1200) body = body.slice(0,1200) + "\n…";
-  linkNyit("viber://forward?text=" + encodeURIComponent(body));
-}
 function naploKuldes(g){
   const t = naploSzoveg();
   if(!t){ g.textContent = "Még nincs napló-bejegyzés"; return; }
-  megoszt(t, g);
+  if(navigator.share){ megoszt(t, g); return; } // telefonon: rendszer-megosztó (szöveg)
+  naploMasol(g); // asztali böngészőben: formázott (HTML) vágólapra
 }
 
 function naploIr(n){ try{ localStorage.setItem("matekNaplo", JSON.stringify(n)); }catch(e){} }
@@ -1717,8 +1689,6 @@ function szuloNezet(){
   mutat("scr-szulo"); pinMegse();
   $("szulo-kuldes").style.display="block";
   $("szulo-mindtorles").style.display="inline-block";
-  $("email-panel").style.display="block";
-  $("szulo-email").value = szuloEmail();
   const c = $("szulo-tartalom"), n = naploOlvas();
   if(n===null){ c.innerHTML = '<div class="szulo-ures">A napló ezen az eszközön nem érhető el (a böngészős változatban működik).</div>'; return; }
   if(!n.length){ c.innerHTML = '<div class="szulo-ures">Még nincs mentett kör. A befejezett körök ide automatikusan bekerülnek.</div>'; return; }
@@ -1781,7 +1751,6 @@ function szuloKer(){ // Szülőknek link: első alkalommal PIN kell
   $("szulo-tartalom").innerHTML = '<div class="szulo-ures">🔒 A szülői nézet PIN-kóddal védett.</div>';
   $("szulo-kuldes").style.display="none";
   $("szulo-mindtorles").style.display="none";
-  $("email-panel").style.display="none";
   fuggoTorles = "belep";
   $("pin-szoveg").textContent = "Add meg a szülői PIN-t:";
   $("pin-ok").textContent = "Belépés";
