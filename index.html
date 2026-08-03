@@ -79,6 +79,8 @@
   .pont.rossz{background:var(--piros);}
   .sorozat{font-weight:700; color:var(--sarga); font-size:1.05rem;}
   .tipus-sor{text-align:center; margin-bottom:7px; min-height:24px;}
+  .jatek-uzenet{text-align:center; font-size:.82rem; color:var(--turkiz); font-weight:600;
+                margin-bottom:5px; min-height:18px;}
   .tipus-sor span{display:inline-block; background:#e9e4fb; color:var(--lila-s);
     font-size:.85rem; font-weight:700; padding:3px 12px; border-radius:999px;}
   .kerdes{
@@ -333,6 +335,7 @@
       <div class="pontok" id="pontok"></div>
       <div class="sorozat" id="sorozat"></div>
     </div>
+    <div class="jatek-uzenet" id="jatek-uzenet"></div>
     <div class="tipus-sor" id="tipus-sor"></div>
     <div class="kerdes" id="kerdes"></div>
     <div class="valasz-kijelzo" id="kijelzo"></div>
@@ -369,12 +372,12 @@ const DICSERET = ["Szuper! 🌟","Ügyes vagy! 👏","Pontosan! ✨","Remek! �
                   "Ez az! 🙌","Zseniális! 🤩","Telitalálat! 🎯","Mesteri! 🥇","Így kell ezt! 🔥"];
 function nevOlvas(){ try{ return localStorage.getItem("matekNev"); }catch(e){ return ""; } }
 function dicseret(){
-  const n = nevOlvas();
-  if(n && Math.random()<0.4)
+  const n = nevOlvas(), r = Math.random();
+  if(n && r<0.2)
     return valaszt([`Ez az, ${n}! 🙌`,`${n}, ez profi volt! 😎`,`Ügyes vagy, ${n}! 🌟`,
                     `${n}, te matekbajnok vagy! 🏆`,`Így kell ezt, ${n}! 🔥`,
                     `${n}, a számok barátja! 🤝`,`Micsoda agy, ${n}! 🧠`]);
-  return valaszt(DICSERET);
+  return r<0.65 ? valaszt(DICSERET_HP) : valaszt(DICSERET);
 }
 const KOSZONTOK_NEVES = [
   "Szia {n}! Jó munkát! 💪","Hajrá {n}, ma is menni fog! 🚀",
@@ -435,15 +438,315 @@ const KOSZONTOK_HP = [
   "{n}, ma bűbájos napod lesz – kezdjük! 🌈",
   "Csintalanságom megvolt, {n} – most jöhet a matek! 😉"
 ];
+const KOSZONTOK_HP2 = [
+  // Házak és a Süveg
+  "{n}, a Süveg sokáig gondolkodna rajtad: mindegyik ház büszke lenne rád! 🎩",
+  "Griffendél kardja helyett ma a ceruzád a fegyvered, {n}! ⚔️",
+  "{n}, a Hugrabug címerállata a borz – szívós, mint te a gyakorlásban! 🦡",
+  "A Hollóhát jelszava mindig egy rejtvény, {n} – a tiéd ma a matek! 🧩",
+  "Mardekáros becsvágy, {n}: ma megdöntöd a saját rekordod! 🐍",
+  "{n}, tudtad? A Süveg Godric Gryffindor kalapja volt! 🎩",
+  "A házkupa 10 pontonként gyűlik, {n} – akárcsak a te köreid! 🏆",
+  "{n}, minden ház közös terme titkos – a tiéd a matektudásod! 🚪",
+  "A Griffendél toronyszobájából messze látni, {n} – te is láss túl a feladaton! 🗼",
+  "{n}, a Mardekár klubhelyisége a tó alatt van – merülj el a számokban! 🌊",
+  "A Hugrabug bejárata a konyha mellett van, {n} – tudás és uzsonna! 🥐",
+  "{n}, a Hollóhát ajtaja csak okos válaszra nyílik – a tiéd már nyitva! 🦅",
+  "Négy ház, egy iskola, {n} – ezer feladat, egy bajnok! 🏰",
+  "{n}, ma házkupadöntő: te a hibák ellen! 🥇",
+  "A pontszámláló homokórák megteltek, {n} – töltsd te is a naplód! ⏳",
+  "{n}, Godric, Rowena, Helga és Salazar is számolt – alapítani is tudni kell! 📐",
+  "A prefektusi jelvényhez szorgalom kell, {n} – jó úton jársz! 📛",
+  "{n}, a Süveg dala minden évben más – akár a te köszöntőid! 🎵",
+  "Iskolakezdés a Roxfortban: talárt fel, {n}, agyat be! 🥋",
+  "{n}, a legjobb griffendéles tulajdonság a bátorság – kezdd a nehezebbel! 🦁",
+  "A Hollóhát szelleme, a Szürke Hölgy is a tudást őrizte, {n}! 👻",
+  "{n}, félig sem olyan nehéz ez, mint a Süveg alatt ülni! 🪑",
+  "A talárod színe ma a szorgalom színe, {n}! 🎽",
+  "{n}, a roxforti évkönyvbe ma is kerül rólad egy jó sor! 📖",
+  "Házpontverseny áll, {n} – a te válaszaid billentik a mérleget! ⚖️",
+  // Varázsigék
+  "Accio figyelem, {n} – és kezdődhet a kör! 🪄",
+  "{n}, a Reparo megjavítja a hibát – nálad a Tovább gomb teszi! 🔧",
+  "Expelliarmus, {n} – fegyverezd le a nehéz példákat! ⚡",
+  "Protego, {n}! A gyakorlás a legjobb pajzs a hibák ellen! 🛡️",
+  "Nox után Lumos, {n} – minden hiba után jön egy jó válasz! 💡",
+  "{n}, a Riddikulus a félelmet neveti ki – nevesd ki te is a nehéz példát! 😄",
+  "Aguamenti, {n} – friss vizet az agynak, és hajrá! 💧",
+  "{n}, a Silencio a zajnak szól – csend, most matek van! 🤫",
+  "Wingardium Levi-Ó-za, {n} – a hangsúly a pontosságon van! 🪶",
+  "{n}, egy jól irányzott Stupor a feladatnak: állj, és megoldódsz! 💫",
+  "Orchideus, {n} – varázsolj virágot a naplódba hibátlan körrel! 💐",
+  "{n}, a Petrificus Totalus lefagyaszt – téged csak a csengő állítson meg! 🔔",
+  "Finite Incantatem, {n} – a rossz sorozatnak vége, újat kezdünk! 🔄",
+  "{n}, a varázsige kimondása is gyakorlást kíván – akár a szorzótábla! 🗣️",
+  "Egy suhintás, egy pöccintés, {n} – és kész a megoldás! ✨",
+  "{n}, a néma varázslat a legnehezebb – a fejszámolás a te néma varázslatod! 🧠",
+  "Alohomora a füzetnek, {n} – nyisd ki és számolj! 📓",
+  "{n}, Levicorpus! Emeld magasba az eredményeid! 🙃",
+  "Pálcamozdulat és pontos szó, {n} – képlet és pontos számolás! ➗",
+  "{n}, a rontáselhárítás alapja a figyelem – a hibaelhárításé is! 👀",
+  "Sonorus, {n} – hadd hallja mindenki: ma is gyakoroltál! 📢",
+  "{n}, egy Impervius a lustaság ellen, és indulhat a kör! 🌂",
+  "Varázsigék könyve helyett szorzótábla, {n} – ugyanolyan hatásos! 📕",
+  "{n}, a Patrónusod ma egy számjegy lesz – hívd elő! 🦌",
+  "Bombarda a legnehezebb feladatnak, {n} – robbantsd szét tudással! 💥",
+  // Tanárok és alakok
+  "{n}, Dumbledore szerint a szavak a legkimeríthetetlenebb varázserő – a számok se rosszabbak! 🧙",
+  "McGalagony sosem hibázik átváltoztatástan-órán, {n} – te is légy precíz! 🐈",
+  "{n}, Piton szigorú, de a pontosságot ő is díjazná! ⚗️",
+  "Flitwick professzor apró, de nagy varázsló, {n} – a kis lépések számítanak! 🪜",
+  "{n}, Bimba professzor szerint minden növény gondozást kíván – az agyad is! 🌱",
+  "Hagrid a legnagyobb szívű óriás, {n} – te a legnagyobb eszű számoló! 💚",
+  "{n}, Lupin tanár úr órái a legjobbak voltak – legyen ilyen a mai köröd is! 🌕",
+  "Trelawney jóslata mára: fényes siker vár rád, {n}! 🔮",
+  "{n}, Madam Hooch sípjára indul a meccs – az én jelemre a kör! 🏁",
+  "Madam Cvikker a könyvtár őre, {n} – a tudás nála is hatalom! 📚",
+  "{n}, Dumbledore citromport szopogat gondolkodás közben – neked mi segít? 🍋",
+  "Hermione szerint a könyvekben minden benne van, {n} – a gyakorlásban még több! 📖",
+  "{n}, Ron a varázslósakk bajnoka – te a fejszámolásé! ♟️",
+  "Harry az aranycikeszt kapta el elsőre, {n} – te a helyes választ! ⚡",
+  "{n}, Neville a gyógynövénytan mestere lett – mindenkinek van erőssége! 🌿",
+  "Luna másképp látja a világot, {n} – egy jó ötlet néha minden! 🌙",
+  "{n}, Dobby zoknit kapott és szabad lett – te tudást kapsz és erős leszel! 🧦",
+  "Sirius Tapmancsként is hűséges, {n} – légy hű a napi gyakorláshoz! 🐕",
+  "{n}, a Weasley-ikrek a humor mesterei – egy mosollyal könnyebb a matek! 😜",
+  "Molly Weasley órája mindig tudja, hol a család, {n} – a naplód tudja, hol tartasz! 🕰️",
+  "{n}, Ollivander szerint a pálca választja a varázslót – a matek már kiválasztott téged! 🪄",
+  "A Kóbor Grimbusz kalauza is fejben számol vissza, {n}! 🚌",
+  "{n}, Madam Pomfrey mindent gyógyít – a hibát a gyakorlás gyógyítja! 🏥",
+  "Hóborc kópé, de te fegyelmezett vagy, {n} – ma nincs rendetlenkedés! 🃏",
+  "{n}, Hisztis Myrta a hibákon kesereg – te inkább javítsd ki őket! 🚽",
+  // Kviddics és repülés
+  "{n}, a cikesz 150 pontot ér – egy hibátlan kör legalább annyit! 🟡",
+  "Seprűnyél egyenesbe, {n} – rajt! 🧹",
+  "{n}, a hajtók gólja 10 pont – akár egy jó válasz! 🥅",
+  "A terelők elütik a gurkót, {n} – te üsd el a figyelemzavart! 🏏",
+  "{n}, a fogó türelme hozza a győzelmet – várd ki a jó megoldást! 🧘",
+  "Tűzvillám sebesség, {n} – de a pontosság az igazi győztes! 🔥",
+  "{n}, a kviddicsvébé döntőjében is fejben tartják az állást! 📊",
+  "Hét játékos, hét feladat, {n} – csapatban az agyaddal! 7️⃣",
+  "{n}, a Böffentés-csel is gyakorlásból születik – a fejszámolás is! 🌀",
+  "Emelkedj a pálya fölé, {n} – onnan látszik az egész feladat! 🦅",
+  "{n}, egy jó fogó sosem veszi le a szemét a cikeszről – te se a feladatról! 👁️",
+  "A kapus hármat véd, te hármat számolsz, {n} – meccs! 🧤",
+  "{n}, szélcsend van, ideális idő egy gyakorlókörre! 🌤️",
+  "A lelátó rólad zúg ma, {n}! 📣",
+  "{n}, kviddicskupa-szabály: sosem adjuk fel, amíg a cikesz szabad! 🏆",
+  "Bal kanyar, jobb kanyar, {n} – a lényeg, hogy célba érj! 🎯",
+  "{n}, a seprűd ma a ceruzád – száguldj vele! ✏️",
+  "Időkérés! {n}, egy mély levegő, és folytatjuk! ⏸️",
+  "{n}, az edző mindig mondja: az alapok döntik el a meccset! 📋",
+  "Győztes szerelés, {n}: fejben erős, számolásban gyors! 💪",
+  "{n}, a kviddicsben nincs döntetlen – a te köröd is győzelemért megy! 🥇",
+  "Repülj alacsonyan, célozz pontosan, {n}! 🎯",
+  "{n}, még George és Fred is komolyan vette az edzést… na jó, majdnem! 😆",
+  "A szurkolók transzparense: HAJRÁ {n}! 🚩",
+  "{n}, ötven kör a pálya körül? Nem – tíz feladat, és tiéd a kupa! 🏟️",
+  // Mágikus lények
+  "{n}, a főnix könnye gyógyít – a gyakorlás a hibákat gyógyítja! 🐦‍🔥",
+  "A hippogriff előtt meghajlunk, {n} – a feladat előtt sosem! 🦅",
+  "{n}, a baziliszkusz tekintete elől nézz a füzetbe – ott biztonságos! 📓",
+  "Norbert, a sárkány is kicsiben kezdte, {n}! 🐉",
+  "{n}, a kentaurok a csillagokból olvasnak – te a számokból! ✨",
+  "A mandragóra sikít, {n} – a te agyad inkább zakatoljon! 🌱",
+  "{n}, Aragog családja nagy – de a te tudásod nagyobbra nő! 🕷️",
+  "A durrfarkú szurcsók robbanékony, {n} – a te tudásod is az! 🧨",
+  "{n}, a thesztrálokat kevesen látják – a jó megoldást te mindig meglátod! 🐴",
+  "Egy házimanó rendet tart, {n} – tarts rendet a számjegyek közt! 🧹",
+  "{n}, a kelpie alakot vált – a feladat is, de te átlátsz rajta! 🌊",
+  "A vérfarkas csak teliholdkor veszélyes, {n} – a hiba sosem az, ha tanulsz belőle! 🌕",
+  "{n}, a griffmadár őrzi a kincset – te a pontjaidat! 🦁",
+  "Csikócsőr csak az udvariasakat engedi közel, {n} – a matek a kitartókat! 🪶",
+  "{n}, a kis puffancs zsebben is elfér – akár a szorzótábla a fejedben! 🐹",
+  "A niffler aranyat keres, {n} – te a helyes választ! 🪙",
+  "{n}, a bowtruckle a pálcafát őrzi – te őrizd a sorozatod! 🌿",
+  "Hedvig mindig célba ér, {n} – a te válaszod is oda talál! 🦉",
+  "{n}, Agyar hangosan ugat, de szelíd – a nehéz feladat is ilyen! 🐶",
+  "A tűzrák szikrát szór, {n} – szórj te is: ötleteket! 🦀",
+  "{n}, a gnómok a kertben számolatlanul bujkálnak – számold meg őket fejben! 🧌",
+  "Az egyszarvú ritka csoda, {n} – akár egy hibátlan villámkör! 🦄",
+  "{n}, a sellők a tó mélyén énekelnek – a számok a füzet mélyén várnak! 🧜",
+  "A koboldok a bank mesterei, {n} – pénzszámolásban verhetetlenek! 🏦",
+  "{n}, még egy troll is megtanulná ezt – te viszont mesterfokon tudod majd! 🏔️",
+  // Helyszínek
+  "{n}, az Abszol úton ma akció van: minden jó válasz ingyen önbizalom! 🛍️",
+  "A Mézesfalás polcain minden édesség – a naplódban minden pont! 🍬",
+  "{n}, a Szellemszállás csak hírből ijesztő – akár a hosszú feladatok! 👻",
+  "Roxmortsba csak engedéllyel mehetsz, {n} – a következő szintre tudással! 🎫",
+  "{n}, a Tiltott Rengetegbe ne menj – a nehéz példákba nyugodtan! 🌲",
+  "A Minisztérium liftje minden szintre visz, {n} – a gyakorlás is! 🛗",
+  "{n}, a Gringotts trezorjai mélyen vannak – a tudásod is mélyüljön! 🏦",
+  "A King's Cross 9 és ¾. vágányáról indul a kaland, {n}! 🚂",
+  "{n}, a Nagyterem plafonja az eget mutatja – a te plafonod a csillagos ég! 🌌",
+  "A mozgó lépcsők néha máshová visznek, {n} – de te tudod az utat! 🪜",
+  "{n}, a pincében bájitaltan van – nálad most számbűvölés! ⚗️",
+  "A bagolyház tetejéről az egész birtok látszik, {n} – lásd át te is a feladatot! 🦉",
+  "{n}, a Szükség Szobája azzá válik, amire szükséged van – ma gyakorlóterem! 🚪",
+  "Az üvegházban veszélyes növények nőnek, {n} – a füzetedben okos számok! 🌵",
+  "{n}, a klubhelyiség kandallója mellett a lecke is jobban megy! 🔥",
+  "A hetedik emeleti folyosó titkokat rejt, {n} – a hetedik feladat is! 🤫",
+  "{n}, a Roxfort Expressz sosem késik – a napi gyakorlásod se késsen! 🚂",
+  "A csillagvizsgáló toronyból számoljuk a csillagokat, {n}! 🔭",
+  "{n}, a kastély 142 lépcsősora közül ma a tudás lépcsőjén mész felfelé! 🪜",
+  "A tanári szobába kopogni kell, {n} – a jó válaszhoz gondolkodni! ✊",
+  "{n}, a kis tantermekben születnek a nagy tudások! 🏫",
+  "A tóparton jól esik a pihenés, {n} – de előbb a kör! 🌅",
+  "{n}, Hagrid kunyhójában mindig akad sütemény – nálad mindig akad jó válasz! 🍪",
+  "A pufók hölgy portréja jelszót kér, {n} – a tiéd: gyakorlás! 🖼️",
+  "{n}, a sötét folyosón is végigmegy, aki tudja az utat – te tudod! 🕯️",
+  // Tárgyak és ereklyék
+  "{n}, a láthatatlanná tévő köpeny sem rejti el a tehetséged! 🧥",
+  "A Tekergők Térképén minden lépés látszik, {n} – a naplódban minden köröd! 🗺️",
+  "{n}, az Edevis tükre a vágyad mutatja – én egy hibátlan kört látok benne! 🪞",
+  "A cikesz emléke: minden kezdet nehéz, {n} – aztán szárnyal! 🟡",
+  "{n}, az időnyerővel Hermione dupla órára járt – neked elég napi egy kör! ⏳",
+  "A merengő a gondolatokat őrzi, {n} – a naplód az eredményeid! 💭",
+  "{n}, a Bölcsek Köve aranyat csinál – a gyakorlás tudást! 🪨",
+  "Az emlékeztető gömb pirosra vált, ha felejtesz, {n} – a napló nem felejt! 🔴",
+  "{n}, a pálcád magja ma tollpihe: könnyű kézzel írd a megoldást! 🪶",
+  "A mágikus sakk-készlet magától lép, {n} – a te fejed magától számol! ♟️",
+  "{n}, a Weasley-pulóver melegít – a dicséret lelkesít! 🧶",
+  "Az önmagát jegyzetelő penna kényelmes, {n} – de a fejszámolás menőbb! 🖋️",
+  "{n}, a zsupszkulcs bárhová röpít – a tudásod messzebbre! 🥾",
+  "A hoppanálás vizsgaköteles, {n} – a szorzótábla is! 💨",
+  "{n}, a Hop-porral kandallóból kandallóba – feladatról feladatra! 🟢",
+  "A kviddicskupa vitrinben áll, {n} – a te neved a naplóban ragyog! 🏆",
+  "{n}, a szemfényvesztő kalapból nyúl ugrik – a fejedből megoldás! 🐇",
+  "A mágikus fényképek mozognak, {n} – a te eredményeid emelkednek! 📈",
+  "{n}, a süvegben levél, a levélben meghívó: gyakorolni hívnak! ✉️",
+  "Az ordító levél hangos, {n} – a te sikered hangosabb! 📨",
+  "{n}, a csokibéka ugrik egyet – ugorj te is a következő feladatra! 🐸",
+  "A Bogoly Berti-féle mindenízű drazsé kockázatos, {n} – a gyakorlás sosem! 🍬",
+  "{n}, a galleonok aranyból vannak – a szorgalom aranyat ér! 🪙",
+  "A pálcatok a derekadon, füzet a kezedben, {n} – így indul a nap! 📔",
+  "{n}, a varázsvilág legjobb térképe is számokból áll: méretarány! 📏",
+  // Rejtély és titok
+  "{n}, a mai kör titkos küldetés: a hibamentes átjutás! 🕵️",
+  "Rejtély: melyik szám hiányzik, {n}? Te percek alatt kideríted! ❓",
+  "{n}, a Titkok Kamrája is megnyílt – a te tudásod kamrája is nyílik! 🐍",
+  "Egy titkos ajtó csak a kitartóknak nyílik, {n} – kopogtass számokkal! 🚪",
+  "{n}, a mai jelszó: kitartás. Add tovább… vagyis inkább tartsd meg! 🤐",
+  "Nyomozz, {n}: hol bujkál a helyes válasz? 🔎",
+  "{n}, minden feladat egy rejtvény – és te vagy a mesterdetektív! 🕵️‍♀️",
+  "A titokzatos idegen ma jó hírt hoz, {n}: menni fog! 🎭",
+  "{n}, a kincsesláda három zárral nyílik: figyelem, tudás, türelem! 🗝️",
+  "Susognak a portrék, {n}: azt mondják, ma nagy napod lesz! 🖼️",
+  "{n}, a láthatatlan tinta is előtűnik – akár a megoldás, ha ránézel! 🫥",
+  "A rejtélyes 7-es: hét feladat, hét siker, {n}? Kiderül! 7️⃣",
+  "{n}, egy jó rejtvényhez fej kell – szerencsére neked pont van! 🧠",
+  "A folyosó végén fény dereng, {n} – az a kör vége, indulj! 🔦",
+  "{n}, senki sem tudja, mi lesz a következő feladat… izgalmas, ugye? 🎲",
+  "A jóskristály homályos, {n} – de a szorgalmad tisztán látszik! 🔮",
+  "{n}, a legenda szerint aki ma gyakorol, holnap varázsol! 📜",
+  "Pszt, {n}… a titok az, hogy nincs titok: gyakorolni kell! 🤫",
+  "{n}, a labirintus közepén a kupa vár – minden válasz egy lépés! 🌀",
+  "Ki járt itt előtted, {n}? Valaki, aki szintén gyakorolt – és nyert! 👣",
+  "{n}, a zárt könyvtári részleg tiltott – a te tudásodnak nincs tiltott része! 📚",
+  "Éjféli rejtély helyett délutáni matek, {n} – ugyanolyan izgalmas! 🌗",
+  "{n}, a megfejtés kulcsa nálad van: a két füled között! 🗝️",
+  "Nyomkövető bűbáj bekapcsolva, {n}: követjük a fejlődésed! 📍",
+  "{n}, egy titkos szövetség tagja vagy: a Gyakorlók Rendjéé! 🛡️",
+  // Mágikus érdekességek és számok
+  "Tudtad, {n}? A varázsvilágban a 7 a legerősebb mágikus szám! 7️⃣",
+  "{n}, a Gringottsban 1 galleon = 17 sarló – a koboldok is átváltanak! 🪙",
+  "Tudtad, {n}? 1 sarló éppen 29 knút – ez ám a fejszámolás! 🧮",
+  "{n}, a Roxfort Expressz pontban 11-kor indul – az idő is szám! 🕚",
+  "Tudtad, {n}? A kviddicsben a cikeszfogás 150 pont – nagy szorzó! ✖️",
+  "{n}, a Roxfortban 142 lépcsősor van – ki számolta meg vajon? 🪜",
+  "Tudtad, {n}? Az időnyerő percre pontos – a matek is az! ⏱️",
+  "{n}, a bűbájokhoz pontos mozdulat kell – fokokban mérve! 📐",
+  "Tudtad, {n}? A csillagjóslás is táblázatokkal dolgozik! 📊",
+  "{n}, a bájitalfőzés arányokon múlik: 3 csepp, 2 kavarás… csupa matek! ⚗️",
+  "Tudtad, {n}? A rúnák megfejtése kódfejtés – akár egy egyenlet! 🔤",
+  "{n}, a mágikus sakktáblán 64 mező van – itt is a számok uralkodnak! ♟️",
+  "Tudtad, {n}? A Kóbor Grimbuszon a jegy ára attól függ, kérsz-e kakaót! 🚌",
+  "{n}, egy varázsló párbajban a szög és a távolság dönt – geometria! 📏",
+  "Tudtad, {n}? A teliholdak közt 29-30 nap telik el – naptármatek! 🌕",
+  "{n}, a főnix 500 évig is él – hány gyakorlókör fér bele? 🐦‍🔥",
+  "Tudtad, {n}? A kviddicspálya 150 méter hosszú – mérjük fel fejben! 📏",
+  "{n}, a láthatatlanná tévő köpeny alatt is ketyeg az óra – az idő számít! ⌚",
+  "Tudtad, {n}? Az Abszol úton a 93. szám a Weasley Varázsvicc Vállalat! 🎪",
+  "{n}, a jóslattanterem a északi torony tetején van – sok-sok lépcső, számold! 🗼",
+  "Tudtad, {n}? A varázslósakkban a királynő a legerősebb – a matekban a gyakorlás! 👑",
+  "{n}, hét évfolyam van a Roxfortban – te melyik szinten állsz ma? 🎓",
+  "Tudtad, {n}? A baziliszkusz több száz évig nőtt akkorára – a tudás is nő! 🐍",
+  "{n}, a Nagyteremben négy hosszú asztal áll – osztás négyfelé! 🍽️",
+  "Tudtad, {n}? A mágiaminisztérium mélyén jóslatgömbök ezreit számozták meg! 🔮",
+  // Bájitalok, tantárgyak és minden más
+  "{n}, a bájitalhoz recept kell – a feladathoz módszer! 📋",
+  "Százfűlé-főzet helyett százszor-tudás, {n}! 🧪",
+  "{n}, a Felix Felicis a szerencse itala – a tiéd a felkészülés! 🍀",
+  "Átváltoztatástan: számból eredmény, {n} – ez a te szakod! 🔁",
+  "{n}, sötét varázslatok kivédése helyett ma hibák kivédése! 🛡️",
+  "A legendás mágiatörténet-óra altató, {n} – a matek sosem az! 😴",
+  "{n}, számmisztika a Roxfortban is tantárgy – Hermione kedvence! 🔢",
+  "Gyógynövénytan-szabály, {n}: türelemmel minden kihajt – a tudás is! 🌱",
+  "{n}, a jóslástan bizonytalan – a matek biztos! ⚖️",
+  "Bűbájtan-lecke, {n}: a pontosság fél siker! ✨",
+  "{n}, a mugliismeret szerint a muglik számológépet nyomkodnak – te fejben vagy! 🧠",
+  "Az RBF vizsgán csupa kiváló, {n} – kezdd a gyakorlással! 📜",
+  "{n}, a RAVASZ szint már mesterfok – afelé tartasz! 🎯",
+  "Dolgozatírás a Roxfortban pergamenre megy, {n} – nálad érintőképernyőre! 📱",
+  "{n}, a legjobb tanulók titka: napi egy kör, eső után is! 🌧️",
+  "A szünetben csokibéka, óra után matek, {n} – tökéletes nap! 🐸",
+  "{n}, a kastély könyvtárában 60 000 könyv van – de a lényeg a fejedben! 📚",
+  "Írd a leckét úgy, {n}, hogy még Piton se találjon benne hibát! ✍️",
+  "{n}, egy pont a részvételért, tíz a tudásért – gyűjtsd mindkettőt! 🎖️",
+  "A tanév legjobb bűbája, {n}: az elkezdett kör befejezése! 🏁",
+  "{n}, a varázsló is ember: hibázik, javít, fejlődik – akár te! 🌟",
+  "Vizsgaidőszak a Roxfortban? Nálad csak egy vidám kör, {n}! 😊",
+  "{n}, jegyezd meg: a legnagyobb varázslat a kitartás! 💫",
+  "Utolsó óra előtt még egy kör, {n} – aztán jöhet a csokibéka! 🍫",
+  "{n}, a Roxfort mottója: sose csiklandozz alvó sárkányt – de számolni bátran számolj! 🐉"
+];
+const DICSERET_HP = [
+  "10 pont a Griffendélnek! 🦁","Varázslatos! ✨","Cikeszfogás! 🟡","A Süveg is tapsol! 🎩",
+  "Hermione is elismerne! 📚","Dumbledore-i bölcsesség! 🧙","Merlin szakállára – tökéletes! 🧔",
+  "RBF: Rendkívüli! 📜","Kiváló, akár egy prefektus! 📛","McGalagony is elmosolyodna! 🐈",
+  "Piton is bólintana! ⚗️","Ez igazi bűbáj volt! 🪄","Főnix-szintű válasz! 🐦‍🔥",
+  "Aranycikesz-gyorsaság! ⚡","Tűzvillám-tempó! 🧹","Házkupa-győztes válasz! 🏆",
+  "Felix Felicis se kellett! 🍀","Patrónus-erejű megoldás! 🦌","Lumos! Ragyogó válasz! 💡",
+  "Accio siker – és megjött! 🎯","Bölcsek Köve-fényesség! 🪨","Egy varázslónak is becsületére válna! 🧙‍♂️",
+  "A Tekergők is megsüvegelnék! 🗺️","Roxforti színvonal! 🏰","Hollóhátas ész! 🦅",
+  "Griffendéles bátorság! 🦁","Hugrabugos pontosság! 🦡","Mardekári ravaszság! 🐍",
+  "A Nagyterem tapsol! 👏","Ollivander is ilyet választana! 🪄","Időnyerő nélkül is gyors! ⏳",
+  "Kviddicskupa-döntő szintű! 🥇","Hét pont a hét varázslóért! 7️⃣","Galleont érő válasz! 🪙",
+  "A Szürke Hölgy is büszke! 👻","Flitwick professzor bravózik! 🎩","Hagrid szerint: csuda klassz! 💚",
+  "Luna szerint is különleges! 🌙","Neville-i fejlődés! 🌿","Weasley-vigyor jár érte! 😜",
+  "Dobby szabadon ugrál örömében! 🧦","Hedvig elvinné a jó hírt! 🦉","A cikesz a kezedben! 🟡",
+  "Egy pont a homokórába! ⏳","A portrék is tapsolnak! 🖼️","A Nagyterem plafonja felragyogott! 🌌",
+  "Zsupszkulcs a következő szintre! 🥾","A pufók hölgy is beenged! 🖼️","Jelszó elfogadva! 🗝️",
+  "A Süveg kiáltja: ZSENI! 🎩","Bagolyposta: kitűnő! ✉️","Csokibéka-kártyára kívánkozol! 🃏",
+  "A merengőbe való pillanat! 💭","Edevis tükre: egy győztest mutat! 🪞","Ez ám a fejszámoló-bűbáj! 🧠",
+  "A koboldok is megirigyelnék! 🏦","Gringotts-pontosság! 💎","A kentaurok is ezt jósolták! ✨",
+  "Egyszarvú-ritkaságú válasz! 🦄","A niffler aranyat talált – te választ! 🪙","Mandragóra-ébresztő siker! 🌱",
+  "Sárkányszelídítő teljesítmény! 🐉","Hippogriff-elegancia! 🦅","Trimágus-bajnoki válasz! 🔥",
+  "A serleg téged választott! 🏆","Expecto Eredményum! 🦌","Expelliarmus – lefegyverző! ⚡",
+  "Protego-pontosság! 🛡️","Wingardium Levi-Ó-hoho! 🪶","Reparo se kell – hibátlan! 🔧",
+  "Alohomora – kinyílt a tudás! 🚪","Riddikulus-nak a kétség! 😄","Finite – a feladat legyőzve! ✅",
+  "Sonorus: HURRÁ! 📢","Orchideus-szép megoldás! 💐","Aguamenti-frissességű agy! 💧",
+  "Bombarda-erejű válasz! 💥","Lángoló serleg-szintű! 🔥","Szellemek is megsüvegelnek! 👻",
+  "Hóborc most az egyszer néma! 🃏","A prefektusok példaként említenek! 📜","Évkönyvbe illő pillanat! 📖",
+  "A klubhelyiség zeng! 🎉","Roxmortsi hétvégét érdemelsz! 🎫","Mézesfalás-édes siker! 🍬",
+  "Vajsör jár érte! 🍺","A Kóbor Grimbusz is fékezett – ekkora válasz! 🚌","Minisztériumi dicséret! 🏛️",
+  "Aranyos, mint 150 pont! 🌟","A homokóra csordultig! ⏳","Mesteri pálcamunka! 🪄",
+  "A Szükség Szobája is kitárult! 🚪","Legendás, mint a kard! ⚔️","A Tiltott Rengeteg is elámult! 🌲",
+  "Csillagjós se látta volna szebben! 🔮","A rúnák is ezt írják: ügyes! 🔤","Számmisztikailag tökéletes! 🔢",
+  "A bájital pont jó arányú! ⚗️","Óriásléptű haladás! 🏔️","A thesztrálok is odanéztek! 🐴",
+  "Kentaur-pontosságú! 🏹","Világító, mint a Lumos Maxima! 💡","A kviddicskommentátor ujjong! 📣",
+  "Bátor, mint egy éjféli kaland! 🌙","A 9 és ¾. vágányon a helyed! 🚂","Varázslóvizsga: kitüntetéssel! 🎓"
+];
 const KOSZONTOK_SIMA = [
   "Szia! Jó munkát! 💪","Hajrá, ma is menni fog! 🚀","Minden kör egy szint felfelé! 🆙",
   "A gyakorlás bajnokot csinál! 🏆","Kalandra fel! A számok várnak! 🗺️"
 ];
-function frissitKoszonto(){
+function veletlenUzenet(){
   const n = nevOlvas();
-  $("koszonto").textContent = n ? valaszt(KOSZONTOK_NEVES.concat(KOSZONTOK_HP)).replaceAll("{n}", n)
-                                : valaszt(KOSZONTOK_SIMA);
+  return n ? valaszt(KOSZONTOK_NEVES.concat(KOSZONTOK_HP, KOSZONTOK_HP2)).replaceAll("{n}", n)
+           : valaszt(KOSZONTOK_SIMA);
 }
+function frissitKoszonto(){ $("koszonto").textContent = veletlenUzenet(); }
 const RAG = {1:"es",2:"es",3:"as",4:"es",5:"ös",6:"os",7:"es",8:"as",9:"es",10:"es"};
 // névelő: "az" ha a szám kiejtése magánhangzóval kezdődik (1, 5, 5xx)
 const nevelo = x => { const sz=Math.floor(x/100)%10, t=Math.floor(x/10)%10;
@@ -512,9 +815,13 @@ const stat = { szorzas:[0,0], helyi:[0,0], muvelet:[0,0], potlas:[0,0], irasbeli
                tortek:[0,0], negativ:[0,0] }; // [jó, összes]
 
 /* ================= képernyőváltás ================= */
+let menuScroll = 0; // a főmenü görgetési pozíciója (lapfrissítéskor nullázódik)
 function mutat(id){
+  if($("scr-menu").classList.contains("aktiv") && id!=="scr-menu") menuScroll = window.scrollY;
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("aktiv"));
   $(id).classList.add("aktiv");
+  if(id==="scr-menu") requestAnimationFrame(()=>window.scrollTo(0, menuScroll));
+  else window.scrollTo(0,0);
 }
 function menu(){ clearInterval(villamTimer); villamAktiv=false; hibaCache=null; mutat("scr-menu"); frissitStat(); frissitKoszonto(); }
 function frissitStat(){
@@ -1423,6 +1730,7 @@ function kovetkezo(elso){
   if(mod==="villam" && !villamAktiv){ villamVege(); return; }
   if(!elso && kerdesek>=korHossz){ vege(); return; }
   aktKerdes = ujKerdes(); bevitel=""; zarolva=false; ir=null;
+  $("jatek-uzenet").textContent = veletlenUzenet(); // egy feladat, egy üzenet
   keszVisszaall(); $("tovabb").disabled=false;
   $("tipus-sor").innerHTML = aktKerdes.tf ? `<span>${aktKerdes.tf}</span>` : "";
   $("visszajelzes").className="visszajelzes"; $("visszajelzes").innerHTML="";
