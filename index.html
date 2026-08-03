@@ -279,6 +279,7 @@
     <div class="valasz-kijelzo" id="hiba-kijelzo" style="color:#b3283e"></div>
     <div class="valaszgombok" id="hiba-gombok" style="display:none"></div>
     <div class="visszajelzes rossz" id="hiba-uzenet" style="display:block"></div>
+    <button class="fo-gomb megoszto" id="hiba-ujra" onclick="hibaUjra()">🔁 Újra megoldom</button>
     <button class="fo-gomb" onclick="szuloNezet()">← vissza a naplóhoz</button>
   </div>
 
@@ -835,7 +836,7 @@ function mutat(id){
   if(id==="scr-menu") requestAnimationFrame(()=>window.scrollTo(0, menuScroll));
   else window.scrollTo(0,0);
 }
-function menu(){ clearInterval(villamTimer); villamAktiv=false; hibaCache=null; mutat("scr-menu"); frissitStat(); frissitKoszonto(); }
+function menu(){ clearInterval(villamTimer); villamAktiv=false; hibaCache=null; ujraMod=false; mutat("scr-menu"); frissitStat(); frissitKoszonto(); }
 function frissitStat(){
   let o=0,j=0; Object.values(stat).forEach(s=>{ j+=s[0]; o+=s[1]; });
   $("stat-sor").textContent = o ? `Ma eddig: ${j} jó válasz ${o} feladatból` : "";
@@ -1567,8 +1568,9 @@ function allitIndit(){
 }
 function allitMod(dh,dm){
   if(zarolva || !allit) return;
-  allit.h = ((allit.h-1+dh+12)%12)+1;
-  allit.m = (allit.m+dm+60)%60;
+  const ossz = (((allit.h%12)*60 + allit.m) + dh*60 + dm + 720) % 720;
+  allit.h = Math.floor(ossz/60)===0 ? 12 : Math.floor(ossz/60);
+  allit.m = ossz % 60;
   allitRajzol();
 }
 function allitRajzol(){ const e=$("allit-ora"); if(e) e.innerHTML = oraSVG(allit.h, allit.m); }
@@ -1759,6 +1761,7 @@ function genVegyes(){
 
 /* ================= körvezérlés ================= */
 function inditKor(){
+  ujraMod=false;
   kerdesek=0; jok=0; sorozat=0; maxSorozat=0; hibak=[]; korId=Date.now();
   mutat("scr-game"); rajzolPontok(); kovetkezo(true);
 }
@@ -1791,7 +1794,7 @@ function inditVegyesPanel(){
   else { mod="vegyes"; korHossz=beall.dbKor; inditKor(); }
 }
 function inditIdoKor(uzemmod){
-  mod=uzemmod; korHossz=9999;
+  ujraMod=false; mod=uzemmod; korHossz=9999;
   kerdesek=0; jok=0; sorozat=0; maxSorozat=0; hibak=[]; korId=Date.now();
   mutat("scr-game");
   $("pontok").innerHTML = `<span class="ido" id="ido">⏱ ${villamIdo}</span>`;
@@ -1855,10 +1858,21 @@ function rajzolPontok(){
   const c=$("pontok"); c.innerHTML="";
   for(let i=0;i<korHossz;i++){ const d=document.createElement("div"); d.className="pont"; c.appendChild(d);}
 }
-function kovetkezo(elso){
+function hibaUjra(){ // a naplóból ugyanaz a feladat még egyszer; új tételként naplózódik
+  if(!aktHiba || !aktHiba.q) return;
+  ujraMod = true;
+  mod = aktHiba.q.modul || "vegyes";
+  korHossz = 1; kerdesek=0; jok=0; sorozat=0; maxSorozat=0; hibak=[]; korId=Date.now();
+  mutat("scr-game"); rajzolPontok();
+  kovetkezo(true, JSON.parse(JSON.stringify(aktHiba.q)));
+}
+function kovetkezo(elso, fixKerdes){
   if(idoMod() && !villamAktiv){ villamVege(); return; }
-  if(!elso && kerdesek>=korHossz){ vege(); return; }
-  aktKerdes = ujKerdes(); bevitel=""; zarolva=false; ir=null;
+  if(!elso && kerdesek>=korHossz){
+    if(ujraMod){ ujraMod=false; hibaCache=null; szuloNezet(); return; }
+    vege(); return;
+  }
+  aktKerdes = fixKerdes || ujKerdes(); bevitel=""; zarolva=false; ir=null;
   frissitKoszonto(); // a felső üzenet pörög: egy feladat, egy üzenet
   keszVisszaall(); $("tovabb").disabled=false;
   $("tipus-sor").innerHTML = aktKerdes.tf ? `<span>${aktKerdes.tf}</span>` : "";
@@ -2004,7 +2018,7 @@ function irKesz(){
     sorozat=0; p.classList.add("rossz");
     hibak.push({ c:`${aktKerdes.cimke} → helyesen: ${aktKerdes.eredmeny}`,
                  tf:aktKerdes.tf||"", k:ir.snap?ir.snap.k:$("kerdes").innerHTML,
-                 f:ir.snap?ir.snap.f:"", b:"", g:"" });
+                 f:ir.snap?ir.snap.f:"", b:"", g:"", q: {...aktKerdes} });
     v.className="visszajelzes rossz";
     v.innerHTML=`Kijött a végeredmény, de volt piros számjegy.<span class="hint">${aktKerdes.cimke} = ${aktKerdes.eredmeny} — nézzétek meg, melyik oszlopnál akadt el!</span>`;
     keszNyil();
@@ -2073,7 +2087,8 @@ function ellenoriz(){
     v.innerHTML = `Nem baj! A helyes válasz: <b>${aktKerdes.valasz}</b><span class="hint">${aktKerdes.hint}</span>`;
     hibak.push({ c:`${aktKerdes.cimke} → helyesen: ${aktKerdes.valasz}`,
                  tf:aktKerdes.tf||"", k:$("kerdes").innerHTML, f:v.innerHTML,
-                 b:bevitel, g: aktKerdes.tipus==="valaszto" ? $("valaszgombok").innerHTML : "" });
+                 b:bevitel, g: aktKerdes.tipus==="valaszto" ? $("valaszgombok").innerHTML : "",
+                 q: {...aktKerdes} });
     if(idoMod()) setTimeout(kovetkezo, 1500);
     else if(aktKerdes.tipus==="valaszto"||aktKerdes.tipus==="allit") tovabbMutat();
     else keszNyil();
@@ -2268,10 +2283,13 @@ function szuloNezet(){
 }
 
 /* ---- hiba-visszanézés (pillanatkép) ---- */
+let aktHiba = null, ujraMod = false;
 function hibaMutat(ei,hi){
   const n = naploOlvas(); if(!n || !n[ei] || !n[ei].hibak[hi]) return;
   const x = n[ei].hibak[hi];
   if(typeof x === "string" || !x.k) return;
+  aktHiba = x;
+  $("hiba-ujra").style.display = x.q ? "block" : "none";
   $("hiba-tipus").innerHTML = x.tf ? `<span>${x.tf}</span>` : "";
   $("hiba-kerdes").innerHTML = x.k;
   $("hiba-kijelzo").textContent = x.b || "";
