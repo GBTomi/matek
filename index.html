@@ -1885,7 +1885,13 @@ function leptet(mez,d){
   beallMent(); beallKijelez();
 }
 const AVATAROK = ["🦊","🐱","🐼","🐢","🐶","🐰","🐨","🦁","🐯","🐸","🐵","🐻","🐹","🐭","🦉","🐷"];
-function avatarAlkalmaz(){ $("avatar-gomb").textContent = beall.avatar || "🦊"; }
+function avatarAlkalmaz(){
+  const a = beall.avatar || "🦊";
+  $("avatar-gomb").textContent = a;
+  const ikon = document.querySelector("link[rel='icon']");
+  if(ikon) ikon.href = "data:image/svg+xml," + encodeURIComponent(
+    "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>"+a+"</text></svg>");
+}
 function avatarPanelNyit(){
   $("avatar-racs").innerHTML = AVATAROK.map(a =>
     `<button class="${a===(beall.avatar||"🦊")?"aktiv":""}" onclick="avatarValaszt('${a}')">${a}</button>`).join("");
