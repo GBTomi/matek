@@ -79,8 +79,6 @@
   .pont.rossz{background:var(--piros);}
   .sorozat{font-weight:700; color:var(--sarga); font-size:1.05rem;}
   .tipus-sor{text-align:center; margin-bottom:7px; min-height:24px;}
-  .jatek-uzenet{text-align:center; font-size:.82rem; color:var(--turkiz); font-weight:600;
-                margin-bottom:5px; min-height:18px;}
   .tipus-sor span{display:inline-block; background:#e9e4fb; color:var(--lila-s);
     font-size:.85rem; font-weight:700; padding:3px 12px; border-radius:999px;}
   .kerdes{
@@ -335,7 +333,6 @@
       <div class="pontok" id="pontok"></div>
       <div class="sorozat" id="sorozat"></div>
     </div>
-    <div class="jatek-uzenet" id="jatek-uzenet"></div>
     <div class="tipus-sor" id="tipus-sor"></div>
     <div class="kerdes" id="kerdes"></div>
     <div class="valasz-kijelzo" id="kijelzo"></div>
@@ -1730,7 +1727,7 @@ function kovetkezo(elso){
   if(mod==="villam" && !villamAktiv){ villamVege(); return; }
   if(!elso && kerdesek>=korHossz){ vege(); return; }
   aktKerdes = ujKerdes(); bevitel=""; zarolva=false; ir=null;
-  $("jatek-uzenet").textContent = veletlenUzenet(); // egy feladat, egy üzenet
+  frissitKoszonto(); // a felső üzenet pörög: egy feladat, egy üzenet
   keszVisszaall(); $("tovabb").disabled=false;
   $("tipus-sor").innerHTML = aktKerdes.tf ? `<span>${aktKerdes.tf}</span>` : "";
   $("visszajelzes").className="visszajelzes"; $("visszajelzes").innerHTML="";
