@@ -383,13 +383,65 @@ const KOSZONTOK_NEVES = [
   "Szia {n}! Melyikkel kezdjük ma? 😊","{n}, ma is ügyesebb leszel, mint tegnap! ⭐",
   "Kalandra fel, {n}! A számok várnak! 🗺️","{n}, egy kör csak 10 perc – vágj bele! ⏱️"
 ];
+const KOSZONTOK_HP = [
+  "Szia {n}! A Teszlek Süveg szerint ma a Számbűvölők házába kerülsz! 🎩",
+  "{n}, ragadd meg a pálcád: Matematicus Maximus! ✨",
+  "Roxforti szint, {n}: a mai kör egy bűbájtan-óra! 🏰",
+  "{n}, gyorsabb vagy, mint az aranycikesz! 🟡",
+  "Griffendéles bátorság, {n} – vágj bele! 🦁",
+  "Hollóhátas ész, {n} – neked ez menni fog! 🦅",
+  "Hugrabugos kitartás, {n} – a gyakorlás a titok! 🦡",
+  "Mardekáros ravaszság, {n} – találd meg a legrövidebb utat! 🐍",
+  "{n}, 10 pont a házadnak minden jó válaszért! 🏆",
+  "A bagoly ma jó híreket visz rólad, {n}! 🦉",
+  "{n}, a számok a te varázsigéid! ✨",
+  "Kviddicsedzés helyett fejszámoló-edzés, {n}! 🧹",
+  "Expecto Matekónum, {n}! 🦌",
+  "{n}, Dumbledore is büszke lenne rád! 🧙",
+  "McGalagony professzor figyel, {n} – mutasd meg! 👩‍🏫",
+  "Bájitaltan helyett számtan, {n} – itt nem robban semmi! ⚗️",
+  "{n}, a matek a legerősebb varázslat! 🪄",
+  "Seprűre fel, {n} – repüljünk át a feladatokon! 🧹",
+  "{n}, egy igazi számvarázsló sosem adja fel! 🎩",
+  "Lumos, {n}! Világítsd be a feladatokat! 💡",
+  "{n}, a Szükség Szobája ma gyakorlóterem! 🚪",
+  "Alohomora, {n} – nyisd ki a számok kapuját! 🗝️",
+  "{n}, gyűjtsd a pontokat, mint Harry a cikeszt! 🏅",
+  "A Tekergők Térképe szerint a következő kör vár, {n}! 🗺️",
+  "{n}, még Hermione is elismerne ezért! 📚",
+  "Wingardium Leviosa, {n} – szárnyaljon az eszed! 🪶",
+  "{n}, a varázslósakknál is izgalmasabb kör vár! ♟️",
+  "Kezdődjön a Trimágus Számtusa, {n}! 🔥",
+  "{n}, minden kör egy lépés a Roxfort felé! 🏰",
+  "A galleonokat is számolni kell, {n} – gyakorolj! 🪙",
+  "{n}, te vagy a kiválasztott… a mai matekhoz! ⚡",
+  "Ne félj a nehéz feladattól, {n} – csak egy leheletnyi bűbáj! 🌀",
+  "{n}, a főnix is újra meg újra felszáll – próbáld bátran! 🐦‍🔥",
+  "Sárkányszelídítés helyett számszelídítés, {n}! 🐉",
+  "{n}, hét számfeladvány vár ma legyőzésre! 🗡️",
+  "Kapd elő a pálcád… azaz az ujjad, {n}! ☝️",
+  "{n}, a Süveg azt súgja: zseni leszel! 🎩",
+  "Varázsold hibátlanra a kört, {n}! ✨",
+  "{n}, a prefektusok is így kezdték! 📜",
+  "Az Odú is tele van számokkal, {n} – számold a Weasley-ket! 🏠",
+  "{n}, matekból te vagy Roxfort bajnoka! 🏆",
+  "Óvakodj a hibamanóktól, {n} – figyelj a részletekre! 🧌",
+  "{n}, egy kör matek = egy üveg agyerősítő bájital! 🧪",
+  "Fel a fejjel, {n} – még Neville-ből is hős lett! 🌟",
+  "{n}, jóslástan helyett biztos tudomány: a matek! 🔭",
+  "Accio helyes válasz, {n}! 🪄",
+  "{n}, a Roxfort Expressz a 9 és ¾-ről indul – a törtek is barátok! 🚂",
+  "Legyen veled a varázserő, {n}… és a szorzótábla! ✳️",
+  "{n}, ma bűbájos napod lesz – kezdjük! 🌈",
+  "Csintalanságom megvolt, {n} – most jöhet a matek! 😉"
+];
 const KOSZONTOK_SIMA = [
   "Szia! Jó munkát! 💪","Hajrá, ma is menni fog! 🚀","Minden kör egy szint felfelé! 🆙",
   "A gyakorlás bajnokot csinál! 🏆","Kalandra fel! A számok várnak! 🗺️"
 ];
 function frissitKoszonto(){
   const n = nevOlvas();
-  $("koszonto").textContent = n ? valaszt(KOSZONTOK_NEVES).replaceAll("{n}", n)
+  $("koszonto").textContent = n ? valaszt(KOSZONTOK_NEVES.concat(KOSZONTOK_HP)).replaceAll("{n}", n)
                                 : valaszt(KOSZONTOK_SIMA);
 }
 const RAG = {1:"es",2:"es",3:"as",4:"es",5:"ös",6:"os",7:"es",8:"as",9:"es",10:"es"};
@@ -464,7 +516,7 @@ function mutat(id){
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("aktiv"));
   $(id).classList.add("aktiv");
 }
-function menu(){ clearInterval(villamTimer); villamAktiv=false; mutat("scr-menu"); frissitStat(); frissitKoszonto(); }
+function menu(){ clearInterval(villamTimer); villamAktiv=false; hibaCache=null; mutat("scr-menu"); frissitStat(); frissitKoszonto(); }
 function frissitStat(){
   let o=0,j=0; Object.values(stat).forEach(s=>{ j+=s[0]; o+=s[1]; });
   $("stat-sor").textContent = o ? `Ma eddig: ${j} jó válasz ${o} feladatból` : "";
@@ -1510,7 +1562,7 @@ function keszGomb(){
 function keszNyil(){ // hibás válasz után a pipa nyíllá válik, 3 mp-ig tiltva
   const g=$("kesz-gomb"); g.textContent="→"; g.classList.add("nyil");
   keszVar=true; keszTiltva=true;
-  setTimeout(()=>{ keszTiltva=false; g.classList.add("aktiv"); }, 2000);
+  setTimeout(()=>{ keszTiltva=false; g.classList.add("aktiv"); }, 1000);
 }
 function keszVisszaall(){
   const g=$("kesz-gomb"); g.textContent="✔"; g.classList.remove("nyil","aktiv");
@@ -1518,7 +1570,7 @@ function keszVisszaall(){
 }
 function tovabbMutat(){ // választós feladatoknál marad a Tovább, 3 mp zárral
   const t=$("tovabb"); t.style.display="block"; t.disabled=true;
-  setTimeout(()=>{ t.disabled=false; }, 2000);
+  setTimeout(()=>{ t.disabled=false; }, 1000);
 }
 function ellenoriz(){
   if(zarolva || ir || keszVar || bevitel==="") return;
@@ -1709,14 +1761,25 @@ function szuloNezet(){
     h += `<div class="szulo-sor"><span>${nev}</span><span><b>${Math.round(100*j/o)}%</b> <small>(${j}/${o})</small>` +
          ` <button class="szulo-torol" onclick="torlesKer('${kulcs}')" title="Kategória naplójának törlése">🗑</button></span></div>`;
   });
-  // hibák: kattintható pillanatképek (a régi, szöveges bejegyzések nem kattinthatók)
-  const hibaSorok = [];
-  n.forEach((e,ei)=> e.hibak.forEach((x,hi)=>
-    hibaSorok.push({ ei, hi, d:new Date(e.t).toLocaleDateString("hu-HU"), x })));
-  const utolso = hibaSorok.slice(-12).reverse();
-  if(utolso.length){
+  // hibák: kattintható pillanatképek; szűrő: mind / csak új
+  const osszes = [];
+  n.forEach((e,ei)=> e.hibak.forEach((x,hi)=> osszes.push({ ei, hi, x })));
+  if(hibaCache===null){ // a lista csak szűrő-váltáskor vagy új belépéskor számolódik újra
+    let szurt = osszes;
+    if(hibaSzuro==="uj") szurt = osszes.filter(f=> !(typeof f.x!=="string" && f.x.m));
+    hibaCache = szurt.slice(-20).map(f=>({ei:f.ei, hi:f.hi}));
+  }
+  if(osszes.length){
     h += '<div class="szulo-cim">Legutóbbi hibák – koppints a visszanézéshez</div>';
-    utolso.forEach(f=>{
+    h += `<div class="valaszto" style="margin-bottom:6px">` +
+         `<button class="chip${hibaSzuro==="mind"?" on":""}" onclick="hibaSzures('mind')">mind</button>` +
+         `<button class="chip${hibaSzuro==="uj"?" on":""}" onclick="hibaSzures('uj')">csak új</button></div>`;
+    const sorok = hibaCache
+      .map(({ei,hi})=> (n[ei] && n[ei].hibak[hi]!==undefined)
+        ? { ei, hi, d:new Date(n[ei].t).toLocaleDateString("hu-HU"), x:n[ei].hibak[hi] } : null)
+      .filter(Boolean).reverse();
+    if(!sorok.length) h += '<div class="szulo-ures">Nincs új hiba – minden át van nézve! 🎉</div>';
+    sorok.forEach(f=>{
       const obj = typeof f.x !== "string";
       const cim = obj ? f.x.c : f.x;
       const cls = "szulo-sor" + (obj && f.x.k ? " hiba":"") + (obj && f.x.m ? " megnezve":"");
@@ -1745,6 +1808,8 @@ function hibaMutat(ei,hi){
 
 /* ---- PIN-védett belépés és törlések (PIN: 9999) ---- */
 let fuggoTorles = null, szuloBelepve = false;
+let hibaSzuro = "mind", hibaCache = null; // a lista csak új szűrésre frissül, visszanézéskor nem
+function hibaSzures(f){ hibaSzuro = f; hibaCache = null; szuloNezet(); }
 function szuloKer(){ // Szülőknek link: első alkalommal PIN kell
   if(szuloBelepve){ szuloNezet(); return; }
   mutat("scr-szulo");
@@ -1781,6 +1846,7 @@ function pinOk(){
   else if(fuggoTorles){ const [md,kr] = fuggoTorles.split("|");
     const n = naploOlvas()||[];
     naploIr(n.filter(e=>!(e.mod===md && String(e.kor||0)===kr))); }
+  if(fuggoTorles!=="belep") hibaCache=null; // törlés után friss lista
   szuloNezet(); // pinMegse-t is meghívja, és újraszámolja a statisztikát
 }
 
