@@ -116,6 +116,7 @@
   .visszajelzes.jo{display:block; background:#dff7ec; color:#177a4f;}
   .visszajelzes.rossz{display:block; background:#ffe3e8; color:#b3283e;}
   .visszajelzes .hint{display:block; font-weight:400; font-size:.92rem; margin-top:6px;}
+  .visszajelzes .vigasz{font-style:italic; opacity:.85; font-size:.88rem;}
   .tovabb{margin-top:8px; background:var(--lila); color:#fff; border:none;
           border-radius:12px; padding:9px; font-size:1.05rem; font-weight:700;
           width:100%; cursor:pointer; display:none;}
@@ -750,6 +751,58 @@ const DICSERET_HP = [
   "Kentaur-pontosságú! 🏹","Világító, mint a Lumos Maxima! 💡","A kviddicskommentátor ujjong! 📣",
   "Bátor, mint egy éjféli kaland! 🌙","A 9 és ¾. vágányon a helyed! 🚂","Varázslóvizsga: kitüntetéssel! 🎓"
 ];
+const VIGASZ_HP = [
+  "Még Harry is leesett elsőre a seprűről – aztán bajnok lett! 🧹",
+  "Neville is sokat hibázott, mégis hős lett belőle! 🌟",
+  "A főnix a hamuból születik újra – próbáld meg újra! 🐦‍🔥",
+  "Dumbledore szerint a hibáinkból tanulunk a legtöbbet. 🧙",
+  "Hermione is utánanézett, ha valami nem ment elsőre. 📚",
+  "Egy félresikerült bájital még nem bukott vizsga! ⚗️",
+  "Ron első varázsigéje se sikerült – ma mégis nevetünk rajta! 😄",
+  "A cikeszt se fogják meg minden meccsen – lesz következő! 🟡",
+  "Még Ollivander pálcái se találnak elsőre gazdát. 🪄",
+  "A Roxfortba se egy nap alatt jut el a levél. 🦉",
+  "Minden nagy varázsló hibázott már – ettől lettek nagyok. ✨",
+  "A Süveg is gondolkodik, mielőtt dönt – gondolkodj te is, és újra menni fog! 🎩",
+  "Egy rossz kanyar a labirintusban még nem a vége! 🌀",
+  "A varázsigék is csak sokadik próbára sikerülnek. 🗣️",
+  "Hagrid szerint: nem baj, ha nagyot esel, ha nagyot is állsz fel! 💚",
+  "McGalagony is elrontotta az első átváltoztatását. 🐈",
+  "A Tekergők Térképe is sok tévútból készült el. 🗺️",
+  "Egy gurkó-találat után is folytatódik a meccs! 🏏",
+  "Lassan járj, tovább érsz – még seprűn is. 🧹",
+  "A Szükség Szobája is csak a harmadik körre nyílik ki. 🚪",
+  "Luna szerint a hibák csak másképp sikerült próbálkozások. 🌙",
+  "A csokibéka is kiugrik néha – aztán megvan! 🐸",
+  "Egy elrontott lépés a varázslósakkban még nem matt. ♟️",
+  "Az időnyerővel se sikerülne minden elsőre. ⏳",
+  "A bagoly is eltéved néha, de a levél célba ér. 📨",
+  "Merlin se lett egy nap alatt Merlin. 🧔",
+  "A gyakorlás a legjobb varázslat – és te épp azt csinálod! 💫",
+  "Kis lépés a tudásnak, nagy lépés a házkupának! 🏆",
+  "A Kóbor Grimbusz is kanyarog, mégis megérkezik. 🚌",
+  "Dobby is sokat ügyetlenkedett, mégis mindenki szerette. 🧦",
+  "A mandragóra is sírdogál, mielőtt megnő. 🌱",
+  "Egy felhős nap a kviddicspályán se szegi kedved! 🌧️",
+  "A következő feladat egy új esély – varázsold jóra! 🪄",
+  "A Griffendél pontokat veszített, mégis nyert kupát. 🦁",
+  "Nem a pálca számít, hanem aki fogja – próbáld újra! ✋",
+  "A Bölcsek Köve is sok kísérletből született. 🪨",
+  "Egy kihagyott gól után jön a legszebb találat! 🥅",
+  "Piton is elrontotta az első bájitalát… na jó, ő talán nem – de te tanulsz belőle! ⚗️",
+  "A hibát a Reparo nem javítja – de a következő próbád igen! 🔧",
+  "Még a Nagyterem gyertyái is pislákolnak néha. 🕯️",
+  "A hoppanáláshoz is sok gyakorlás kell – ne add fel! 💨",
+  "Egy botlás a mozgó lépcsőn még nem eltévedés. 🪜",
+  "A jó fogó a kihagyott cikesz után is figyel tovább. 👀",
+  "A varázslóvizsgát se elsőre írja mindenki kitűnőre. 🎓",
+  "Hiba nélkül nincs tanulás – ezt minden roxforti tudja. 🏰",
+  "A sárkányt se egy nap alatt szelídítik meg. 🐉",
+  "A legjobb történetekben is van nehéz fejezet – lapozz tovább! 📖",
+  "Az aranycikesz még a levegőben van – kapd el a következőt! 🟡",
+  "Egy kis Lumos a sötétben: nézd meg a segítséget, és menni fog! 💡",
+  "A bátorság nem az, hogy sosem hibázol – hanem hogy újra próbálod. 🦁"
+];
 const KOSZONTOK_SIMA = [
   "Szia! Jó munkát! 💪","Hajrá, ma is menni fog! 🚀","Minden kör egy szint felfelé! 🆙",
   "A gyakorlás bajnokot csinál! 🏆","Kalandra fel! A számok várnak! 🗺️"
@@ -873,7 +926,7 @@ function megnyit(m){
   if(m==="villam"){ rajzolTablakBe("villam-tabla-valaszto");
     chipsor("villam-ido-valaszto", IDO_OPCIOK,
       ()=>String(villamIdo), v=>{villamIdo=+v;}); }
-  if(m==="lanc") chipsor("lanc-valaszto",[["3","3 lépés"],["4","4 lépés"],["5","5 lépés"]],
+  if(m==="lanc") chipsor("lanc-valaszto",[["2","2 lépés"],["3","3 lépés"],["4","4 lépés"],["5","5 lépés"]],
       ()=>String(lancLepes), v=>{lancLepes=+v;});
   if(m==="ora") rajzolOra();
   if(m==="vegyes"){
@@ -1602,6 +1655,7 @@ function genBecsles(){
   return { szoveg:`<b>Körülbelül</b> mennyi<br><span class="nagy">${a} ${ossz?"+":"−"} ${b}</span> ?`,
            tipus:"valaszto", opciok, valasz:val,
            hint:`${a} ≈ ${ka} és ${b} ≈ ${kb} → ${ka} ${ossz?"+":"−"} ${kb} = ${val}`,
+           pontos:`${a} ${ossz?"+":"−"} ${b} = ${ossz?a+b:a-b}`,
            modul:"becsles", cimke:`becslés: ${a} ${ossz?"+":"−"} ${b}`, tf:"Becslés · kerekítéssel" };
 }
 
@@ -2020,7 +2074,8 @@ function irKesz(){
                  tf:aktKerdes.tf||"", k:ir.snap?ir.snap.k:$("kerdes").innerHTML,
                  f:ir.snap?ir.snap.f:"", b:"", g:"", q: {...aktKerdes} });
     v.className="visszajelzes rossz";
-    v.innerHTML=`Kijött a végeredmény, de volt piros számjegy.<span class="hint">${aktKerdes.cimke} = ${aktKerdes.eredmeny} — nézzétek meg, melyik oszlopnál akadt el!</span>`;
+    v.innerHTML=`Kijött a végeredmény, de volt piros számjegy.<span class="hint">${aktKerdes.cimke} = ${aktKerdes.eredmeny} — nézzétek meg, melyik oszlopnál akadt el!</span>`
+      + `<span class="hint vigasz">${valaszt(VIGASZ_HP)}</span>`;
     keszNyil();
   }
   naploFrissit();
@@ -2073,7 +2128,8 @@ function ellenoriz(){
   if(jo){
     jok++; sorozat++; maxSorozat=Math.max(maxSorozat,sorozat); s[0]++;
     if(p && p.classList) p.classList.add("jo");
-    v.className="visszajelzes jo"; v.innerHTML = dicseret();
+    v.className="visszajelzes jo"; v.innerHTML = dicseret()
+      + (aktKerdes.pontos ? `<span class="hint">Pontosan: ${aktKerdes.pontos}</span>` : "");
     // gyenge tény javítva → kivesszük
     if(aktKerdes.teny) gyengeTenyek = gyengeTenyek.filter(f=>!(f[0]===aktKerdes.teny[0]&&f[1]===aktKerdes.teny[1]));
     if(idoMod()) setTimeout(kovetkezo, 350);
@@ -2084,7 +2140,9 @@ function ellenoriz(){
     if(aktKerdes.teny && !gyengeTenyek.some(f=>f[0]===aktKerdes.teny[0]&&f[1]===aktKerdes.teny[1]))
       gyengeTenyek.push(aktKerdes.teny);
     v.className="visszajelzes rossz";
-    v.innerHTML = `Nem baj! A helyes válasz: <b>${aktKerdes.valasz}</b><span class="hint">${aktKerdes.hint}</span>`;
+    v.innerHTML = `A helyes válasz: <b>${aktKerdes.valasz}</b><span class="hint">${aktKerdes.hint}</span>`
+      + (aktKerdes.pontos ? `<span class="hint">Pontosan: ${aktKerdes.pontos}</span>` : "")
+      + `<span class="hint vigasz">${valaszt(VIGASZ_HP)}</span>`;
     hibak.push({ c:`${aktKerdes.cimke} → helyesen: ${aktKerdes.valasz}`,
                  tf:aktKerdes.tf||"", k:$("kerdes").innerHTML, f:v.innerHTML,
                  b:bevitel, g: aktKerdes.tipus==="valaszto" ? $("valaszgombok").innerHTML : "",
