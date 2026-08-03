@@ -214,25 +214,26 @@
       <button class="vissza" id="nev-torles" style="display:none" onclick="nevTorles()">Név törlése</button>
       <button class="vissza" onclick="nevMegse()">Most nem</button>
     </div>
+    <div class="valaszto" id="targy-valaszto" style="justify-content:center; margin-bottom:10px"></div>
     <button class="modul" id="menu-szorzas" onclick="megnyit('szorzas')"><span class="ikon">✖️</span>
       <span>Szorzótábla<small>2-től 10-ig, a nehezebbeket többször kérdezi</small></span></button>
-    <button class="modul" onclick="megnyit('helyi')"><span class="ikon">🏗️</span>
+    <button class="modul" id="menu-helyi" onclick="megnyit('helyi')"><span class="ikon">🏗️</span>
       <span>Helyiérték és számok<small>százasok-tízesek-egyesek, kerekítés, szomszédok</small></span></button>
-    <button class="modul" onclick="megnyit('muvelet')"><span class="ikon">➕➖</span>
+    <button class="modul" id="menu-muvelet" onclick="megnyit('muvelet')"><span class="ikon">➕➖</span>
       <span>Összeadás és kivonás<small>1000-ig, átlépéssel vagy anélkül</small></span></button>
     <button class="modul" id="menu-irasbeli" onclick="megnyit('irasbeli')"><span class="ikon">✍️</span>
       <span>Írásbeli számolás<small>egymás alatt, számjegyenként – mint a füzetben</small></span></button>
-    <button class="modul" onclick="megnyit('potlas')"><span class="ikon">🎯</span>
+    <button class="modul" id="menu-potlas" onclick="megnyit('potlas')"><span class="ikon">🎯</span>
       <span>Pótlás<small>mennyi hiányzik 100-ig, 1000-ig?</small></span></button>
     <button class="modul" id="menu-osztas" onclick="megnyit('osztas')"><span class="ikon">➗</span>
       <span>Bennfoglalás, osztás<small>a szorzótábla párja, maradékkal is</small></span></button>
     <button class="modul" id="menu-villam" onclick="megnyit('villam')"><span class="ikon">⚡</span>
       <span>Villámkör<small>1 perc – hány szorzás fér bele?</small></span></button>
-    <button class="modul" onclick="inditSzamegyenes()"><span class="ikon">📏</span>
+    <button class="modul" id="menu-szamegyenes" onclick="inditSzamegyenes()"><span class="ikon">📏</span>
       <span>Számegyenes<small>hol van a szám 0 és 1000 között?</small></span></button>
-    <button class="modul" onclick="megnyit('lanc')"><span class="ikon">🔗</span>
+    <button class="modul" id="menu-lanc" onclick="megnyit('lanc')"><span class="ikon">🔗</span>
       <span>Láncszámolás<small>több lépés fejben, egymás után</small></span></button>
-    <button class="modul" onclick="inditSzoveges()"><span class="ikon">📖</span>
+    <button class="modul" id="menu-szoveges" onclick="inditSzoveges()"><span class="ikon">📖</span>
       <span>Szöveges feladatok<small>rövid történet – melyik művelet kell?</small></span></button>
     <button class="modul" id="menu-sorozat" onclick="inditSorozat()"><span class="ikon">🔁</span>
       <span>Sorozatok<small>mi a szabály? folytasd a sort!</small></span></button>
@@ -268,6 +269,20 @@
       <span>Hányféleképpen?<small>sorbaállítás, párosítás, mérkőzések</small></span></button>
     <button class="modul" id="menu-egyenlotlen" onclick="inditEgyenlotlen()"><span class="ikon">🚦</span>
       <span>Egyenlőtlenség<small>▢ + 3 &lt; 12 – mennyi lehet a ▢?</small></span></button>
+    <button class="modul" id="menu-mgh" onclick="inditMgh()"><span class="ikon">🅰️</span>
+      <span>Magánhangzók<small>rövid vagy hosszú? o-ó, u-ú, i-í…</small></span></button>
+    <button class="modul" id="menu-jly" onclick="inditJly()"><span class="ikon">🪶</span>
+      <span>J vagy Ly?<small>go▢ó, fo▢ó – melyik betű hiányzik?</small></span></button>
+    <button class="modul" id="menu-szotag" onclick="inditSzotag()"><span class="ikon">👏</span>
+      <span>Szótagolás<small>hány szótagból áll a szó?</small></span></button>
+    <button class="modul" id="menu-irasjel" onclick="inditIrasjel()"><span class="ikon">❕</span>
+      <span>Mondatvégi írásjel<small>pont, kérdőjel vagy felkiáltójel?</small></span></button>
+    <button class="modul" id="menu-anszo" onclick="inditAnszo()"><span class="ikon">🇬🇧</span>
+      <span>Angol szókincs<small>állatok, színek, család, iskola…</small></span></button>
+    <button class="modul" id="menu-anszam" onclick="inditAnszam()"><span class="ikon">🔢</span>
+      <span>Angol számok<small>seven = ? – írd be számmal</small></span></button>
+    <button class="modul" id="menu-anbetuz" onclick="inditAnbetuz()"><span class="ikon">🔤</span>
+      <span>Angol betűzés<small>rakd ki betűnként az angol szót!</small></span></button>
     <button class="modul" onclick="megnyit('vegyes')"><span class="ikon">🎲</span>
       <span>Vegyes kör<small>mindenből egy kicsit – simán vagy időre</small></span></button>
     <div class="statsor" id="stat-sor"></div>
@@ -1865,12 +1880,13 @@ const nevelo = x => { const sz=Math.floor(x/100)%10, t=Math.floor(x/10)%10;
 const Nevelo = x => nevelo(x)==="az" ? "Az" : "A";
 
 /* ================= beállítások (életkor, kör-hossz) ================= */
-let beall = { kor:9, dbKor:10, tema:"hp", avatar:"🦊" };
+let beall = { kor:9, dbKor:10, tema:"hp", avatar:"🦊", targy:"matek" };
 function beallMent(){ try{ localStorage.setItem("matekBeall", JSON.stringify(beall)); }catch(e){} }
 function beallTolt(){ try{ const x=JSON.parse(localStorage.getItem("matekBeall"));
   if(x && x.kor>=7 && x.kor<=11 && x.dbKor>=5 && x.dbKor<=20){
     if(!x.tema || !TEMAK[x.tema]) x.tema="hp";
     if(!x.avatar || !AVATAROK.includes(x.avatar)) x.avatar="🦊";
+    if(!x.targy || !TANTARGYAK[x.targy]) x.targy="matek";
     beall=x; } }catch(e){} }
 const szamkor = () => beall.kor<=7 ? 20 : beall.kor===8 ? 100 : 1000;
 const nehezKor = () => beall.kor>=10;
@@ -1879,7 +1895,8 @@ function korTablak(){ kivTablak.clear();
 function leptet(mez,d){
   if(mez==="kor"){ const regi=beall.kor;
     beall.kor=Math.min(11,Math.max(7,beall.kor+d));
-    if(beall.kor!==regi) korTablak(); }
+    if(beall.kor!==regi) korTablak();
+    if(beall.kor<=7 && beall.targy==="angol") beall.targy="matek"; }
   else beall.dbKor=Math.min(20,Math.max(5,beall.dbKor+d));
   beallMent(); beallKijelez();
 }
@@ -1918,25 +1935,49 @@ function beallKijelez(){
 }
 // kerettanterv szerint: 1. osztályban nincs szorzás/osztás/írásbeli művelet,
 // az írásbeli összeadás-kivonás 3. osztálytól tananyag
+const TANTARGYAK = { // bővíthető: új kulcs = új tantárgy
+  matek: { nev:"Matek", modulok:["szorzas","helyi","muvelet","irasbeli","potlas","osztas",
+    "villam","szamegyenes","lanc","szoveges","sorozat","nyitott","ora","penz","becsles",
+    "mertek","romai","sorrend","szamalkotas","tortek","negativ","igazhamis","jelek",
+    "kakukk","tablazat","kombi","egyenlotlen"] },
+  nyelvtan: { nev:"Nyelvtan", modulok:["mgh","jly","szotag","irasjel"] },
+  angol: { nev:"Angol", modulok:["anszo","anszam","anbetuz"] }
+};
+function targyValt(k){
+  beall.targy = k; beallMent(); beallKijelez();
+}
+function rajzolTargyak(){
+  const c = $("targy-valaszto"); if(!c) return;
+  c.innerHTML="";
+  for(const [k,t] of Object.entries(TANTARGYAK)){
+    if(k==="angol" && beall.kor<=7) continue; // idegen nyelv később kezdődik
+    const g=document.createElement("button");
+    g.className="chip"+(beall.targy===k?" on":"");
+    g.textContent=t.nev; g.onclick=()=>targyValt(k);
+    c.appendChild(g);
+  }
+}
 function rejtettModulok(){
   const k = beall.kor;
   if(k<=7) return ["szorzas","osztas","villam","irasbeli",
                    "becsles","mertek","romai","sorrend","szamalkotas","tortek","negativ",
-                   "kakukk","tablazat","kombi","egyenlotlen"];
-  if(k===8) return ["irasbeli","becsles","mertek","romai","sorrend","tortek","negativ","kombi"];
+                   "kakukk","tablazat","kombi","egyenlotlen",
+                   "jly","szotag","irasjel","anszo","anszam","anbetuz"];
+  if(k===8) return ["irasbeli","becsles","mertek","romai","sorrend","tortek","negativ","kombi",
+                    "anbetuz"];
   if(k===9) return ["tortek","negativ"];
   if(k===10) return ["negativ"];
   return [];
 }
-const MIND_MODUL = ["szorzas","osztas","villam","irasbeli","becsles","mertek","romai",
-                    "sorrend","szamalkotas","tortek","negativ","sorozat","nyitott","ora","penz",
-                    "igazhamis","jelek","kakukk","tablazat","kombi","egyenlotlen"];
 function menuFrissit(){
   const rejtett = rejtettModulok();
-  MIND_MODUL.forEach(k=>{
+  const sajat = (TANTARGYAK[beall.targy]||TANTARGYAK.matek).modulok;
+  const osszes = [...new Set(Object.values(TANTARGYAK).flatMap(t=>t.modulok))];
+  osszes.forEach(k=>{
     const e = $("menu-"+k);
-    if(e) e.style.display = rejtett.includes(k) ? "none" : "flex";
+    if(e) e.style.display = (sajat.includes(k) && !rejtett.includes(k)) ? "flex" : "none";
   });
+  rajzolTargyak();
 }
 
 /* ================= állapot ================= */
@@ -1953,7 +1994,9 @@ const stat = { szorzas:[0,0], helyi:[0,0], muvelet:[0,0], potlas:[0,0], irasbeli
                sorozat:[0,0], nyitott:[0,0], ora:[0,0], penz:[0,0], becsles:[0,0],
                mertek:[0,0], romai:[0,0], sorrend:[0,0], szamalkotas:[0,0],
                tortek:[0,0], negativ:[0,0], igazhamis:[0,0], jelek:[0,0],
-               kakukk:[0,0], tablazat:[0,0], kombi:[0,0], egyenlotlen:[0,0] }; // [jó, összes]
+               kakukk:[0,0], tablazat:[0,0], kombi:[0,0], egyenlotlen:[0,0],
+               mgh:[0,0], jly:[0,0], szotag:[0,0], irasjel:[0,0],
+               anszo:[0,0], anszam:[0,0], anbetuz:[0,0] }; // [jó, összes]
 
 /* ================= képernyőváltás ================= */
 let menuScroll = 0; // a főmenü görgetési pozíciója (lapfrissítéskor nullázódik)
@@ -3065,7 +3108,217 @@ function genEgyenlotlen(){
            modul:"egyenlotlen", cimke:`▢ × ${b} < ${c}`, tf:"Egyenlőtlenség · szorzással" };
 }
 
+/* ================= NYELVTAN és ANGOL tantárgy (v27) ================= */
+const MGH_SZAVAK = [ // [csonk, két lehetőség, helyes, teljes szó]
+  ["ajt▢",["o","ó"],"ó","ajtó"],["oll▢",["o","ó"],"ó","olló"],["haj▢",["o","ó"],"ó","hajó"],
+  ["orv▢s",["o","ó"],"o","orvos"],["b▢grács",["o","ó"],"o","bogrács"],["cip▢",["ö","ő"],"ő","cipő"],
+  ["erd▢",["ö","ő"],"ő","erdő"],["id▢",["ö","ő"],"ő","idő"],["tük▢r",["ö","ő"],"ö","tükör"],
+  ["▢sz",["ö","ő"],"ő","ősz"],["h▢z",["u","ú"],"ú","húz"],["k▢t",["u","ú"],"ú","kút"],
+  ["f▢j",["u","ú"],"ú","fúj"],["▢szik",["u","ú"],"ú","úszik"],["k▢tya",["u","ú"],"u","kutya"],
+  ["▢jj",["u","ú"],"u","ujj"],["kap▢",["u","ú"],"u","kapu"],["bet▢",["ü","ű"],"ű","betű"],
+  ["fés▢",["ü","ű"],"ű","fésű"],["t▢z",["ü","ű"],"ű","tűz"],["f▢rdik",["ü","ű"],"ü","fürdik"],
+  ["▢l",["ü","ű"],"ü","ül"],["v▢z",["i","í"],"í","víz"],["h▢d",["i","í"],"í","híd"],
+  ["pap▢r",["i","í"],"í","papír"],["▢r",["i","í"],"í","ír"],["h▢r",["i","í"],"í","hír"],
+  ["▢gér",["i","í"],"í","ígér"],["k▢csi",["i","í"],"i","kicsi"],["▢skola",["i","í"],"i","iskola"],
+  ["vir▢g",["a","á"],"á","virág"],["mad▢r",["a","á"],"á","madár"],["▢blak",["a","á"],"a","ablak"],
+  ["sz▢k",["e","é"],"é","szék"],["eg▢r",["e","é"],"é","egér"]
+].filter(x=>x[1].length===2);
+const LY_SZAVAK = ["lyuk","golyó","gólya","folyó","folyosó","mosoly","bagoly","sirály","harkály",
+  "király","kastély","erkély","osztály","szabály","veszély","tavaly","mély","hely","ilyen",
+  "olyan","milyen","súly","selyem","moly","kályha","pálya"];
+const J_SZAVAK = ["jég","jön","jegy","játék","ajtó","hajó","fej","haj","vaj","tej","sajt","fúj",
+  "díj","új","tuja","papagáj","tolvaj","olaj","baj","hajnal","fejsze","sajnál","jutalom",
+  "fajta","jelvény"];
+const SZOTAG_SZAVAK = ["alma","körte","ceruza","iskola","ablak","kutya","macska","vonat",
+  "repülőgép","csokoládé","tél","ház","sál","kerékpár","telefon","számítógép","labda","virág",
+  "tanító","pillangó","teknősbéka","sün","kalap","eper","málna","katicabogár","villamos",
+  "körhinta","nap","fagylalt"];
+const MGH_BETUK = "aáeéiíoóöőuúüű";
+const szotagSzam = szo => [...szo].filter(b=>MGH_BETUK.includes(b)).length;
+const IRASJEL_MONDATOK = [
+  ["Az alma piros","."],["Holnap iskolába megyek","."],["A kutya a kertben ugat","."],
+  ["Ma egész nap süt a nap","."],["Éva könyvet olvas","."],["A vonat elindult","."],
+  ["Tegnap esett az eső","."],["Nyáron sokat fürdünk","."],
+  ["Hány óra van","?"],["Hol laksz","?"],["Mit ebédeltél ma","?"],["Ki jön velem","?"],
+  ["Mikor kezdődik a film","?"],["Hova mentek nyaralni","?"],["Melyik a kedvenc színed","?"],
+  ["Kérsz egy almát","?"],
+  ["De szép ez a virág","!"],["Vigyázz","!"],["Gyere ide gyorsan","!"],["Hurrá, nyertünk","!"],
+  ["Milyen finom ez a sütemény","!"],["Segítség","!"],["Bárcsak nyár lenne","!"],["Csukd be az ajtót","!"]
+];
+const ANGOL_SZAVAK = [ // [magyar, angol, téma]
+  ["kutya","dog","állat"],["macska","cat","állat"],["madár","bird","állat"],["hal","fish","állat"],
+  ["ló","horse","állat"],["egér","mouse","állat"],["medve","bear","állat"],["oroszlán","lion","állat"],
+  ["elefánt","elephant","állat"],["nyúl","rabbit","állat"],
+  ["piros","red","szín"],["kék","blue","szín"],["zöld","green","szín"],["sárga","yellow","szín"],
+  ["fekete","black","szín"],["fehér","white","szín"],["barna","brown","szín"],["rózsaszín","pink","szín"],
+  ["anya","mother","család"],["apa","father","család"],["fiútestvér","brother","család"],
+  ["lánytestvér","sister","család"],["nagymama","grandmother","család"],["baba","baby","család"],
+  ["könyv","book","iskola"],["toll","pen","iskola"],["ceruza","pencil","iskola"],["táska","bag","iskola"],
+  ["asztal","table","iskola"],["szék","chair","iskola"],["iskola","school","iskola"],["tanár","teacher","iskola"],
+  ["fej","head","test"],["kéz","hand","test"],["láb","leg","test"],["szem","eye","test"],
+  ["fül","ear","test"],["orr","nose","test"],["száj","mouth","test"],["haj","hair","test"],
+  ["alma","apple","étel"],["kenyér","bread","étel"],["tej","milk","étel"],["tojás","egg","étel"],
+  ["sajt","cheese","étel"],["víz","water","étel"],["hús","meat","étel"],["leves","soup","étel"],
+  ["banán","banana","étel"],["narancs","orange","étel"],
+  ["ház","house","egyéb"],["autó","car","egyéb"],["nap","sun","egyéb"],["hold","moon","egyéb"],
+  ["csillag","star","egyéb"],["fa","tree","egyéb"],["virág","flower","egyéb"],["labda","ball","egyéb"],
+  ["játék","toy","egyéb"],["ajtó","door","egyéb"],["ablak","window","egyéb"]
+];
+const ANGOL_SZAMOK = [[1,"one"],[2,"two"],[3,"three"],[4,"four"],[5,"five"],[6,"six"],[7,"seven"],
+  [8,"eight"],[9,"nine"],[10,"ten"],[11,"eleven"],[12,"twelve"],[13,"thirteen"],[14,"fourteen"],
+  [15,"fifteen"],[16,"sixteen"],[17,"seventeen"],[18,"eighteen"],[19,"nineteen"],[20,"twenty"],
+  [30,"thirty"],[40,"forty"],[50,"fifty"],[60,"sixty"],[70,"seventy"],[80,"eighty"],
+  [90,"ninety"],[100,"one hundred"]];
+const BETUZ_SZAVAK = ANGOL_SZAVAK.filter(x=>x[1].length>=3 && x[1].length<=6 && !x[1].includes(" "));
+
+function genMgh(){
+  const [csonk, opciok, jo, teljes] = valaszt(MGH_SZAVAK);
+  return { szoveg:`Melyik betű hiányzik?<br><span class="nagy">${csonk}</span>`,
+           tipus:"valaszto", opciok, valasz:jo,
+           hint:`A helyes alak: ${teljes}.`,
+           modul:"mgh", cimke:`${csonk} (${teljes})`, tf:"Magánhangzók · rövid vagy hosszú?" };
+}
+function genJly(){
+  const lyE = Math.random()<0.5;
+  const szo = valaszt(lyE ? LY_SZAVAK : J_SZAVAK);
+  const csonk = lyE ? szo.replace("ly","▢") : szo.replace("j","▢");
+  return { szoveg:`J vagy LY?<br><span class="nagy">${csonk}</span>`,
+           tipus:"valaszto", opciok:["j","ly"], valasz: lyE ? "ly" : "j",
+           hint:`A helyes alak: ${szo}.`,
+           modul:"jly", cimke:`${csonk} (${szo})`, tf:"J vagy Ly" };
+}
+function genSzotag(){
+  const szo = valaszt(SZOTAG_SZAVAK);
+  const db = szotagSzam(szo);
+  return { szoveg:`Hány szótagból áll ez a szó?<br><span class="nagy">${szo}</span>`,
+           valasz:db,
+           hint:`Ahány magánhangzó, annyi szótag: ${szo} → ${db} szótag.`,
+           modul:"szotag", cimke:`${szo} szótagszáma`, tf:"Szótagolás" };
+}
+function genIrasjel(){
+  const [mondat, jel] = valaszt(IRASJEL_MONDATOK);
+  const nev = jel==="." ? "kijelentő" : jel==="?" ? "kérdő" : "felkiáltó vagy felszólító";
+  return { szoveg:`<span class="szoveges-szoveg">${mondat} ▢</span><br>Melyik írásjel kerül a végére?`,
+           tipus:"valaszto", opciok:[".","?","!"], valasz:jel,
+           hint:`Ez ${nev} mondat: „${mondat}${jel}”`,
+           modul:"irasjel", cimke:`${mondat} ▢`, tf:"Mondatvégi írásjel" };
+}
+function genAnszo(){
+  const [hu, en, tema] = valaszt(ANGOL_SZAVAK);
+  const tarsak = ANGOL_SZAVAK.filter(x=>x[1]!==en && x[0]!==hu);
+  const azonosTema = tarsak.filter(x=>x[2]===tema);
+  const pool = azonosTema.length>=2 ? azonosTema : tarsak;
+  if(Math.random()<0.5){ // magyar -> angol
+    const opciok=[en];
+    while(opciok.length<3){ const d=valaszt(pool)[1]; if(!opciok.includes(d)) opciok.push(d); }
+    opciok.sort();
+    return { szoveg:`Mi angolul:<br><span class="nagy">${hu}</span> ?`,
+             tipus:"valaszto", opciok, valasz:en,
+             hint:`${hu} = ${en}`, modul:"anszo", cimke:`${hu} angolul`, tf:"Angol szókincs · magyar→angol" };
+  }
+  const opciok=[hu];
+  while(opciok.length<3){ const d=valaszt(pool)[0]; if(!opciok.includes(d)) opciok.push(d); }
+  opciok.sort();
+  return { szoveg:`Mit jelent magyarul:<br><span class="nagy">${en}</span> ?`,
+           tipus:"valaszto", opciok, valasz:hu,
+           hint:`${en} = ${hu}`, modul:"anszo", cimke:`${en} magyarul`, tf:"Angol szókincs · angol→magyar" };
+}
+function genAnszam(){
+  const lista = beall.kor<=8 ? ANGOL_SZAMOK.filter(x=>x[0]<=12) : ANGOL_SZAMOK;
+  const [szam, szo] = valaszt(lista);
+  return { szoveg:`Írd be számmal:<br><span class="nagy">${szo}</span>`,
+           valasz:szam,
+           hint:`${szo} = ${szam}`,
+           modul:"anszam", cimke:`${szo} = ?`, tf:"Angol számok" };
+}
+function genAnbetuz(){
+  const [hu, en] = valaszt(BETUZ_SZAVAK);
+  return { szoveg:`Betűzd angolul:<br><b>${hu}</b><div id="betuz-hely"></div>`,
+           tipus:"betuz", valasz:en,
+           hint:`${hu} = ${en}`,
+           modul:"anbetuz", cimke:`${hu} angolul betűzve (${en})`, tf:"Angol betűzés" };
+}
+/* betűzés-vezérlés (írásbeli-szerű, betű-gombokkal) */
+let anb = null;
+function betuzIndit(){
+  const cel = aktKerdes.valasz;
+  anb = { betuk:[...cel], pos:0, hibas:false };
+  let h = '<div class="oszto-feladat" style="flex-wrap:wrap">';
+  for(let i=0;i<cel.length;i++) h += `<div class="rcella" id="bc${i}"></div>`;
+  h += '</div>';
+  $("betuz-hely").innerHTML = h;
+  // betű-gombok: a szó betűi + 3 zavaró, keverve
+  const abc = "abcdefghijklmnoprstuwy";
+  const halmaz = [...new Set([...cel])];
+  while(halmaz.length < Math.min(halmaz.length+3, [...new Set([...cel])].length+3)){
+    const d = abc[rnd(0,abc.length-1)];
+    if(!halmaz.includes(d)) halmaz.push(d);
+  }
+  for(let i=halmaz.length-1;i>0;i--){ const j=rnd(0,i); [halmaz[i],halmaz[j]]=[halmaz[j],halmaz[i]]; }
+  const c = $("valaszgombok"); c.innerHTML="";
+  c.style.flexDirection="row"; c.style.flexWrap="wrap"; c.style.justifyContent="center";
+  halmaz.forEach(b=>{
+    const g=document.createElement("button"); g.textContent=b;
+    g.style.flex="0 0 52px"; g.style.padding="10px 0";
+    g.onclick=()=>betuzGomb(b); c.appendChild(g);
+  });
+  betuzAktiv();
+}
+function betuzAktiv(){
+  for(let i=0;i<anb.betuk.length;i++){
+    const cella=$("bc"+i); if(cella) cella.classList.toggle("aktiv", i===anb.pos);
+  }
+}
+function betuzGomb(b){
+  if(zarolva || !anb) return;
+  const cella = $("bc"+anb.pos), v = $("visszajelzes");
+  cella.textContent = b;
+  if(b === anb.betuk[anb.pos]){
+    cella.classList.remove("rossz"); cella.classList.add("jo");
+    v.className="visszajelzes"; v.innerHTML="";
+    anb.pos++;
+    if(anb.pos >= anb.betuk.length){ betuzKesz(); return; }
+    betuzAktiv();
+  } else {
+    cella.classList.remove("rossz"); void cella.offsetWidth; cella.classList.add("rossz");
+    anb.hibas = true;
+    v.className="visszajelzes rossz";
+    v.innerHTML = `Ez a betű nem ide jön.<span class="hint">${aktKerdes.hint}</span>`;
+  }
+}
+function betuzKesz(){
+  zarolva = true; kerdesek++;
+  const st = stat[aktKerdes.modul] || stat.szorzas; st[1]++;
+  const pont = $("pontok").children[kerdesek-1];
+  const v = $("visszajelzes");
+  if(!anb.hibas){
+    jok++; sorozat++; maxSorozat=Math.max(maxSorozat,sorozat); st[0]++;
+    if(pont && pont.classList) pont.classList.add("jo");
+    v.className="visszajelzes jo"; v.innerHTML = dicseret();
+  } else {
+    sorozat=0; if(pont && pont.classList) pont.classList.add("rossz");
+    hibak.push({ c:`${aktKerdes.cimke} → helyesen: ${aktKerdes.valasz}`,
+                 tf:aktKerdes.tf||"", k:$("kerdes").innerHTML, f:`Helyesen: ${aktKerdes.valasz}`,
+                 b:"", g:"", q: {...aktKerdes} });
+    v.className="visszajelzes rossz";
+    v.innerHTML = `A helyes betűzés: <b>${aktKerdes.valasz}</b>`
+      + `<span class="hint vigasz">${valaszt(aktTema().vigasz)}</span>`;
+  }
+  naploFrissit();
+  frissitSorozat();
+  tovabbMutat();
+}
 function genVegyes(){
+  if(beall.targy==="nyelvtan"){
+    const l = ["mgh","jly","szotag","irasjel"].filter(x=>!rejtettModulok().includes(x));
+    const m2 = valaszt(l.length?l:["mgh"]);
+    return m2==="mgh"?genMgh() : m2==="jly"?genJly() : m2==="szotag"?genSzotag() : genIrasjel();
+  }
+  if(beall.targy==="angol"){
+    const l = ["anszo","anszam","anbetuz"].filter(x=>!rejtettModulok().includes(x));
+    const m2 = valaszt(l.length?l:["anszo"]);
+    return m2==="anszo"?genAnszo() : m2==="anszam"?genAnszam() : genAnbetuz();
+  }
   let lista = ["szorzas","helyi","muvelet","potlas","osztas","lanc","szoveges","szamegyenes",
                "sorozat","nyitott","ora","penz","becsles","mertek","romai","sorrend",
                "szamalkotas","tortek","negativ","igazhamis","jelek","kakukk","tablazat",
@@ -3138,6 +3391,13 @@ function inditKakukk(){ mod="kakukk"; korHossz=beall.dbKor; inditKor(); }
 function inditTablazat(){ mod="tablazat"; korHossz=beall.dbKor; inditKor(); }
 function inditKombi(){ mod="kombi"; korHossz=Math.max(5,Math.round(beall.dbKor*0.8)); inditKor(); }
 function inditEgyenlotlen(){ mod="egyenlotlen"; korHossz=beall.dbKor; inditKor(); }
+function inditMgh(){ mod="mgh"; korHossz=beall.dbKor; inditKor(); }
+function inditJly(){ mod="jly"; korHossz=beall.dbKor; inditKor(); }
+function inditSzotag(){ mod="szotag"; korHossz=beall.dbKor; inditKor(); }
+function inditIrasjel(){ mod="irasjel"; korHossz=beall.dbKor; inditKor(); }
+function inditAnszo(){ mod="anszo"; korHossz=beall.dbKor; inditKor(); }
+function inditAnszam(){ mod="anszam"; korHossz=beall.dbKor; inditKor(); }
+function inditAnbetuz(){ mod="anbetuz"; korHossz=Math.max(5,Math.round(beall.dbKor*0.8)); inditKor(); }
 
 const idoMod = () => mod==="villam" || mod==="vegyesido";
 function inditVillam(){ if(kivTablak.size===0) return; inditIdoKor("villam"); }
@@ -3210,6 +3470,13 @@ function ujKerdes(){
   if(mod==="tablazat") return genTablazat();
   if(mod==="kombi")    return genKombi();
   if(mod==="egyenlotlen") return genEgyenlotlen();
+  if(mod==="mgh")      return genMgh();
+  if(mod==="jly")      return genJly();
+  if(mod==="szotag")   return genSzotag();
+  if(mod==="irasjel")  return genIrasjel();
+  if(mod==="anszo")    return genAnszo();
+  if(mod==="anszam")   return genAnszam();
+  if(mod==="anbetuz")  return genAnbetuz();
   return genVegyes();
 }
 function rajzolPontok(){
@@ -3242,11 +3509,15 @@ function kovetkezo(elso, fixKerdes){
     rajzolIrasbeliKerdes(); frissitSorozat(); return;
   }
   $("kerdes").innerHTML = `<div class="kerdes-belso">${aktKerdes.szoveg}</div>`;
-  const valasztos = aktKerdes.tipus==="valaszto", allitos = aktKerdes.tipus==="allit";
-  $("keypad").style.display = (valasztos||allitos)? "none":"grid";
-  $("kijelzo").style.display = (valasztos||allitos)? "none":"block";
-  $("valaszgombok").style.display = (valasztos||allitos)? "flex":"none";
+  const valasztos = aktKerdes.tipus==="valaszto", allitos = aktKerdes.tipus==="allit",
+        betuzos = aktKerdes.tipus==="betuz";
+  anb = null;
+  const c0 = $("valaszgombok"); c0.style.flexDirection=""; c0.style.flexWrap=""; c0.style.justifyContent="";
+  $("keypad").style.display = (valasztos||allitos||betuzos)? "none":"grid";
+  $("kijelzo").style.display = (valasztos||allitos||betuzos)? "none":"block";
+  $("valaszgombok").style.display = (valasztos||allitos||betuzos)? "flex":"none";
   if(allitos){ allitIndit(); frissitKijelzo(); frissitSorozat(); return; }
+  if(betuzos){ betuzIndit(); frissitSorozat(); return; }
   if(valasztos){
     const c=$("valaszgombok"); c.innerHTML="";
     aktKerdes.opciok.forEach(o=>{
@@ -3487,7 +3758,9 @@ const MODNEV = {szorzas:"Szorzótábla", helyi:"Helyiérték", muvelet:"Összead
                 szamalkotas:"Számalkotás", tortek:"Törtek", negativ:"Negatív számok",
                 vegyesido:"Vegyes ⚡", igazhamis:"Igaz-hamis", jelek:"Jelek",
                 kakukk:"Kakukktojás", tablazat:"Számgép", kombi:"Hányféleképpen?",
-                egyenlotlen:"Egyenlőtlenség"};
+                egyenlotlen:"Egyenlőtlenség", mgh:"Magánhangzók", jly:"J vagy Ly",
+                szotag:"Szótagolás", irasjel:"Mondatvégi írásjel", anszo:"Angol szókincs",
+                anszam:"Angol számok", anbetuz:"Angol betűzés"};
 // localStorage csak a weben él; az asztali artifact-nézetben tiltott lehet -> try/catch
 function naploOlvas(){ try{ return JSON.parse(localStorage.getItem("matekNaplo")||"[]"); }catch(e){ return null; } }
 let korId = null; // az aktuális kör napló-azonosítója
@@ -3495,7 +3768,7 @@ function naploFrissit(){ // MINDEN megválaszolt feladat után fut - félbehagyo
   if(!korId || !kerdesek) return;
   try{
     const n = JSON.parse(localStorage.getItem("matekNaplo")||"[]");
-    const e = { t:korId, mod, kor:beall.kor, jok, ossz:kerdesek, maxSor:maxSorozat, hibak:[...hibak] };
+    const e = { t:korId, mod, kor:beall.kor, targy:beall.targy||"matek", jok, ossz:kerdesek, maxSor:maxSorozat, hibak:[...hibak] };
     const i = n.findIndex(x=>x.t===korId);
     if(i>=0) n[i]=e; else n.push(e);
     while(n.length>300) n.shift();
