@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Matek Gyakorló</title>
+<title>Gyakorló feladatok</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦊</text></svg>">
 <style>
   :root{
@@ -201,10 +201,9 @@
 </head>
 <body>
 <div class="app">
-  <h1><span id="avatar-gomb" onclick="avatarPanelNyit()" title="Kattints az avatar cseréjéhez">🦊</span> Matek Gyakorló</h1>
+  <h1><span id="avatar-gomb" onclick="avatarPanelNyit()" title="Kattints az avatar cseréjéhez">🦊</span> Gyakorló feladatok</h1>
   <div class="koszonto" id="koszonto" onclick="nevSzerkeszt()" title="Kattints a név módosításához"></div>
-  <div class="alcim" id="alcim">Ezres számkör · napi 10–15 perc</div>
-  <div class="alcim" id="kor-info" style="margin-top:-12px">1 kör = 10 feladat</div>
+  <div class="alcim" id="kor-info">1 kör = 10 feladat · Napi 10–15 perc, a rövid, mindennapos gyakorlás ér a legtöbbet!</div>
 
   <!-- MENÜ -->
   <div class="screen aktiv" id="scr-menu">
@@ -1914,9 +1913,7 @@ function beallKijelez(){
   $("kor-kijelzo").textContent = beall.kor+" év";
   $("tema-kijelzo").textContent = aktTema().nev;
   $("db-kijelzo").textContent = beall.dbKor;
-  $("kor-info").textContent = `1 kör = ${beall.dbKor} feladat · a rövid, mindennapos gyakorlás ér a legtöbbet!`;
-  const m = szamkor();
-  $("alcim").textContent = `${m===20?"Húszas":m===100?"Százas":"Ezres"} számkör · napi 10–15 perc`;
+  $("kor-info").textContent = `1 kör = ${beall.dbKor} feladat · Napi 10–15 perc, a rövid, mindennapos gyakorlás ér a legtöbbet!`;
   menuFrissit();
 }
 // kerettanterv szerint: 1. osztályban nincs szorzás/osztás/írásbeli művelet,
@@ -3509,7 +3506,7 @@ function naploFrissit(){ // MINDEN megválaszolt feladat után fut - félbehagyo
 function naploSzoveg(){ // a szülői áttekintés látható formája szövegként
   const n = naploOlvas()||[];
   if(!n.length) return null;
-  let t = (beall.avatar||"🦊")+" Matek Gyakorló – napló\n";
+  let t = (beall.avatar||"🦊")+" Gyakorló feladatok – napló\n";
   const napok = {};
   n.forEach(e=>{ const k = new Date(e.t).toLocaleDateString("hu-HU"); (napok[k]=napok[k]||[]).push(e); });
   t += "\nUtolsó 7 nap:\n";
@@ -3548,7 +3545,7 @@ function naploHTML(){ // formázott változat e-mailbe illesztéshez (inline st�
   const n = naploOlvas()||[];
   if(!n.length) return null;
   const st = 'font-family:Segoe UI,Arial,sans-serif;color:#2b2350;';
-  let h = `<div style="${st}"><h2 style="color:#5b3fd9;margin:0 0 6px">${beall.avatar||"🦊"} Matek Gyakorló – napló</h2>`;
+  let h = `<div style="${st}"><h2 style="color:#5b3fd9;margin:0 0 6px">${beall.avatar||"🦊"} Gyakorló feladatok – napló</h2>`;
   h += `<h3 style="color:#5b3fd9;margin:12px 0 4px">Utolsó 7 nap</h3><table style="border-collapse:collapse">`;
   const napok = {};
   n.forEach(e=>{ const k = new Date(e.t).toLocaleDateString("hu-HU"); (napok[k]=napok[k]||[]).push(e); });
