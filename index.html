@@ -19,6 +19,14 @@
   .app{width:100%; max-width:520px; padding:16px; display:flex; flex-direction:column; min-height:100vh;}
   h1{font-size:1.6rem; text-align:center; color:var(--lila-s); margin:10px 0 2px;}
   .alcim{text-align:center; color:var(--halvany); font-size:.9rem; margin-bottom:14px;}
+  .koszonto{text-align:center; font-size:1.02rem; font-weight:700; color:var(--turkiz);
+            margin:2px 0 4px; cursor:pointer; min-height:22px;}
+  .nev-input{width:100%; text-align:center; font-size:1.2rem; font-weight:700;
+             padding:9px; border:2px solid var(--lila); border-radius:12px; margin-top:8px;
+             color:var(--szoveg);}
+  .masol-gomb{background:none; border:none; color:var(--lila-s); font-size:.85rem;
+              font-weight:700; cursor:pointer; margin-top:4px; text-decoration:underline;
+              display:block; margin-left:auto; margin-right:auto;}
   .screen{display:none; flex-direction:column; flex:1;}
   .screen.aktiv{display:flex;}
 
@@ -176,10 +184,18 @@
 <body>
 <div class="app">
   <h1>🦊 Matek Gyakorló</h1>
+  <div class="koszonto" id="koszonto" onclick="nevSzerkeszt()" title="Kattints a név módosításához"></div>
   <div class="alcim" id="alcim">Ezres számkör · napi 10–15 perc</div>
 
   <!-- MENÜ -->
   <div class="screen aktiv" id="scr-menu">
+    <div class="panel" id="nev-panel" style="display:none">
+      <h2 id="nev-cim">Mi a neved? 😊</h2>
+      <input id="nev-input" class="nev-input" type="text" maxlength="15" placeholder="Írd be a neved">
+      <button class="fo-gomb" onclick="nevMentes()">Mentés ✔</button>
+      <button class="vissza" id="nev-torles" style="display:none" onclick="nevTorles()">Név törlése</button>
+      <button class="vissza" onclick="nevMegse()">Most nem</button>
+    </div>
     <button class="modul" id="menu-szorzas" onclick="megnyit('szorzas')"><span class="ikon">✖️</span>
       <span>Szorzótábla<small>2-től 10-ig, a nehezebbeket többször kérdezi</small></span></button>
     <button class="modul" onclick="megnyit('helyi')"><span class="ikon">🏗️</span>
@@ -232,6 +248,7 @@
         <button onclick="leptet('db',-1)">−</button><b id="db-kijelzo">10</b><button onclick="leptet('db',1)">+</button></div>
     </div>
     <button class="fo-gomb megoszto" onclick="naploKuldes(this)" style="margin-top:8px">📤 Napló küldése</button>
+    <button class="masol-gomb" onclick="naploMasol(this)">📋 Formázott másolás (e-mailhez)</button>
     <div class="tipp">💡 Egy kör = 10 feladat. A rövid, mindennapos gyakorlás ér a legtöbbet!<br>
       <button class="szulo-link" onclick="szuloKer()">👨‍👩‍👧 Szülőknek (PIN)</button></div>
   </div>
@@ -246,6 +263,7 @@
       <button class="vissza" onclick="pinMegse()">Mégse</button>
     </div>
     <button class="fo-gomb" id="szulo-kuldes" onclick="naploKuldes(this)">📤 Napló küldése</button>
+    <button class="masol-gomb" onclick="naploMasol(this)">📋 Formázott másolás (e-mailhez)</button>
     <button class="vissza" id="szulo-mindtorles" onclick="torlesKer('mind')">🗑 Teljes napló törlése (PIN)</button>
     <button class="vissza" onclick="menu()">← vissza a menübe</button>
   </div>
@@ -347,7 +365,33 @@
 const $ = id => document.getElementById(id);
 const rnd = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
 const valaszt = arr => arr[rnd(0,arr.length-1)];
-const DICSERET = ["Szuper! 🌟","Ügyes vagy! 👏","Pontosan! ✨","Remek! 🎉","Nagyon jó! 💪","Ez az! 🙌"];
+const DICSERET = ["Szuper! 🌟","Ügyes vagy! 👏","Pontosan! ✨","Remek! 🎉","Nagyon jó! 💪",
+                  "Ez az! 🙌","Zseniális! 🤩","Telitalálat! 🎯","Mesteri! 🥇","Így kell ezt! 🔥"];
+function nevOlvas(){ try{ return localStorage.getItem("matekNev"); }catch(e){ return ""; } }
+function dicseret(){
+  const n = nevOlvas();
+  if(n && Math.random()<0.4)
+    return valaszt([`Ez az, ${n}! 🙌`,`${n}, ez profi volt! 😎`,`Ügyes vagy, ${n}! 🌟`,
+                    `${n}, te matekbajnok vagy! 🏆`,`Így kell ezt, ${n}! 🔥`,
+                    `${n}, a számok barátja! 🤝`,`Micsoda agy, ${n}! 🧠`]);
+  return valaszt(DICSERET);
+}
+const KOSZONTOK_NEVES = [
+  "Szia {n}! Jó munkát! 💪","Hajrá {n}, ma is menni fog! 🚀",
+  "Szia {n}! Minden kör egy szint felfelé! 🆙","{n}, a gyakorlás bajnokot csinál! 🏆",
+  "Szia {n}! A matekagyad edzésre vár! 🧠","Csak így tovább, {n} – mindennap egy kicsit jobb! 🌱",
+  "Szia {n}! Melyikkel kezdjük ma? 😊","{n}, ma is ügyesebb leszel, mint tegnap! ⭐",
+  "Kalandra fel, {n}! A számok várnak! 🗺️","{n}, egy kör csak 10 perc – vágj bele! ⏱️"
+];
+const KOSZONTOK_SIMA = [
+  "Szia! Jó munkát! 💪","Hajrá, ma is menni fog! 🚀","Minden kör egy szint felfelé! 🆙",
+  "A gyakorlás bajnokot csinál! 🏆","Kalandra fel! A számok várnak! 🗺️"
+];
+function frissitKoszonto(){
+  const n = nevOlvas();
+  $("koszonto").textContent = n ? valaszt(KOSZONTOK_NEVES).replaceAll("{n}", n)
+                                : valaszt(KOSZONTOK_SIMA);
+}
 const RAG = {1:"es",2:"es",3:"as",4:"es",5:"ös",6:"os",7:"es",8:"as",9:"es",10:"es"};
 // névelő: "az" ha a szám kiejtése magánhangzóval kezdődik (1, 5, 5xx)
 const nevelo = x => { const sz=Math.floor(x/100)%10, t=Math.floor(x/10)%10;
@@ -420,7 +464,7 @@ function mutat(id){
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("aktiv"));
   $(id).classList.add("aktiv");
 }
-function menu(){ clearInterval(villamTimer); villamAktiv=false; mutat("scr-menu"); frissitStat(); }
+function menu(){ clearInterval(villamTimer); villamAktiv=false; mutat("scr-menu"); frissitStat(); frissitKoszonto(); }
 function frissitStat(){
   let o=0,j=0; Object.values(stat).forEach(s=>{ j+=s[0]; o+=s[1]; });
   $("stat-sor").textContent = o ? `Ma eddig: ${j} jó válasz ${o} feladatból` : "";
@@ -1426,7 +1470,7 @@ function irKesz(){
   if(!ir.hibas){
     jok++; sorozat++; maxSorozat=Math.max(maxSorozat,sorozat); s[0]++;
     p.classList.add("jo");
-    v.className="visszajelzes jo"; v.innerHTML=valaszt(DICSERET);
+    v.className="visszajelzes jo"; v.innerHTML=dicseret();
     keszNyil();
   } else {
     sorozat=0; p.classList.add("rossz");
@@ -1487,7 +1531,7 @@ function ellenoriz(){
   if(jo){
     jok++; sorozat++; maxSorozat=Math.max(maxSorozat,sorozat); s[0]++;
     if(p && p.classList) p.classList.add("jo");
-    v.className="visszajelzes jo"; v.innerHTML = valaszt(DICSERET);
+    v.className="visszajelzes jo"; v.innerHTML = dicseret();
     // gyenge tény javítva → kivesszük
     if(aktKerdes.teny) gyengeTenyek = gyengeTenyek.filter(f=>!(f[0]===aktKerdes.teny[0]&&f[1]===aktKerdes.teny[1]));
     if(mod==="villam") setTimeout(kovetkezo, 350);
@@ -1513,10 +1557,11 @@ function vege(){
   mutat("scr-end");
   const csillag = jok===korHossz? 3 : jok/korHossz>=0.8? 2 : jok/korHossz>=0.6? 1 : 0;
   $("csillagok").textContent = "⭐".repeat(csillag) + "☆".repeat(3-csillag);
-  const uzenet = csillag===3? "Hibátlan! Fantasztikus! 🏆"
-              : csillag===2? "Nagyon ügyes voltál! 🎉"
-              : csillag===1? "Jó munka, egyre jobban megy! 💪"
-              : "Semmi baj, a gyakorlás teszi a mestert! 🌱";
+  const nv = nevOlvas(), nr = nv ? `, ${nv}` : "";
+  const uzenet = csillag===3? `Hibátlan${nr}! Fantasztikus! 🏆`
+              : csillag===2? `Nagyon ügyes voltál${nr}! 🎉`
+              : csillag===1? `Jó munka${nr}, egyre jobban megy! 💪`
+              : `Semmi baj${nr}, a gyakorlás teszi a mestert! 🌱`;
   $("eredmeny-szoveg").innerHTML = `${jok} / ${korHossz} jó válasz<br><small>leghosszabb sorozat: ${maxSorozat}</small><br>${uzenet}`;
   const h=$("hibalista");
   if(hibak.length){ h.style.display="block";
@@ -1580,6 +1625,56 @@ async function megoszt(szoveg, gomb){
     await navigator.clipboard.writeText(szoveg);
     gomb.textContent = "Vágólapra másolva ✔";
   }catch(e){ /* megszakított megosztás */ }
+}
+function naploHTML(){ // formázott változat e-mailbe illesztéshez (inline stílusokkal)
+  const n = naploOlvas()||[];
+  if(!n.length) return null;
+  const st = 'font-family:Segoe UI,Arial,sans-serif;color:#2b2350;';
+  let h = `<div style="${st}"><h2 style="color:#5b3fd9;margin:0 0 6px">🦊 Matek Gyakorló – napló</h2>`;
+  h += `<h3 style="color:#5b3fd9;margin:12px 0 4px">Utolsó 7 nap</h3><table style="border-collapse:collapse">`;
+  const napok = {};
+  n.forEach(e=>{ const k = new Date(e.t).toLocaleDateString("hu-HU"); (napok[k]=napok[k]||[]).push(e); });
+  Object.keys(napok).slice(-7).reverse().forEach(k=>{
+    const l = napok[k], j = l.reduce((x,e)=>x+e.jok,0), o = l.reduce((x,e)=>x+e.ossz,0);
+    h += `<tr><td style="padding:2px 16px 2px 0;border-bottom:1px dashed #ddd">${k}</td>` +
+         `<td style="padding:2px 0;border-bottom:1px dashed #ddd">${l.length} kör · <b>${j}/${o}</b> jó</td></tr>`;
+  });
+  h += `</table><h3 style="color:#5b3fd9;margin:12px 0 4px">Modulonként és korosztályonként</h3><table style="border-collapse:collapse">`;
+  const m = {};
+  n.forEach(e=>{ const kulcs = `${e.mod}|${e.kor||0}`;
+    const x = m[kulcs]=m[kulcs]||[0,0]; x[0]+=e.jok; x[1]+=e.ossz; });
+  Object.entries(m).sort().forEach(([kulcs,[j,o]])=>{
+    const [md,kr] = kulcs.split("|");
+    h += `<tr><td style="padding:2px 16px 2px 0;border-bottom:1px dashed #ddd">${MODNEV[md]||md}${kr!=="0"?` · ${kr} év`:""}</td>` +
+         `<td style="padding:2px 0;border-bottom:1px dashed #ddd"><b>${Math.round(100*j/o)}%</b> <span style="color:#8a82b0">(${j}/${o})</span></td></tr>`;
+  });
+  h += `</table>`;
+  const hibaSorok = [];
+  n.forEach(e=> e.hibak.forEach(x=>
+    hibaSorok.push([typeof x==="string"?x:x.c, new Date(e.t).toLocaleDateString("hu-HU")])));
+  if(hibaSorok.length){
+    h += `<h3 style="color:#b3283e;margin:12px 0 4px">Legutóbbi hibák</h3><table style="border-collapse:collapse">`;
+    hibaSorok.slice(-12).reverse().forEach(([c,d])=>{
+      h += `<tr><td style="padding:2px 16px 2px 0;border-bottom:1px dashed #ddd">${c.replace(/→/g,"–")}</td>` +
+           `<td style="padding:2px 0;border-bottom:1px dashed #ddd;color:#8a82b0;font-size:.9em">${d}</td></tr>`;
+    });
+    h += `</table>`;
+  }
+  return h + `</div>`;
+}
+async function naploMasol(g){ // formázott másolat: e-mailbe illesztve megtartja a kinézetet
+  const html = naploHTML();
+  if(!html){ g.textContent = "Még nincs napló-bejegyzés"; return; }
+  try{
+    await navigator.clipboard.write([new ClipboardItem({
+      "text/html": new Blob([html], {type:"text/html"}),
+      "text/plain": new Blob([naploSzoveg()], {type:"text/plain"})
+    })]);
+    g.textContent = "Formázva a vágólapon ✔ – illeszd be a levélbe";
+  }catch(e){
+    try{ await navigator.clipboard.writeText(naploSzoveg());
+      g.textContent = "Szövegként másolva ✔ (a formázott itt nem támogatott)"; }catch(_){}
+  }
 }
 function naploKuldes(g){
   const t = naploSzoveg();
@@ -1697,10 +1792,38 @@ document.addEventListener("keydown", e=>{
   else if(e.key==="Backspace") torol();
   else if(e.key==="Enter") keszGomb();
 });
+/* ---- név bekérése, szerkesztése ---- */
+function nevSzerkeszt(){
+  const n = nevOlvas();
+  $("nev-cim").textContent = n ? "Módosítod a neved? ✏️" : "Mi a neved? 😊";
+  $("nev-input").value = n || "";
+  $("nev-torles").style.display = n ? "inline-block" : "none";
+  $("nev-panel").style.display = "block";
+  $("nev-input").focus();
+}
+function nevMentes(){
+  const n = $("nev-input").value.trim().slice(0,15);
+  try{ localStorage.setItem("matekNev", n); }catch(e){}
+  $("nev-panel").style.display = "none"; frissitKoszonto();
+}
+function nevTorles(){
+  try{ localStorage.setItem("matekNev", ""); }catch(e){}
+  $("nev-panel").style.display = "none"; frissitKoszonto();
+}
+function nevMegse(){
+  if(nevOlvas()===null){ try{ localStorage.setItem("matekNev", ""); }catch(e){} } // többet ne kérdezze
+  $("nev-panel").style.display = "none"; frissitKoszonto();
+}
+
 beallTolt();
 if(beall.kor!==9) korTablak();
 beallKijelez();
 menu();
+if(nevOlvas()===null) nevSzerkeszt(); // első indulás: "Mi a neved?"
+// PIN: Enter és helyes kód azonnali elfogadása; név: Enter = mentés
+$("pin-input").addEventListener("input", e=>{ if(e.target.value==="9999") pinOk(); });
+$("pin-input").addEventListener("keydown", e=>{ if(e.key==="Enter") pinOk(); });
+$("nev-input").addEventListener("keydown", e=>{ if(e.key==="Enter") nevMentes(); });
 </script>
 </body>
 </html>
