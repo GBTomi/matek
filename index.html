@@ -188,11 +188,20 @@
   .hibalista h3{font-size:1rem; margin-bottom:8px; color:var(--piros);}
   .hibalista div{font-size:1.02rem; padding:4px 0; border-bottom:1px dashed #eee;}
   .hibalista div:last-child{border:none;}
+  #avatar-gomb{cursor:pointer; display:inline-block; transition:transform .15s;}
+  #avatar-gomb:active{transform:scale(1.2);}
+  #avatar-panel{display:none; position:fixed; inset:0; background:rgba(43,35,80,.55); z-index:50; align-items:center; justify-content:center;}
+  #avatar-panel.nyitva{display:flex;}
+  .avatar-doboz{background:var(--panel,#fff); border-radius:18px; padding:16px 18px; max-width:330px; text-align:center; box-shadow:0 8px 30px rgba(0,0,0,.25);}
+  .avatar-doboz h3{margin:0 0 4px;}
+  #avatar-racs{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:10px;}
+  #avatar-racs button{font-size:1.9rem; line-height:1; background:#f1eefe; border:2px solid transparent; border-radius:12px; padding:8px 4px; cursor:pointer;}
+  #avatar-racs button.aktiv{border-color:#5b3fd9; background:#e6e0ff;}
 </style>
 </head>
 <body>
 <div class="app">
-  <h1>🦊 Matek Gyakorló</h1>
+  <h1><span id="avatar-gomb" onclick="avatarPanelNyit()" title="Kattints az avatar cseréjéhez">🦊</span> Matek Gyakorló</h1>
   <div class="koszonto" id="koszonto" onclick="nevSzerkeszt()" title="Kattints a név módosításához"></div>
   <div class="alcim" id="alcim">Ezres számkör · napi 10–15 perc</div>
   <div class="alcim" id="kor-info" style="margin-top:-12px">1 kör = 10 feladat</div>
@@ -1250,11 +1259,592 @@ const VIGASZ_MC = [
   "A hiba csak egy blokk az úton – lépj át rajta! 🧱"
 ];
 /* ---- témák (bővíthető: új kulcs = új téma) ---- */
+const KOSZONTOK_CICA = [
+  "{n}, doromboló üdvözlet – kezdődhet a matek! 🐱",
+  "Tappancs a magasba, {n} – ma is ügyes leszel! 🐾",
+  "{n}, a cica is minden nap fenkedik – te a fejszámolást élesíted! 🐈",
+  "Egy gombolyag feladat vár, {n} – bogozd ki! 🧶",
+  "{n}, oson a cica, oson a tudás – észre se veszed, és megvan! 🐾",
+  "Bajuszpödrés, {n} – a jó válasz szagát érzem! 😺",
+  "{n}, a macska kilenc élete helyett neked kilenc jó válaszod lesz! 9️⃣",
+  "Ugrás, {n} – a cica is pontosan céloz, te is fogsz! 🐱",
+  "{n}, tejföl helyett ma tudást lefetyelünk! 🥛",
+  "A napos ablakpárkány várhat, {n} – előbb egy kör matek! ☀️",
+  "{n}, hegyezd a füled: itt a gyakorlás ideje! 🐈",
+  "Cirmos üdvözlet, {n} – csíkos legyen a napod, hibátlan a köröd! 😸",
+  "{n}, a cica is halkan érkezik – a tudás is észrevétlen gyűlik! 🐾",
+  "Karmold be a pontokat, {n}! 🐱",
+  "{n}, egérfogáshoz türelem kell – a matekhoz is! 🐭",
+  "Nyújtózz egy nagyot, {n}, és vágjunk bele! 🙆",
+  "{n}, a macska mindig talpra esik – te is minden feladatnál! 🐈",
+  "Dorombolás-fokozat: maximum, {n} – kezdjünk! 😻",
+  "{n}, a kíváncsiság a cica ereje – és a tiéd is! 🔍",
+  "Miau annyit tesz: hajrá {n}! 🐱",
+  "{n}, puha tappancs, éles ész – ez a mai felszerelés! 🐾",
+  "A cica is figyeli a madarat, mielőtt ugrik – figyelj te is, {n}! 🐦",
+  "{n}, ma macskaügyességgel vesszük az akadályokat! 🤸",
+  "Setteng a siker, {n} – kapd el! 🐈‍⬛",
+  "{n}, a cirmos is megvárja a jó pillanatot – te is gondold át! ⏳",
+  "Fülhegyezés, bajuszrezgés – feladat közeleg, {n}! 😺",
+  "{n}, a cicatorna után jöhet az agytorna! 🧠",
+  "Macskaszem a sötétben is lát – te a nehéz példában is, {n}! 👀",
+  "{n}, gombolyagként gurulnak majd a jó válaszok! 🧶",
+  "A kandúr is büszkén sétál – ma te is fogsz, {n}! 🐈",
+  "{n}, cicanyelven a matek: miau-tematika! 😹",
+  "Halkan, pontosan, elegánsan – macskamódra, {n}! 🐾",
+  "{n}, a cica a legmagasabb polcra is felér – te a legnehezebb példáig! 📚",
+  "Egy tál tej jár a végén… vagyis egy csillag, {n}! ⭐",
+  "{n}, a macskamenta helyett a matek dob fel ma! 🌿",
+  "Cicaszundi előtt egy kör fejszámolás, {n}! 😴",
+  "{n}, a veréb elrepül, a tudás megmarad! 🐦",
+  "Tappancsnyomok a füzetben: csupa jó válasz, {n}! 🐾",
+  "{n}, a cica is gyakorolja az ugrást – te a számolást! 🐱",
+  "Cirregő üdvözlet, {n} – a cicák így köszönnek a barátaiknak! 😽",
+  "{n}, ma minden példát kényelmesen kicselezünk! 😼",
+  "A fotelból a világ tetejére – egy kör matekkal, {n}! 🛋️",
+  "{n}, macskaléptekkel a tudás felé! 🐾",
+  "Farokemelős üdvözlet, {n} – a cicáknál ez a jókedv jele! 🐈",
+  "{n}, az egér a lyukban, a válasz a fejedben – csald elő! 🐭",
+  "Villámgyors mancs, villámgyors ész, {n}! ⚡",
+  "{n}, a cica is naponta mosakszik – te naponta gyakorolsz! 🧼",
+  "Kandúrbátorság a nehéz példákhoz, {n}! 💪",
+  "{n}, hangold a dorombolást győzelmi dalra! 🎵",
+  "A cirmos csíkjai, mint a füzet sorai – töltsd meg őket, {n}! 📓",
+  "{n}, ma az ölbe hulló megoldásokat is megdolgozzuk! 😸",
+  "Cicafül minden apró hibát meghall – a tiéd is, {n}! 👂",
+  "{n}, a szomszéd kandúr is elismerően nyávog majd! 🐈‍⬛",
+  "Puha párna, éles karom, okos fej – cicakészlet, {n}! 😺",
+  "{n}, a lézerpöttyöt is elkapnád – hát még a jó választ! 🔴",
+  "Macskakő úton is biztos a léptünk, {n}! 🛤️",
+  "{n}, a cica is a magasból figyel – lásd át te is a feladatot! 🏔️",
+  "Bajuszmérce szerint ma pontos napod lesz, {n}! 📏",
+  "{n}, kapard össze a bátorságod – csak tíz feladat! 🐾",
+  "Az ablakban ülve is a matekon jár az eszed, ugye {n}? 🪟",
+  "{n}, a doromboló agy jobban számol – lazíts és hajrá! 😌",
+  "Cicakarate: hip-hop, megvan a válasz, {n}! 🥋",
+  "{n}, ma egy egész gombolyag tudást gombolyítunk fel! 🧶",
+  "A macska sosem kapkod – gondolkodik, aztán ugrik, {n}! 🐱",
+  "{n}, tíz feladat, tíz tappancsnyom a tudás útján! 🐾",
+  "Cirmos, kormos, foltos – mind szurkol neked, {n}! 😻",
+  "{n}, a háztetők felett is átlátunk – hát még a példákon! 🏠",
+  "Egy cica sose adja fel az egérnél – te se a példánál, {n}! 🐭",
+  "{n}, fend ki az eszed, mint cica a karmát! ✨",
+  "Napozás előtt agytorna – így kerek a cicanap, {n}! ☀️",
+  "{n}, a legpuhább mancs is tud pontosat ütni – rajta! 🐾",
+  "Miákolj egyet örömödben minden jó válasz után, {n}! 😹",
+  "{n}, a kosárban alvás kiérdemelt pihenés lesz a kör után! 🧺",
+  "Cicabajnokság indul – első versenyző: {n}! 🏆",
+  "{n}, a kíváncsi cica okos cica – kérdezz, számolj, tanulj! ❓",
+  "Selymes szőr, fényes elme – ez vagy te ma, {n}! ✨",
+  "{n}, cserkészd be a megoldást, mint cica a zsákmányt! 🎯",
+  "A cica is újrapróbálja az ugrást – te is a példát, {n}! 🔁",
+  "{n}, dorombolva megy a számolás is – jó hangulatban hajrá! 🎶",
+  "Macskaszemmel nézve minden példa kisegér, {n}! 🐭",
+  "{n}, a tappancsod alatt ma csupa jó válasz terem! 🐾",
+  "Cicanapló bejegyzés: {n} ma is gyakorolt – és büszke lehet! 📔",
+  "{n}, oson az idő – használd ki egy okos körre! ⏰",
+  "A kandúr a kerítésen, te a tudás tetején, {n}! 🐈",
+  "{n}, kilenc élet nem kell – elég egy jó nekifutás! 🚀",
+  "Cicafarok-jelzés: minden rendben, mehet a kör, {n}! 🐈‍⬛",
+  "{n}, a matek olyan, mint a gombolyag – ha megvan a vége, kibomlik! 🧶",
+  "Fültől fülig ér majd a mosolyod a kör végén, {n}! 😸",
+  "{n}, a cica is lassan lopakodik, aztán villámgyorsan ugrik – így számolj! ⚡",
+  "Szőrmók szurkolótábor gyűlt össze ma neked, {n}! 😻",
+  "{n}, a legjobb egérfogó is gyakorlással lett az – hajrá! 🐭",
+  "Cicailag hitelesítve: {n} ma okosabb lesz, mint tegnap! ✅",
+  "{n}, tedd a mancsod a szívedre: ugye ma is gyakorolsz? 🐾",
+  "A macska hét mérföldről kiszagolja a halat – te a jó választ, {n}! 🐟",
+  "{n}, cicamosdás helyett elmefrissítés következik! 💦",
+  "Minden cirmosnak megvan a maga csíkja – neked a matektudásod, {n}! 🐯",
+  "{n}, halk léptekkel, hangos sikerekkel! 🏅",
+  "A cica is az ölben szeret – a tudás a fejedben, {n}! 🧠",
+  "{n}, egy utolsó nyújtózás, és jöhet a tíz feladat! 🐱"
+,
+  "{n}, cicaköszöntés: fejbökés és irány a matek! 🐱"
+];
+const DICSERET_CICA = [
+  "Doromboló siker! 😻","Tappancstaps! 🐾","Cicabajnok válasz! 🏆","Egérpontos! 🐭",
+  "Miau-csodás! 🐱","Kilenc életet érő válasz! 9️⃣","Karmolásnyi hiba sincs! ✨",
+  "Bajuszrezgetően jó! 😺","Macskaugrás-pontos! 🎯","Gombolyagnyi ügyesség! 🧶",
+  "Cirmos-elegáns megoldás! 🐈","Lézerpötty-gyors! 🔴","Kandúrkirályi! 👑",
+  "Tejfölösen sima! 🥛","Talpraesett válasz – cicamódra! 🐾","Fülhegyező teljesítmény! 👂",
+  "Macskaszem-éles! 👀","Selymesen pontos! ✨","Napozópárkány-nyugalmú megoldás! ☀️",
+  "Villámmancs! ⚡","Doromboló agymunka! 🧠","Cicatorna a javából! 🤸",
+  "Zsákmányul ejtetted a választ! 🎯","Háztető-magas színvonal! 🏠","Puha mancs, kemény tudás! 🐾",
+  "Egy tál tejet érdemelsz! 🥛","Cicanaplóba kívánkozik! 📔","Osonva jött, tökéletes lett! 🐈‍⬛",
+  "Farokemelős büszkeség! 🐈","Macskamenta-frissességű! 🌿","Cirregésnyi öröm! 😽",
+  "A kandúrok is megsüvegelik! 🎩","Ablakpárkány-bajnok! 🪟","Kosárnyi ügyesség! 🧺",
+  "Szőrmókok gyöngye! 😻","Mancsra esett válasz! 🐾","Hibátlan, mint a frissen mosott bunda! 🧼",
+  "Cicakarate-fekete öv! 🥋","Lopakodva is célba ért! 🐱","Miau-fantasztikus! 😹",
+  "Fényes, mint a macskaszem éjjel! 🌙","Kecses megoldás! 🩰","A polc tetejére ugrottál! 📚",
+  "Cirmos csíkos csúcsforma! 🐯","Halk léptű, nagy tudású! 🐾","Egérfogó-mesteri! 🐭",
+  "Dorombolj, megérdemled! 🎶","Cicailag hitelesítve! ✅","Macskaköves út a győzelemig! 🛤️",
+  "Bajnok-bajuszú válasz! 😺","Tökéletes ugrás! 🤸","A veréb is megtapsolná! 🐦",
+  "Karmos-pontos! 💅","Cicafül-finomságú észlelés! 👂","Ölbe hulló siker – megdolgoztál érte! 😸",
+  "A gombolyag kibogozva! 🧶","Szimatod, mint a legjobb kandúré! 👃","Macskaugrásnyira a tökéletestől… nem, ez az! 🎯",
+  "Puha, mint a párna, pontos, mint a mancs! 🛋️","Fürge cirmos! 🐈","Tetőcserép-biztos válasz! 🏠",
+  "Nyávogásnyi kétség sem fér hozzá! 🐱","Cicaszundit érő munka! 😴","Lebegő bajusz, szárnyaló ész! ✨",
+  "Kandúrbecsülettel megoldva! 💪","A cicatál kiürült, a pontok gyűlnek! 🍽️","Mesteri mancsmunka! 🐾",
+  "Cirmos-korona a fejedre! 👑","Kilencedik élet szintű! 🌟","Macska-matek mesterfok! 🧮",
+  "Talpra estél, mint mindig! 🐈","Ez ám a fajin fogás! 🐟","Szőröstül-bőröstül tökéletes! 😻",
+  "Cicavizsga: kitűnő! 📜","A háztetők hőse! 🌃","Mancsintés jár érte! 🐾",
+  "Egy doboznyi öröm! 📦","Fénylő szemű megoldás! ✨","A cicabanda büszke rád! 😼",
+  "Csendes, de ütős! 🥊","Kifent karom, kifent ész! 💎","Macskapontos időzítés! ⏱️",
+  "A lézerpöttyöt is lekörözted! 🔴","Cicailag kiváló! 🏅","Doromb-doromb, ez az! 🎵",
+  "Zsemleforma, tökéletes forma! 🥐","A kaparófán a csúcsra értél! 🪵","Miau-mesteri! 😺",
+  "Cirmos gól! ⚽","Nagy macska vagy! 🦁","A bajuszod se rezdült – magabiztos válasz! 😌",
+  "Cicakegyekben állsz! 😽","Pontos, mint az etetési idő! ⏰","Fototapéta-szép megoldás! 🖼️",
+  "Az egér is gratulál! 🐭","Macskás menőség! 😎","Tappancspecsét: hibátlan! 🐾",
+  "Cicacsúcs! ⛰️"
+,
+  "Bunda-bravúr! 😺","Egérutat nyert a tudásod! 🐭"
+];
+const VIGASZ_CICA = [
+  "A cica se fogja meg elsőre az egeret – de nem adja fel! 🐭",
+  "Minden macska leesett már a polcról – aztán talpra estek, ahogy te is fogsz! 🐈",
+  "A kiscica is sokszor elvéti az ugrást, mire nagy vadász lesz. 🐾",
+  "Egy elszalasztott egér nem rontja el a vadászatot – jön a következő! 🐱",
+  "A gombolyag néha összegubancolódik – türelemmel kibomlik. 🧶",
+  "Még a legügyesebb kandúr is nekimegy néha az ajtónak. 😹",
+  "A cica megrázza magát, és újra próbálja – tedd te is! 🐈‍⬛",
+  "Kilenc élet, ezer próbálkozás – egy hiba igazán belefér! 9️⃣",
+  "A lézerpöttyöt se lehet mindig elkapni – mégis jó a játék! 🔴",
+  "Nedves lett a mancsod? Megrázod, és mész tovább! 💦",
+  "A macska se tanult meg egy nap alatt fára mászni. 🌳",
+  "Hibázni olyan, mint a szőrgombóc – kicsit kellemetlen, aztán túl vagy rajta! 😸",
+  "A cirmos is elvéti néha az ugrást a szekrényre – legközelebb feljut. 🪑",
+  "Egy rossz válasz csak egy zörrenés – a vadászat folytatódik! 🐾",
+  "A dorombolás visszatér – egy hiba nem rontja el a kedved sokáig! 🎶",
+  "Még a legjobb egérfogó is hoppon marad néha. 🐭",
+  "A cica ilyenkor mosakszik egyet, és újrakezdi – friss fejjel te is menni fog! 🧼",
+  "Az ablakból nézve minden madár elérhetetlennek tűnik – közelebbről már nem az! 🐦",
+  "Puha mancs, kemény lecke – de már tudod, mire figyelj! 🐾",
+  "A kaparófa tetejére se egy ugrással jut fel a cica. 🪵",
+  "Fújj egyet, mint a cica, aztán próbáld újra – menni fog! 😾",
+  "A tejfölös tál se mindig telik meg elsőre – kitartás! 🥛",
+  "Macskaszemmel nézve a hiba csak egy árnyék – elillan. 🌙",
+  "A kiscica is bátorságot gyűjt az első nagy ugrás előtt – gyűjts te is! 💪",
+  "Egy hiba annyit árt, mint egy csepp eső a bundának – lerázod! 🌧️",
+  "A cica se szégyelli, ha lecsúszik a fáról – felmászik újra. 🌳",
+  "Setteng a megoldás – a következő próbánál elkapod! 🐈",
+  "Nem minden ugrás sikerül, de minden ugrásból tanulsz. 🤸",
+  "A bajusz megrezzent, a hiba megvolt – most már tudod az irányt! 😺",
+  "Az egér most elszaladt, de a lyuknál úgyis találkoztok! 🐭",
+  "A macska hétszer meggondolja – gondold át te is, és sikerül! 🤔",
+  "Egy kis karcolás nem nagy baj – a tudásod gyógyítja! 🩹",
+  "A cirmos se lett egy nap alatt a háztetők királya. 🏠",
+  "Rossz helyre ugrottál? A cica is korrigál a levegőben! 🐱",
+  "A szőrgombócot ki kell köhögni, a hibát ki kell javítani – és kész! 😸",
+  "Minden vadászat tanulság – ez a próba is az volt. 🎯",
+  "A cica se dorombol egész nap – egy borús pillanat belefér. ☁️",
+  "Az ajtó most zárva volt – de a macska tudja: előbb-utóbb kinyílik! 🚪",
+  "Hibáztál? Nyújtózz egyet, rázd meg magad, és újra! 🙆",
+  "A legpuhább landolás is gyakorlásból születik. 🐾",
+  "Egy elvétett mancsütés nem veszi el a kandúr bátorságát! 🥊",
+  "A cica is megvárja a jobb pillanatot – neked is jön a jobb példa! ⏳",
+  "Kicsit megcsúszott a tappancs – a következő lépés biztosabb lesz! 🐾",
+  "A gombolyag vége megvan valahol – keresd tovább türelmesen! 🧶",
+  "Miau annyit tesz: semmi baj, próbáld újra! 🐱",
+  "A napozásból is felkel a cica, ha valami fontos jön – rázd fel magad te is! ☀️",
+  "Egy borzas pillanat után jön a fényes bunda – és a jó válasz! ✨",
+  "A macska kilencszer is nekifut, ha kell – te is megteheted! 🔁",
+  "Most a kerítés túl magas volt – holnapra nősz hozzá! 🐈",
+  "A vadászat végén úgyis a tiéd a zsákmány: a tudás! 🏆"
+];
+
+const KOSZONTOK_PANDI = [
+  "{n}, bambuszropogtatás helyett ma számokat ropogtatunk! 🎋",
+  "Pandi-ölelés és jó munkát, {n}! 🐼",
+  "{n}, a panda naponta 12 órát eszik – neked elég 10 perc gyakorlás! ⏱️",
+  "Gurulj bele a feladatokba, {n} – pandamódra! 🤸",
+  "{n}, fekete-fehér a bunda, színes a tudás! 🐼",
+  "A bambuszerdő csendjében jól megy a számolás, {n}! 🎋",
+  "{n}, a panda lassan mászik, de mindig felér – te is! 🌳",
+  "Pandi-pacsit, {n} – kezdődhet a kör! 🐾",
+  "{n}, ma olyan kitartó leszel, mint egy éhes panda! 💪",
+  "Hemperegj egyet örömödben, {n} – matekidő van! 🐼",
+  "{n}, a panda is válogatja a legjobb bambuszt – te a legjobb megoldást! 🎋",
+  "Kerek fül, kerek pocak, kerek számok, {n}! ⚪",
+  "{n}, a pandabocs is eséssel tanul gurulni – hajrá! 🤸",
+  "Fogd fel pandamód: nyugi, bambusz, számolás, {n}! 😌",
+  "{n}, a panda ritka kincs – a kitartásod is az! 💎",
+  "Fára fel, {n} – onnan szép a kilátás a tudásra! 🌳",
+  "{n}, ma pandaturbó fokozatban számolunk! 🚀",
+  "A pandák órákig elvannak egy ágon – te elleszel tíz feladattal, {n}! 🌿",
+  "{n}, fekete folt, fehér folt, hibátlan kör! 🐼",
+  "Bambuszrügy-frissesség a fejedben, {n}! 🌱",
+  "{n}, a panda nem kapkod – megfontoltan a helyes válasz felé! 🐾",
+  "Dörgölj egy kis szerencsét a pandabundából, {n}! 🍀",
+  "{n}, gurulós-vidám matekozást kívánok! 🎢",
+  "A pandabölcső a fa tetején van – a tudásé a füzetedben, {n}! 📓",
+  "{n}, pandapofival minden példa barátságosabb! 🐼",
+  "Ropp-ropp – így törnek a bambuszok és a nehéz példák, {n}! 🎋",
+  "{n}, a panda békés, de a matekban harcos legyél! 🥋",
+  "Két szín, ezer móka – pandanap van, {n}! ⚫⚪",
+  "{n}, kapaszkodj a tudásba, mint pandabocs a fába! 🌳",
+  "A panda a kedvenc ételét ismeri – te a szorzótáblát, {n}! 🧮",
+  "{n}, lusta délután helyett fürge agytorna! 🧠",
+  "Pandi már a helyén ül – csatlakozz, {n}! 🪑",
+  "{n}, a panda 40 bambuszszálat eszik naponta – te 10 példát oldasz meg! 🔟",
+  "Fekete karikás szemek? A panda így néz ki kipihenten is, {n}! 😄",
+  "{n}, hengeredj át a feladatokon, mint pandi a réten! 🌾",
+  "A bambusz gyorsan nő – a tudásod még gyorsabban, {n}! 📈",
+  "{n}, pandacuki napot és hibátlan kört! 🐼",
+  "Erdei csendes üdvözlet, {n} – kezdjük szépen sorban! 🌲",
+  "{n}, a panda is megmássza a legmagasabb fát – te a legnehezebb példát! 🏔️",
+  "Puha bunda, éles ész – pandi-felszerelés, {n}! ✨",
+  "{n}, egy ölelésnyi bátorítás: menni fog! 🤗",
+  "A pandabocs első mászása is döcögött – aztán ment, {n}! 🐾",
+  "{n}, bambuszligetnyi feladat vár – jó étvágyat hozzá! 🎋",
+  "Görgess végig a példákon, {n} – pandastílusban! 🐼",
+  "{n}, ma a fekete-fehér bundás bajnok szurkol neked! 📣",
+  "Mászás előtt nyújtás, számolás előtt gondolkodás, {n}! 🙆",
+  "{n}, a panda kényelmes, de sosem adja fel – ez a titok! 🔑",
+  "Rügyről rügyre, példáról példára, {n}! 🌱",
+  "{n}, pandapocakban bambusz, fejedben tudás! 🎋",
+  "A hegyi köd felszáll, a megoldás kitisztul, {n}! 🌫️",
+  "{n}, ülj le kényelmesen pandapózba, és hajrá! 🧘",
+  "Fürge mancsok, fürge számok, {n}! 🐾",
+  "{n}, a panda színe egyszerű, a mozgása vicces, a szíve nagy – mint a tiéd! ❤️",
+  "Bambuszropi és fejszámolás – tökéletes kombó, {n}! 🎋",
+  "{n}, gurulj neki a napnak vidáman! 🌞",
+  "A pandi is új ágat keres, ha az egyik letörik – te is új utat találsz, {n}! 🌿",
+  "{n}, mássz fel a tudásfára – ma is egy ággal feljebb! 🌳",
+  "Kerek a füle, kerek a terve: {n} ma gyakorol! 🐼",
+  "{n}, csíkok helyett foltok, hibák helyett pontok! ⚫",
+  "A panda nagy testű, de ügyes mászó – a nehéz példa is megmászható, {n}! 🧗",
+  "{n}, pandanyugalommal a legnehezebb kérdés is barátságos! 😌",
+  "Reggeli bambusz után reggeli agytorna, {n}! 🌅",
+  "{n}, a pandabocsok játszva tanulnak – játssz te is a számokkal! 🎲",
+  "Két pofára tanulás – ez a pandi-módszer, {n}! 😋",
+  "{n}, hempergős jókedvvel minden könnyebben megy! 🤸",
+  "A pandák családban élnek – a te csapatod is szurkol, {n}! 👨‍👩‍👧",
+  "{n}, foltos bundával is lehet ragyogni – hibával is lehet tanulni! ✨",
+  "Bambuszsűrűben is átlát a panda – te a számhalmazon, {n}! 👀",
+  "{n}, pandapihenő csak a kör után – előbb a tíz feladat! ⏸️",
+  "Az erdő csendes, az eszed pörög, {n}! 🌲",
+  "{n}, a panda evés közben is figyel – te számolás közben is mosolyogsz! 😊",
+  "Nagy mancs, nagy szív, nagy tudás – pandi-hármas, {n}! 🐾",
+  "{n}, ma minden példa olyan finom lesz, mint a friss bambuszrügy! 🌱",
+  "Gördülékeny napot, {n} – szó szerint pandamódra! 🎢",
+  "{n}, a pandi már bemelegített – most te jössz! 💪",
+  "Fatörzs-erős alapok, {n} – arra épül a mai kör! 🌳",
+  "{n}, a hegyekben élő panda is völgyből indult – lépésről lépésre! 🏔️",
+  "Pandaszunya előtt pandaszámolás, {n}! 😴",
+  "{n}, két fül, két szem, egy okos fej – minden megvan a körhöz! 🐼",
+  "A bambusz üreges, de erős – az egyszerű módszer is lehet zseniális, {n}! 🎋",
+  "{n}, csendes erdei reggel – tökéletes idő a gyakorlásra! 🌄",
+  "Mancsold le a feladatokat egyenként, {n}! 🐾",
+  "{n}, a panda látszólag lassú, de a fán fürge – meglepetés-gyorsaság! ⚡",
+  "Foltos szemüveg nélkül is élesen lát a pandi – és te is, {n}! 🤓",
+  "{n}, ropogtass el tíz példát, mint pandi a bambuszt! 🎋",
+  "A pandabocs bátorsága benned is megvan, {n}! 🦁",
+  "{n}, guruló pandabocs, guruló jó válaszok! 🤸",
+  "Erdőnyi nyugalom, hegynyi tudás, {n}! 🌲",
+  "{n}, pandi szerint a titok: ülj le, kezdd el, ne add fel! 📜",
+  "Fekete-fehér film helyett színes matekkaland, {n}! 🎬",
+  "{n}, ma a bambuszliget bajnoka leszel! 🏆",
+  "Egy ág, egy példa – szépen sorban végig, {n}! 🌿",
+  "{n}, pandaölelésnyi kitartást a mai körhöz! 🤗",
+  "A ködös hegyek közt is hazatalál a panda – te a megoldáshoz, {n}! 🌫️",
+  "{n}, kezdődik a pandi-parti: tíz feladat, ezer mosoly! 🎉",
+  "Nagy levegő, pandanyugalom, első feladat, {n}! 🌬️",
+  "{n}, a panda súlya ellenére a fán terem – te a matek tetején! 🌳",
+  "Bocs, de nem bocs: pandabocs-lelkesedés kell ma, {n}! 🐼",
+  "{n}, zöld bambusz, zöld út – szabad a pálya a tudásig! 🟢"
+,
+  "{n}, pandi rád bízza a mai bambuszszámlálást! 🎋"
+];
+const DICSERET_PANDI = [
+  "Bambuszropogtató siker! 🎋","Pandapacsi! 🐾","Gurulós-győztes válasz! 🤸","Pandi büszke rád! 🐼",
+  "Fatetőre mászó teljesítmény! 🌳","Rügyfrissességű megoldás! 🌱","Fekete-fehérben is ragyogó! ✨",
+  "Pandaölelést érő válasz! 🤗","Hegymászó-szintű! 🏔️","Bambuszliget bajnoka! 🏆",
+  "Kerek, mint a pandafül! ⚪","Ropp – és megvolt! 🎋","Mancsra mesteri! 🐾",
+  "Erdőnyi ügyesség! 🌲","Pandapofás öröm! 🐼","Bocsok példaképe! 🌟",
+  "Nyugodt és pontos – pandastílus! 😌","Hengerbucka-hibátlan! 🤸","Bambusz-egyenes gondolat! 🎋",
+  "Pandaturbó! 🚀","Foltos bundás fölény! ⚫","Kapaszkodós-kitartó munka! 🧗",
+  "A liget legokosabbja! 🌿","Pandapocaknyi tudás! 🐼","Ködön átlátó éleslátás! 🌫️",
+  "Zsenge rügynél is finomabb válasz! 🌱","Mászóbajnok! 🌳","Csendes erdei tökéletesség! 🌲",
+  "Pandi tapsol a mancsával! 👏","Bambuszerdőnyi pont! 🎋","Gördülékeny megoldás! 🎢",
+  "Hegyi levegő-tiszta válasz! 🏔️","Nagy mancs, nagy találat! 🐾","Pandaparádé! 🎉",
+  "Ágról ágra ügyesebb! 🌿","Kényelmesen zseniális! 🛋️","Bocs-bátorságú válasz! 💪",
+  "Fürge, mint pandi a fán! ⚡","Két pofára tudás! 😋","Pandavizsga: kitűnő! 📜",
+  "Erdő csendje, válasz pontossága! 🌲","Bundás bravúr! 🐼","Ropogósan friss megoldás! 🎋",
+  "Hempergésnyi öröm! 🤸","A hegytető meghódítva! ⛰️","Pandapecsét: hibátlan! ✅",
+  "Bambuszrakéta! 🚀","Foltról foltra tökéletes! ⚫⚪","Mancsemelős győzelem! 🐾",
+  "Cuki és okos – pandikombó! 🐼","Fatörzs-biztos válasz! 🌳","Ligetszépe megoldás! 🌿",
+  "Pandi elismerően bólogat! 😌","Rügyről rügyre feljebb! 📈","Bambuszkirály! 👑",
+  "Kerek egész válasz! ⭕","Erdei rekord! 🏅","Pandaszív, oroszlánész! ❤️",
+  "Mászás nélkül is csúcsra értél! 🏔️","Zöld út a tudásig! 🟢","Bocs-mosolyt fakasztó! 😊",
+  "Pandanyugalmú profizmus! 🧘","Ropogtatnivalóan jó! 🎋","Gurulva is célba találtál! 🎯",
+  "Bundamelegségű siker! 🐼","A bambusz is meghajol előtted! 🌿","Hegyeket mozgató válasz! ⛰️",
+  "Pandifüllel is hallani: tökéletes! 👂","Erdő legjobb számolója! 🧮","Mancsos mestermunka! 🐾",
+  "Bambuszmérce szerint is kiváló! 📏","Pandabajnokság aranyérme! 🥇","Foltosan is folttalan! ✨",
+  "Kapaszkodj, mert szárnyalsz! 🚀","Csúcsragadozó… akarom mondani csúcsszámoló! 😄","Pandaprofesszori válasz! 🎓",
+  "Fáramászós fölény! 🌳","Két színben is ezerszínű tudás! 🌈","Bocs, ez tökéletes! 🐼",
+  "Ligeti legenda születik! 🌿","Bambuszropi-jutalom jár! 🎋","Pandapontosság! 🎯",
+  "Hegyi patak-tiszta gondolat! 💧","Ölelésnyi elismerés! 🤗","Mancsnyomod a dicsőségfalon! 🐾",
+  "Erdőzúgásnyi taps! 👏","Pandi példaképe lettél! 🌟","Bundás-bravúros! 🐼",
+  "Rekord-ropogtatás! 🎋","Fenn a fán, fenn a csúcson! 🌳","Gurulós gól! ⚽",
+  "Pandamosoly-fakasztó! 😊","Bocsból bajnok! 🏆","Kerekfülű királyság! 👑",
+  "Bambusznál is magasabbra nőttél! 📈","Pandi-parádés pontszám! 🎉","Hegycsúcs-hódító! ⛰️",
+  "Zsupsz – és telitalálat! 🎯"
+,
+  "Bambuszerdei bravúr! 🌿","Pandi-piruett a tiszteletedre! 🩰"
+];
+const VIGASZ_PANDI = [
+  "A pandabocs is sokszor legurul, mire megtanul mászni – aztán a fa tetején alszik! 🌳",
+  "Még a panda is elejti néha a bambuszt – felveszi, és eszi tovább. 🎋",
+  "Egy esés a fűbe nem fáj – a panda is hempereg egyet, és újrakezdi! 🤸",
+  "A bambusz se törik le az első roppantásra – próbáld újra! 🎋",
+  "Pandi szerint: aki mászik, néha csúszik – de feljut! 🐾",
+  "A ködös hegyen se látni mindig az utat – aztán kitisztul. 🌫️",
+  "Nagy mancsokkal nehéz finoman fogni – gyakorlással megy! 🐼",
+  "A panda 99 bambuszból egyet mindig elejt – mégis jóllakik! 😋",
+  "Egy hiba csak egy letört ágacska – az erdő áll tovább! 🌲",
+  "A bocs első mászása is döcögött – a századik már mesteri volt. 🧗",
+  "Hengeredj át rajta pandamódra – a hiba mögötted marad! 🤸",
+  "A hegyre se egy lépéssel jut fel a panda – lépésről lépésre! 🏔️",
+  "Foltos a bunda, foltos a nap – de a folt nem hiba, hanem jellegzetesség! ⚫",
+  "A panda se szomorkodik sokáig – keres egy újabb bambuszt! 🎋",
+  "Egy elrontott példa annyi, mint egy üres rügy – a következő finomabb! 🌱",
+  "Pandi is bóbiskol néha a fán – rázd meg magad, és folytasd! 😴",
+  "A legkényelmesebb ág is kipróbálás után lesz meg – a jó módszer is! 🌿",
+  "Csúszott a mancs? A panda megkapaszkodik, és mászik tovább! 🐾",
+  "A bambuszerdőben el lehet tévedni – de mindig van kiút! 🎋",
+  "Nagy testtel is lehet könnyedén mozogni – nehéz példát is lehet simán megoldani! 🐼",
+  "A panda nem sír a letört ág miatt – másikra mászik! 🌳",
+  "Egy kis gurulás lefelé is a mászás része! 🎢",
+  "Pandi tanácsa: nagy levegő, bambusznyugalom, újra! 🌬️",
+  "A hegyi ösvény köves – de a panda talpa bírja, a te eszed is! 🏔️",
+  "Hibázni annyi, mint tüsszenteni egyet – ijesztő hang, semmi baj! 🤧",
+  "A pandabocs is anyukája hátáról esik le néha – puhára érkezik! 🐼",
+  "Egy keserű bambuszrügy után jön az édes! 🌱",
+  "Az eső az erdőben is esik – aztán kisüt a nap, és minden zöldebb! 🌧️",
+  "Pandi nem tökéletes, csak kitartó – ez a titka! 🔑",
+  "A fán maradáshoz nem erő kell, hanem egyensúly – megtalálod! ⚖️",
+  "Most lecsúsztál egy ágat – de a fa ugyanott áll, mászhatod újra! 🌳",
+  "A panda évekig tanulja, melyik bambusz a jó – te percek alatt tanulsz! ⏱️",
+  "Borús a hegytető? A felhők elvonulnak, a tudás marad! ☁️",
+  "Egy rossz válasz nem dönti ki a tudásfádat! 🌲",
+  "Pandi szerint a hiba olyan, mint a bogáncs a bundában – kiszeded, és kész! 🌾",
+  "A gurulás művészetét is esésekből tanulta pandi! 🤸",
+  "Nem baj, ha lassan megy – a panda is ráérősen él, mégis mindent elér! 🐼",
+  "A patak is kerülővel éri el a völgyet – a te utad is kanyaroghat! 💧",
+  "Egy elhibázott mancsütés után jön a pontos! 🐾",
+  "A bambusz gyorsan nő vissza – a kedved is visszanő! 🎋",
+  "Pandi már azon gondolkodik, hogyan segítsen a következőnél! 🤔",
+  "Az erdő nem nevet a botlásokon – tanul belőlük minden bocs! 🌲",
+  "Kicsi botlás, nagy tanulság – pandabölcsesség! 📜",
+  "A ködben is ott a fa – a fejedben is ott a tudás, csak elő kell hívni! 🌫️",
+  "Fekete folt a fehér bundán? Így kerek a panda – hibával együtt vagy ügyes! ⚫",
+  "A hegyoldalban minden panda megcsúszik párszor – a csúcson már nevetnek rajta! ⛰️",
+  "Egy nehéz példa csak egy vastag bambusz – több harapás kell hozzá! 🎋",
+  "Pandi átölel: semmi baj, holnapra ez is menni fog! 🤗",
+  "A bocsból úgy lesz nagy panda, hogy ezerszer újrapróbálja! 🐼",
+  "Roppant egyet a terv – de a következő ág már biztosan tart! 🌿"
+];
+
+const KOSZONTOK_TEKNOS = [
+  "{n}, lassan járj, tovább érsz – de a jó választ biztosan hozd! 🐢",
+  "Páncélos üdvözlet, {n} – kezdődhet a kör! 🛡️",
+  "{n}, a teknős is célba ér – te is, lépésről lépésre! 🏁",
+  "Nyugodt tempó, biztos tudás, {n}! 🐢",
+  "{n}, a nyúl elaludt, a teknős nyert – a kitartás a titok! 🐇",
+  "Dugd ki a fejed a páncélból, {n} – feladatok várnak! 😄",
+  "{n}, a teknős 100 évig él – a tudásod is kitart örökre! 💯",
+  "Araszolj végig a példákon, {n} – mind meglesz! 🐢",
+  "{n}, cammogva is lehet bajnok lenni – sőt, úgy igazán! 🏆",
+  "A tóparton csend van, a fejedben rend, {n}! 🌊",
+  "{n}, a teknőspáncél erős – a tudásod is az lesz! 🛡️",
+  "Napozó kő helyett gyakorlópad, {n}! ☀️",
+  "{n}, minden lépés számít – a teknős is így ér célba! 👣",
+  "Bölcs teknős-üdvözlet, {n} – a türelem pontokat terem! 🧓",
+  "{n}, húzd ki magad a páncélodból: ma bátran számolunk! 💪",
+  "A teknős sosem kapkod, mégis mindent elér, {n}! 🐢",
+  "{n}, úszni is tud, gyalogolni is – a teknős sokoldalú, mint te! 🏊",
+  "Homokba írt számok, fejben tartott tudás, {n}! 🏖️",
+  "{n}, a teknősbéka nyugalma legyen ma veled! 🧘",
+  "Kis lépés neked, nagy lépés a tudásodnak, {n}! 👣",
+  "{n}, a teknős a hátán hordja a házát – te a fejedben a tudást! 🏠",
+  "Csigatempó? Nem: teknőstempó – az biztosabb, {n}! 🐢",
+  "{n}, vén teknős mondja: aki gyakorol, az tanul! 📜",
+  "A tó tükrén látszik az ég – a füzetedben a tudásod, {n}! 🌅",
+  "{n}, páncélkeménységű kitartást a mai körhöz! 🛡️",
+  "Ússz át a feladatokon szépen sorban, {n}! 🌊",
+  "{n}, a teknős lassan pislog, de mindent lát – figyelj te is! 👀",
+  "Napfürdő előtt számfürdő, {n}! ☀️",
+  "{n}, araszolás közben is gyűlik a tudás! 🐢",
+  "A teknős akkor halad, ha kidugja a nyakát – merj nekivágni, {n}! 😊",
+  "{n}, öreg teknős, bölcs teknős – fiatal fej, friss tudás! 🧠",
+  "Kavicsról kavicsra, példáról példára, {n}! 🪨",
+  "{n}, a teknős célfotója is mosolygós – a tiéd is az lesz! 📸",
+  "Lassú víz partot mos, kitartó gyakorlás tudást hoz, {n}! 💧",
+  "{n}, a páncél megvéd, a tudás felemel! 🚀",
+  "Teknőc-türelemmel a legnehezebb példa is megoldódik, {n}! 🐢",
+  "{n}, ma nem sietünk – ma pontosak leszünk! 🎯",
+  "A tengeri teknős ezer kilométert úszik – te tíz példát oldasz, {n}! 🌊",
+  "{n}, minden kör egy gyűrű a páncélodon – egyre erősebb vagy! 🛡️",
+  "Cammogj be a célba ma is győztesen, {n}! 🏁",
+  "{n}, a teknős nem néz hátra – csak a következő lépésre! 👣",
+  "Zöld páncél, zöld út – szabad a pálya, {n}! 🟢",
+  "{n}, a mocsári teknős is kimászik a napra – mássz elő te is gyakorolni! ☀️",
+  "Nyugalom a páncél alatt, okosság a fejben, {n}! 🐢",
+  "{n}, a teknősök már a dinók idején is számoltak… na jó, túléltek! 🦕",
+  "Egy lépés, egy levegő, egy jó válasz, {n}! 🌬️",
+  "{n}, hosszú élet titka: napfény, nyugalom, napi matek! 📅",
+  "A teknős házon belül van mindig – te a tudásodon belül, {n}! 🏠",
+  "{n}, iszapból is ki lehet mászni – nehéz példából is! 💪",
+  "Páncélfényesítés helyett tudásfényesítés, {n}! ✨",
+  "{n}, a teknős útja hosszú, de minden métere biztos! 🛤️",
+  "Vén tavi bölcs üzeni: hajrá {n}, menni fog! 🌊",
+  "{n}, teknőslassúsággal is elérsz mindent – csak el kell indulni! 🐢",
+  "A verseny nem a gyorsaké, hanem a kitartóké – tudod jól, {n}! 🏆",
+  "{n}, húzz be a célba tíz jó válasszal! 🏁",
+  "Csendes tó, csobbanó siker, {n}! 💦",
+  "{n}, a teknős is fejest ugrik néha – vágj bele bátran! 🤿",
+  "Araszolva araszolva hegyeket mozgatunk, {n}! ⛰️",
+  "{n}, a nap a köveket melegíti, a gyakorlás az eszedet! ☀️",
+  "Négy láb, egy páncél, száz százalék, {n}! 💯",
+  "{n}, a teknősnél a lassú is haladás – nálad minden példa az! 📈",
+  "Tópart, nádas, nyugodt számolás – ez a mai terep, {n}! 🌾",
+  "{n}, bölcs vagy, mint a százéves teknős – csak fürgébb! ⚡",
+  "Merülj el a feladatokban, mint teknős a tóban, {n}! 🌊",
+  "{n}, a páncélod a tudásod – minden nap keményebb! 🛡️",
+  "Szárazon és vízen is helytállsz, {n}! 🏊",
+  "{n}, teknősünnep van: ma is gyakorolsz! 🎉",
+  "A kis teknős is egyedül fut a tengerig – bátran, {n}! 🌊",
+  "{n}, nincs sietség, nincs kapkodás – csak jó válaszok! 🎯",
+  "Kidugott fej, nyitott szem, okos válasz, {n}! 👀",
+  "{n}, a teknősök titka: sosem állnak meg, csak lassítanak! 🐢",
+  "Napozókövön ülve is pörög az agy, {n}! 🪨",
+  "{n}, hosszútávon a gyakorlás nyer – te hosszútávra játszol! 🏃",
+  "A teknősbölcsesség első szabálya: kezdd el, {n}! 📜",
+  "{n}, páncélba zárt nyugalom, fejben villámgyors számolás! ⚡",
+  "Mocsáron, tavon, matekon át – mindenütt otthon vagy, {n}! 🏠",
+  "{n}, a teknős célba ér, mert sosem fordul vissza! 🏁",
+  "Lomha test, fürge ész – a teknős titkos fegyvere, {n}! 🧠",
+  "{n}, gyűjtsd a köröket, mint teknős az éveket! 📅",
+  "Homokdűnén át a tengerig, példákon át a tudásig, {n}! 🏖️",
+  "{n}, a teknős szigete nyugodt hely – a füzeted is az! 🏝️",
+  "Nádszál mögül les a siker – araszolj érte, {n}! 🌾",
+  "{n}, öreg teknős nem vén teknős – rutinos számoló! 😄",
+  "A folyó lassan folyik, de mindent elkoptat – a gyakorlás minden hibát, {n}! 💧",
+  "{n}, teknőstalálkozó a tóparton: hozd a tudásod! 🐢",
+  "Egy kör a tóban, egy kör a matekban, {n}! 🔁",
+  "{n}, a teknős páncélja egyedi minta – a te tudásod is az! 🎨",
+  "Kúszva, mászva, számolva – de mindig előre, {n}! ➡️",
+  "{n}, a legidősebb teknős 190 év – neked még bőven van időd gyakorolni! ⏳",
+  "Vízcsepp a páncélon, mosoly az arcodon, {n}! 💦",
+  "{n}, a teknős nem versenyez mással – csak a tegnapi önmagával! 🏅",
+  "Csobbanj bele a feladatokba, {n}! 🌊",
+  "{n}, kemény páncél, lágy szív, éles ész – teknőscsomag! 📦",
+  "A tóparti kavicsok is kisimulnak idővel – a nehéz példák is, {n}! 🪨",
+  "{n}, teknőstempóban is lehet rekordot dönteni – kitartásból! 🏆",
+  "Nyakat ki, fejet fel, mehet a kör, {n}! 😊",
+  "{n}, a teknős mindenhova magával viszi az otthonát – te a tudásodat! 🏠",
+  "Százéves bölcsesség, tízperces gyakorlás, {n}! ⏱️",
+  "{n}, araszolj a csillagokig – ma is közelebb érsz! ⭐"
+,
+  "{n}, a tóparti kör tiéd – irány az első feladat! 🐢"
+];
+const DICSERET_TEKNOS = [
+  "Páncélkemény válasz! 🛡️","Teknősbölcs megoldás! 🐢","Célba araszoltál! 🏁","A nyulat is lehagytad! 🐇",
+  "Százéves bölcsesség! 💯","Tóparti telitalálat! 🌊","Kavicspontos! 🪨","Lassú víz, partot mosott! 💧",
+  "Teknőc-türelem, bajnok-eredmény! 🏆","Bölcs öreg teknős is bólint! 🧓","Páncélfényes siker! ✨",
+  "Araszolva is első! 🥇","Nyugodt és tökéletes! 🧘","Tófenék-mély tudás! 🌊","Napozókő-biztos válasz! ☀️",
+  "Kidugtad a fejed – és nyertél! 😄","Teknősrekord! 📜","Hosszútávbajnok! 🏃","Csobbanós siker! 💦",
+  "Kitartás-királyság! 👑","A célvonalon átcammogtál – elsőként! 🏁","Vén tavi bölcs színvonal! 🌾",
+  "Páncélba zárt tökéletesség! 🛡️","Homokba írható arany válasz! 🏖️","Teknőstempó, rakétapontosság! 🚀",
+  "Lépésről lépésre bajnok! 👣","Tengermély megoldás! 🌊","A dinókat is túlélő tudás! 🦕",
+  "Nádasból a csúcsra! 🌾","Bölcsek köve… akarom mondani, bölcsek teknője! 🐢","Iszapból arany! 🥇",
+  "Lomha? Soha! Pontos? Mindig! 🎯","Tóparti taps! 👏","Gyűrűnyi tudás a páncélodon! 🛡️",
+  "Szárazon és vízen is győztes! 🏊","Teknősünnepi válasz! 🎉","Kúszva is elsöprő! 💨",
+  "A tó tükre is megirigyli – ilyen tiszta válasz! 🌅","Kavicsgyűjtemény legszebbike! 🪨","Nyakkinyújtós bátorság! 💪",
+  "Teknőspecsét: hibátlan! ✅","Évszázados pontosság! ⏳","Mocsárból is kimásztál – győztesen! 🌿",
+  "Páncélod alatt bajnokszív! ❤️","A kis teknős elérte a tengert! 🌊","Célfotó-mosolyos! 📸",
+  "Araszoló agytröszt! 🧠","Vízcseppnyi hiba sincs! 💧","Bölcs döntés, biztos válasz! 📜",
+  "Teknősiskola: kitűnő! 🎓","Lassan, de biztosan – és tökéletesen! 🐢","Sziklaszilárd válasz! 🪨",
+  "Nyugalom nagymestere! 🧘","Cammogva a dicsőségbe! 🏆","Tóugrás… teknősugrás-pontos! 🤿",
+  "A nád susogja: bravó! 🌾","Fürge ész a páncél alatt! ⚡","Százszázalékos teknősmunka! 💯",
+  "Örökzöld megoldás! 🟢","Homokdűne-magas színvonal! 🏖️","Búvárbajnoki válasz! 🤿",
+  "Teknőstitok: megfejtve! 🔑","Nem siettél – nem is hibáztál! 🎯","A tavirózsa is meghajol! 🌸",
+  "Célba araszolás mesterfokon! 🏁","Páncélcsillogás! ✨","A vén teknős is tanulna tőled! 🧓",
+  "Kimásztál a csúcsra! ⛰️","Tótükör-tiszta gondolat! 🌅","Lépegető legenda! 👣",
+  "Napozóköves nyugalom, versenyzői pontosság! ☀️","Teknősbecsület-rend! 🎖️","Hullámverés-erős válasz! 🌊",
+  "Bölcsesség-bajnok! 🏆","Csigákat és nyulakat lekörözve! 🐇","Iszapbirkózó-győztes! 💪",
+  "Páncélod alá vésheted: tökéletes! 🛡️","Vízfelszín-sima megoldás! 💧","Kitartók királya! 👑",
+  "Teknőc-taktika: bevált! ♟️","Öreg tó, friss tudás! 🌊","Araszolva araszolva a csúcsra! 📈",
+  "A parti kövek is tapsolnak! 🪨","Fejkidugós hőstett! 😄","Nádas-suttogta dicséret! 🌾",
+  "Matuzsálemi pontosság! ⏳","Tengeri teknős-távlatú tudás! 🌊","Lassúságod ereje: hibátlanság! 🐢",
+  "Kis lépés, nagy győzelem! 👣","Tópart legokosabbja! 🏅","Páncélos parádé! 🎉",
+  "Sose kapkodtál – most learattad! 🌾","Búvárkodva is pontos! 🤿","Vén bölcs mosolyog: ez az! 😊",
+  "Teknőstrófea a tiéd! 🏆","Évgyűrűnyi fejlődés egy körben! 📈","Csendes víz, hangos siker! 🔊",
+  "A célszalag átszakítva – teknőstempóban! 🏁"
+,
+  "Páncélos bravúr! 🛡️","Tóhossznyi tökéletesség! 🌊"
+];
+const VIGASZ_TEKNOS = [
+  "A teknős is felborul néha – aztán visszafordul, és megy tovább! 🐢",
+  "Lassan járj, tovább érsz – egy hiba csak egy megálló! 👣",
+  "A kis teknősök közül is sokan újrapróbálják az utat a tengerig. 🌊",
+  "Egy rossz lépés nem töri be a páncélt – védve vagy, tanulj belőle! 🛡️",
+  "A nyúl is hibázott: elaludt – a teknős mégis szeretettel várt rá a célban. 🐇",
+  "Az iszapos víz leülepszik – a zavaros példa is kitisztul! 💧",
+  "A teknős nem szégyelli, hogy lassú – te se szégyelld, ha egy példa nehéz! 🐢",
+  "Százéves teknős, százezer botlás – mégis bölcs lett! 🧓",
+  "Húzd be a fejed egy pillanatra, gondolkodj, aztán bátran újra! 😊",
+  "A napozókő nem szalad el – a jó válasz sem, megvárnak! ☀️",
+  "Egy hullám visszasodort? A tengeri teknős újra nekiindul! 🌊",
+  "A páncél attól erős, hogy sok ütést kibírt – a tudásod is így erősödik! 🛡️",
+  "Cammogás közben is halad az idő – hibázás közben is nő a tudás! ⏳",
+  "A teknős sosem esik kétségbe – legfeljebb kicsit behúzódik, aztán folytatja! 🐢",
+  "Homokba fúlt a lépés? A következő már szilárd talajon lesz! 🏖️",
+  "Vén tavi bölcs mondja: aki sosem hibázik, sosem tanul újat! 📜",
+  "A tó másik partja messze van – de minden csapás közelebb visz! 🏊",
+  "Egy elrontott példa csak egy kavics az úton – átmászol rajta! 🪨",
+  "A teknős 190 évig él – egy rossz perce igazán belefér! ⏱️",
+  "Felborultál? Semmi baj – a teknős is tud visszabillenni! 🔄",
+  "Nádasba tévedtél? Onnan is kivezet az út! 🌾",
+  "A leglassabb araszolás is gyorsabb, mint a feladás! 👣",
+  "Mély víz? A teknős ott érzi magát a legjobban – merülj le újra! 🤿",
+  "A célig vezető út hosszú – egy botlás nem fordít vissza! 🏁",
+  "Iszapfürdő után is tiszta lesz a páncél – hiba után is a tudásod! ✨",
+  "A kis teknős se fél a nagy tengertől – te se félj a nagy számoktól! 🌊",
+  "Egy borús nap a tóparton is elmúlik – süt majd a nap! ☁️",
+  "Nyakadat behúztad? Jogos pihenő – aztán nyújtsd ki, és hajrá! 💪",
+  "A teknős útján is vannak gödrök – kikerüli vagy átmássza őket! 🛤️",
+  "Az évgyűrűk hibás évekből is épülnek – mind erősít! 🛡️",
+  "Csobbanás mellé? A következő ugrás pontosabb lesz! 💦",
+  "A bölcs teknős tudja: nem az számít, hányszor esel, hanem hányszor indulsz újra! 🐢",
+  "Lassíts, nézd meg újra – a teknősmódszer sosem hagy cserben! 👀",
+  "A parton maradni könnyű – de te vízre szálltál, ez már siker! 🌊",
+  "Egy hiba annyi, mint egy vízcsepp a páncélon – lepereg! 💧",
+  "A teknős sose sírja vissza az elrontott lépést – a következőre figyel! 👣",
+  "Kemény a dió… akarom mondani a példa? A páncélod keményebb! 🛡️",
+  "Este a tó elcsendesül – a hibád is elcsendesül, a tudás marad! 🌙",
+  "A dinókat is túlélték a teknősök – egy nehéz példát te is túlélsz! 🦕",
+  "Most megcsúszott a mancs a kavicson – ettől még bajnok araszoló vagy! 🪨",
+  "A teknősversenyt sem az nyeri, aki sosem áll meg – hanem aki mindig újraindul! 🏆",
+  "Zavaros a víz? Várj egy kicsit, gondolkodj – kitisztul! 💧",
+  "Egy rossz válasz nem repeszti meg a páncélt – csak megkarcolja, az meg begyógyul! 🩹",
+  "A tengerig vezető úton minden kis teknős elbotlik párszor – mégis odaér! 🌊",
+  "Bölcs leszel te is – a bölcsesség hibákból épül, mint gyöngy a kagylóban! 🦪",
+  "A nap holnap is felkel a tó felett – holnap ez a példa is menni fog! 🌅",
+  "Nehéz a hátad mögött hagyni a hibát? A teknős a házát is cipeli, mégis halad! 🏠",
+  "Egy megtorpanás nem megállás – csak nagy levegő a folytatáshoz! 🌬️",
+  "A teknős szemével nézve: egy hiba csak egy pillanat a hosszú, szép útból! 🐢",
+  "Araszolj tovább – a cél nem ment sehova, ott vár rád! 🏁"
+];
+
 const TEMAK = {
   hp: { nev:"Harry Potter", koszontok: KOSZONTOK_HP.concat(KOSZONTOK_HP2),
         dics: DICSERET_HP, vigasz: VIGASZ_HP },
   mc: { nev:"Minecraft", koszontok: KOSZONTOK_MC.concat(KOSZONTOK_MC2, KOSZONTOK_MC3, KOSZONTOK_MC4),
-        dics: DICSERET_MC, vigasz: VIGASZ_MC }
+        dics: DICSERET_MC, vigasz: VIGASZ_MC },
+  cica:  { nev:"Cica",   koszontok: KOSZONTOK_CICA,   dics: DICSERET_CICA,   vigasz: VIGASZ_CICA },
+  pandi: { nev:"Pandi",  koszontok: KOSZONTOK_PANDI,  dics: DICSERET_PANDI,  vigasz: VIGASZ_PANDI },
+  teknos:{ nev:"Teknős", koszontok: KOSZONTOK_TEKNOS, dics: DICSERET_TEKNOS, vigasz: VIGASZ_TEKNOS }
 };
 const aktTema = () => TEMAK[beall.tema] || TEMAK.hp;
 const KOSZONTOK_SIMA = [
@@ -1276,11 +1866,12 @@ const nevelo = x => { const sz=Math.floor(x/100)%10, t=Math.floor(x/10)%10;
 const Nevelo = x => nevelo(x)==="az" ? "Az" : "A";
 
 /* ================= beállítások (életkor, kör-hossz) ================= */
-let beall = { kor:9, dbKor:10, tema:"hp" };
+let beall = { kor:9, dbKor:10, tema:"hp", avatar:"🦊" };
 function beallMent(){ try{ localStorage.setItem("matekBeall", JSON.stringify(beall)); }catch(e){} }
 function beallTolt(){ try{ const x=JSON.parse(localStorage.getItem("matekBeall"));
   if(x && x.kor>=7 && x.kor<=11 && x.dbKor>=5 && x.dbKor<=20){
     if(!x.tema || !TEMAK[x.tema]) x.tema="hp";
+    if(!x.avatar || !AVATAROK.includes(x.avatar)) x.avatar="🦊";
     beall=x; } }catch(e){} }
 const szamkor = () => beall.kor<=7 ? 20 : beall.kor===8 ? 100 : 1000;
 const nehezKor = () => beall.kor>=10;
@@ -1293,6 +1884,19 @@ function leptet(mez,d){
   else beall.dbKor=Math.min(20,Math.max(5,beall.dbKor+d));
   beallMent(); beallKijelez();
 }
+const AVATAROK = ["🦊","🐱","🐼","🐢","🐶","🐰","🐨","🦁","🐯","🐸","🐵","🐻","🐹","🐭","🦉","🐷"];
+function avatarAlkalmaz(){ $("avatar-gomb").textContent = beall.avatar || "🦊"; }
+function avatarPanelNyit(){
+  $("avatar-racs").innerHTML = AVATAROK.map(a =>
+    `<button class="${a===(beall.avatar||"🦊")?"aktiv":""}" onclick="avatarValaszt('${a}')">${a}</button>`).join("");
+  $("avatar-panel").classList.add("nyitva");
+}
+function avatarValaszt(a){
+  if(!AVATAROK.includes(a)) return;
+  beall.avatar = a; beallMent(); avatarAlkalmaz();
+  $("avatar-panel").classList.remove("nyitva");
+}
+function avatarPanelZar(e){ if(e.target.id==="avatar-panel") $("avatar-panel").classList.remove("nyitva"); }
 function temaValt(d){
   const kulcsok = Object.keys(TEMAK);
   const i = (kulcsok.indexOf(beall.tema) + d + kulcsok.length) % kulcsok.length;
@@ -1300,6 +1904,7 @@ function temaValt(d){
   beallMent(); beallKijelez(); frissitKoszonto();
 }
 function beallKijelez(){
+  avatarAlkalmaz();
   $("kor-kijelzo").textContent = beall.kor+" év";
   $("tema-kijelzo").textContent = aktTema().nev;
   $("db-kijelzo").textContent = beall.dbKor;
@@ -2898,7 +3503,7 @@ function naploFrissit(){ // MINDEN megválaszolt feladat után fut - félbehagyo
 function naploSzoveg(){ // a szülői áttekintés látható formája szövegként
   const n = naploOlvas()||[];
   if(!n.length) return null;
-  let t = "🦊 Matek Gyakorló – napló\n";
+  let t = (beall.avatar||"🦊")+" Matek Gyakorló – napló\n";
   const napok = {};
   n.forEach(e=>{ const k = new Date(e.t).toLocaleDateString("hu-HU"); (napok[k]=napok[k]||[]).push(e); });
   t += "\nUtolsó 7 nap:\n";
@@ -2937,7 +3542,7 @@ function naploHTML(){ // formázott változat e-mailbe illesztéshez (inline st�
   const n = naploOlvas()||[];
   if(!n.length) return null;
   const st = 'font-family:Segoe UI,Arial,sans-serif;color:#2b2350;';
-  let h = `<div style="${st}"><h2 style="color:#5b3fd9;margin:0 0 6px">🦊 Matek Gyakorló – napló</h2>`;
+  let h = `<div style="${st}"><h2 style="color:#5b3fd9;margin:0 0 6px">${beall.avatar||"🦊"} Matek Gyakorló – napló</h2>`;
   h += `<h3 style="color:#5b3fd9;margin:12px 0 4px">Utolsó 7 nap</h3><table style="border-collapse:collapse">`;
   const napok = {};
   n.forEach(e=>{ const k = new Date(e.t).toLocaleDateString("hu-HU"); (napok[k]=napok[k]||[]).push(e); });
@@ -3180,5 +3785,8 @@ $("pin-input").addEventListener("input", e=>{ if(e.target.value==="9999") pinOk(
 $("pin-input").addEventListener("keydown", e=>{ if(e.key==="Enter") pinOk(); });
 $("nev-input").addEventListener("keydown", e=>{ if(e.key==="Enter") nevMentes(); });
 </script>
+<div id="avatar-panel" onclick="avatarPanelZar(event)">
+  <div class="avatar-doboz"><h3>Válassz avatart!</h3><div id="avatar-racs"></div></div>
+</div>
 </body>
 </html>
