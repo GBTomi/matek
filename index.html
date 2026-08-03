@@ -178,7 +178,7 @@
   .szulo-kerdes{background:#e6f7f3; border-left:4px solid var(--turkiz); border-radius:10px;
     padding:9px 12px; font-size:.92rem; font-weight:600; color:#0d6e5f; margin-bottom:10px;
     cursor:pointer;}
-  .szulo-kerdes::before{content:"💬 Kérdezd így: "; font-weight:700;}
+  .szulo-kerdes::before{content:"💬 "; font-weight:700;}
 
   /* ---- EREDMÉNY ---- */
   .csillagok{font-size:3rem; text-align:center; margin:14px 0 4px;}
@@ -256,9 +256,11 @@
         <button onclick="leptet('kor',-1)">−</button><b id="kor-kijelzo">9 év</b><button onclick="leptet('kor',1)">+</button></div>
       <div class="lepteto"><span>Feladat/kör</span>
         <button onclick="leptet('db',-1)">−</button><b id="db-kijelzo">10</b><button onclick="leptet('db',1)">+</button></div>
+      <div class="lepteto"><span>Téma</span>
+        <button onclick="temaValt(-1)">◀</button><b id="tema-kijelzo" style="min-width:110px">Harry Potter</b><button onclick="temaValt(1)">▶</button></div>
     </div>
     <button class="fo-gomb megoszto" onclick="naploKuldes(this)" style="margin-top:8px">📤 Napló küldése</button>
-    <div class="tipp">💡 A rövid, mindennapos gyakorlás ér a legtöbbet!<br>
+    <div class="tipp">
       <button class="szulo-link" onclick="szuloNezet()">👨‍👩‍👧 Szülőknek</button></div>
   </div>
 
@@ -395,7 +397,7 @@ function dicseret(){
   // hangsúly a FOLYAMAT-dicséreten (kitartás, módszer), nem a személy minősítésén
   const n = nevOlvas(), r = Math.random();
   if(r<0.5) return valaszt(DICSERET_FOLYAMAT);
-  if(r<0.72) return valaszt(DICSERET_HP);
+  if(r<0.72) return valaszt(aktTema().dics);
   if(n && r<0.85)
     return valaszt([`Ez az, ${n}! 🙌`,`${n}, ez kitartó munka volt! 😎`,`Ügyes vagy, ${n}! 🌟`,
                     `${n}, a gyakorlásod meghozta! 🏆`,`Így kell ezt, ${n}! 🔥`,
@@ -830,13 +832,427 @@ const VIGASZ_HP = [
   "Egy kis Lumos a sötétben: nézd meg a segítséget, és menni fog! 💡",
   "A bátorság nem az, hogy sosem hibázol – hanem hogy újra próbálod. 🦁"
 ];
+const KOSZONTOK_MC = [
+  // Bányászat és ércek
+  "Szia {n}! Ma gyémántszintre ásunk a matekban! 💎",
+  "{n}, fogd a csákányt: minden feladat egy értékes érc! ⛏️",
+  "Kezdődhet a bányatúra, {n} – a tudás a legmélyebb szinten csillog! 🔦",
+  "{n}, a vasérc is olvasztásra vár – az agyad is bemelegítésre! 🔥",
+  "Smaragdot érő gyakorlás jön, {n}! 🟢",
+  "{n}, sose áss egyenesen lefelé – de a feladatokba bátran! 🕳️",
+  "A redstone-hoz ész kell, {n} – neked van! 🔴",
+  "{n}, ma aranyat mosunk: minden jó válasz egy rög! 🪙",
+  "Fáklyát fel, {n} – világítsd be a számokat! 🕯️",
+  "{n}, a mélyben lapul a gyémánt – a fejedben a megoldás! 💎",
+  "Csákány helyett ceruza, {n} – ugyanolyan hatékony! ✏️",
+  "{n}, a lapis lazulival varázsolunk – a tudással számolunk! 🔵",
+  "Minden réteg számít, {n} – ahogy minden feladat is! 🪨",
+  "{n}, obszidián-kemény leszel matekból! ⬛",
+  "A bányában visszhangzik: hajrá {n}! 📣",
+  "{n}, ma feltárunk egy új barlangrendszert: a szorzásét! 🕸️",
+  "Ne félj a sötéttől, {n} – a tudás a fáklyád! 🔥",
+  "{n}, minden csákányütés közelebb visz – minden feladat is! ⛏️",
+  "Netherit-szintű kitartást, {n}! 🟤",
+  "{n}, a szén is fontos – az alapok is! ⚫",
+  "Ma mélyebbre jutsz, mint tegnap, {n}! 📉",
+  "{n}, a bányász sosem hagyja félbe a járatot! 🚇",
+  "Új tárna, új lehetőség, {n}! 🛤️",
+  "{n}, gyűjtsd a tapasztalatpontokat – feladatról feladatra! 🟩",
+  "A kincsesláda a kör végén vár, {n}! 🧰",
+  // Craftolás és eszközök
+  "{n}, a craftasztalon ma tudást barkácsolunk! 🛠️",
+  "Kard helyett ész, {n} – az a legjobb fegyver! 🗡️",
+  "{n}, 3×3-as rács a craftoláshoz – a szorzótábla is rács! 🔲",
+  "Jó recepthez jó hozzávalók kellenek, {n} – figyelem és kitartás! 📜",
+  "{n}, enchantolt csákány = gyakorlott agy! ✨",
+  "Építs magadnak tudás-páncélt, {n}! 🛡️",
+  "{n}, az üllőn ma a számolást élesítjük! ⚒️",
+  "Bájital helyett fejszámolás, {n} – gyorsító hatású! 🧪",
+  "{n}, a horgászbot türelmet tanít – a matek is! 🎣",
+  "Minden szerszám kopik, de a tudás soha, {n}! 🔧",
+  "{n}, craftolj magadnak egy hibátlan kört! 🧩",
+  "A legjobb recept, {n}: gyakorlás + türelem = siker! 📖",
+  "{n}, a nyílvessző is egyenesen repül – a gondolatod is! 🏹",
+  "Pajzsot fel, {n} – jöhetnek a nehezebb feladatok! 🛡️",
+  "{n}, ma XP-t gyűjtünk, nem is keveset! 💚",
+  "Az iránytű mindig hazamutat, {n} – a tiéd a megoldásra! 🧭",
+  "{n}, térképezd fel a mai feladatokat! 🗺️",
+  "Kovácsolj a hibából tudást, {n}! ⚒️",
+  "{n}, a létra fokról fokra visz – a gyakorlás is! 🪜",
+  "Csónakba, {n} – evezzünk át a feladatokon! 🛶",
+  "{n}, a kampó is megtart – az alaptudásod is! 🪝",
+  "Világító fáklyasor a célig, {n}! 🕯️",
+  "{n}, tegyél még egy blokkot a tudástornyodra! 🧱",
+  "A varázsasztal 30-as szintet kér – te már ott jársz, {n}! 📚",
+  "{n}, a mai készlet: 10 feladat, tele tapasztalattal! 🎒",
+  // Mobok
+  "{n}, a creeper csendben jön – a hiba is: figyelj oda! 💥",
+  "Csontváz-pontossággal célozz, {n}! 🏹",
+  "{n}, a zombik lassúak – te gyors vagy a fejszámolásban! 🧟",
+  "Az enderman elteleportál – a te figyelmed maradjon itt, {n}! 🌀",
+  "{n}, a pókok falra másznak – te a tudásrácson felfelé! 🕷️",
+  "Ma este nem jönnek mobok, {n} – csak feladatok! 🌙",
+  "{n}, szelídítsd meg a matekot, mint egy farkast! 🐺",
+  "A macska elijeszti a creepert, {n} – a tudás a kétséget! 🐱",
+  "{n}, a méhek szorgalmasak – ma te is az leszel! 🐝",
+  "Vigyázz, nyílzápor… á, csak számok, {n}! Kapd el őket! 🎯",
+  "{n}, a slime pattog – a jókedved is pattogjon! 🟢",
+  "A vasgólem megvéd, {n} – a gyakorlás felvértez! 🤖",
+  "{n}, az axolotl is újratölt – egy mély levegő, és mehet! 🦎",
+  "A delfin gyorsúszást ad, {n} – a rutin gyors számolást! 🐬",
+  "{n}, a papagáj utánoz – te viszont magadtól tudod! 🦜",
+  "Éjszaka a mobok, nappal a matek, {n}! ☀️",
+  "{n}, a phantomok a lustákra vadásznak – te ma is gyakorolsz! 👻",
+  "Egy jól irányzott válasz, és a kétség-creeper hatástalan, {n}! 💣",
+  "{n}, a láma is kitartóan cipel – te is viszed a tudást! 🦙",
+  "A róka a ravaszdi – te az okosdi vagy, {n}! 🦊",
+  "{n}, a teknős lassan, de biztosan ér célba – te is odaérsz! 🐢",
+  "A nyuszi nagyokat ugrik – ma a tudásod is, {n}! 🐇",
+  "{n}, a panda bambuszt rág – te feladatokat! 🐼",
+  "Herobrine csak legenda, {n} – a tudásod viszont valódi! 👀",
+  "{n}, a mob-aréna helyett ma szám-aréna vár! 🏟️"
+];
+const KOSZONTOK_MC2 = [
+  // Falu és falusiak
+  "{n}, a falusiak is cserélnek: te időt adsz, tudást kapsz! 🔄",
+  "Hmm! – mondja a falusi. Fordítás: hajrá {n}! 🧑‍🌾",
+  "{n}, a könyvtáros falusi a legjobb üzletfél – a tudás kincs! 📚",
+  "A kovács falusi is gyakorolt, {n} – ezért jó a cucca! ⚒️",
+  "{n}, smaragdért tudást? Mindig megéri! 🟢",
+  "A falu harangja szól, {n}: gyakorlásidő! 🔔",
+  "{n}, építsd a faludat – és a tudásodat! 🏘️",
+  "A vándorkereskedő ma jó ajánlatot hozott, {n}: egy kör matek! 🦙",
+  "{n}, a falusiak followolnak – mutasd meg nekik! 👀",
+  "Golem őrzi a falut, {n} – a rutin a tudásodat! 🗿",
+  "{n}, a termés beérett – ideje learatni a pontokat! 🌾",
+  "A falu kútjába nézve a jövőd látszik, {n}: matekbajnok! 💧",
+  "{n}, minden háznak alap kell – minden tudásnak gyakorlás! 🏠",
+  "A falusi gyerekek is számolnak, {n} – versenyezz velük! 👧",
+  "{n}, nyisd ki a boltot: ma tudást árulunk! 🏪",
+  "Zöld a jelzés, {n}: a falu bízik benned! ✅",
+  "{n}, egy okos falusi többet ér tíz smaragdnál! 💚",
+  "A pap falusi is gyógyít – a gyakorlás a hibákat, {n}! ⚗️",
+  "{n}, a falu főterén ma téged ünnepelnek! 🎉",
+  "Építs iskolát a faludba, {n} – te vagy az első diák! 🏫",
+  "{n}, a nyílpuska-készítő is precíz – legyél te is! 🎯",
+  "A falusi farmere friss kenyeret ad, {n} – a matek friss tudást! 🍞",
+  "{n}, hangos hmm-mel jóváhagyva: kezdődhet a kör! 🗣️",
+  "A falu térképész-asztalán a te utad is rajta van, {n}! 🗺️",
+  "{n}, ma te vagy a falu hőse! 🦸",
+  // Biomok és felfedezés
+  "{n}, ma új biomba lépünk: a Számok Földjére! 🌍",
+  "A dzsungelben templom, a matekban kincs rejlik, {n}! 🌴",
+  "{n}, a sivatagban is van víz – a nehéz feladatban is megoldás! 🏜️",
+  "Hegycsúcsra fel, {n} – onnan szép a kilátás a tudásra! 🏔️",
+  "{n}, a tajga fenyői magasra nőnek – a tudásod is! 🌲",
+  "Korallzátony-színes napod lesz, {n}! 🪸",
+  "{n}, a gombasziget ritka hely – a hibátlan kör is ritka kincs! 🍄",
+  "Jeges biomban is fő a meleg fej, {n}! ❄️",
+  "{n}, a cseresznyeliget virágzik – a tudásod is bontogat! 🌸",
+  "Szavannán fut a gepárd – a te agyad is sprintel, {n}! 🐆",
+  "{n}, a mocsárban béka kuruttyol: bre-ke-ke, azaz hajrá! 🐸",
+  "Új seed, új kaland, {n} – új nap, új feladatok! 🌱",
+  "{n}, a felfedező sosem fél az ismeretlen feladattól! 🧭",
+  "Óceán mélyén kincs, feladat mélyén tudás, {n}! 🌊",
+  "{n}, az erdei kastélyban totem vár – a körben rekord! 🏰",
+  "Barlangi tavak csillognak, {n} – akár a jó válaszaid! 💧",
+  "{n}, a badlands aranyat rejt – a gyakorlás eredményt! 🟠",
+  "Nyílt tengeren hajózunk, {n} – irány a tudás szigete! ⛵",
+  "{n}, a világ végtelen – a fejlődésed is lehet az! ♾️",
+  "Minden chunk betöltve, {n} – kezdődhet a kaland! 🧩",
+  "{n}, az ancient city mélyén csend van – koncentrálj, és tiéd a kincs! 🤫",
+  "Deep dark? Inkább deep smart, {n}! 🧠",
+  "{n}, a szélrózsa minden irányából jönnek a feladatok! 🌬️",
+  "Léggömbként emelkedik a tudásod, {n}! 🎈",
+  "{n}, minden út a gyakorláshoz vezet – indulj el! 🛤️",
+  // Redstone és logika
+  "{n}, a redstone-áramkör is logika – akár a matek! 🔴",
+  "Kapcsold be a gondolkodás-áramkört, {n}! 🎚️",
+  "{n}, egy jó redstone-gép pontos – a te számolásod is az lesz! ⚙️",
+  "Ismétlő, összehasonlító, {n} – a redstone is számol! 🧮",
+  "{n}, az ajtó nyitásához jel kell – a megoldáshoz gondolat! 🚪",
+  "Dugattyú tolja a blokkot, gyakorlás a tudást, {n}! 🔩",
+  "{n}, építs számológépet a fejedben – redstone se kell! 💡",
+  "A megfigyelő blokk mindent lát, {n} – te a részleteket! 👁️",
+  "{n}, egy tick alatt vált a jel – te is gyorsulsz! ⏱️",
+  "Sínre tesszük a tudást, {n} – csilingelő csillevasút! 🛤️",
+  "{n}, a trónterem ajtaja logikai kapura nyílik – tiéd a kulcs! 🗝️",
+  "Automata farm, automata rutin – de a fejed élőben számol, {n}! 🌾",
+  "{n}, a hopper mindent összegyűjt – a naplód a pontjaidat! 📥",
+  "TNT-t csak óvatosan, {n} – a tudás biztosabb robbanás! 🧨",
+  "{n}, a nyomólap jelez – az agyad megold! 🟫",
+  "Redstone-fáklya világít, {n} – az ész is! 🔦",
+  "{n}, hosszú áramkörhöz ismétlő kell – hosszú tudáshoz ismétlés! 🔁",
+  "A megoldás-gépezet beindult, {n}! ⚙️",
+  "{n}, minden jel számít – minden válasz is! 📶",
+  "Logikus lépések, {n} – blokkról blokkra! 🧱",
+  "{n}, a napérzékelő reggel kapcsol – te most! 🌅",
+  "Kapcsolj rá, {n} – zöld a jel! 🟢",
+  "{n}, az áramkör kész – már csak a te jeled hiányzik! ⚡",
+  "Precíz, mint egy óramű-áramkör, {n}! 🕰️",
+  "{n}, a gondolataid ma redstone-sebességgel futnak! 💨",
+  // Nether, End és kaland
+  "{n}, a Nether-kapu lila fénye hív: kaland és tudás vár! 🌀",
+  "Lávatengeren is átkelsz, {n} – egy nehéz feladat meg se kottyan! 🌋",
+  "{n}, a blaze rúdja kell a főzethez – a kitartás a sikerhez! 🔥",
+  "Piglinek aranyat cserélnek, {n} – te tudásra cserélsz időt! 🐷",
+  "{n}, a Nether-erőd útvesztő – a te utad viszont tiszta! 🏯",
+  "Ender-gyöngy a zsebben, {n} – ugorj a következő feladatra! 🟣",
+  "{n}, a sárkány is legyőzhető – a legnehezebb példa is! 🐉",
+  "End-szigetek várnak, {n} – de előbb a mai kör! 🏝️",
+  "{n}, az elytrával repülsz – a tudással szárnyalsz! 🪂",
+  "A végzet nem vár, {n} – de a feladat igen: nyugodtan számolj! ⏳",
+  "{n}, a shulker doboza kincset rejt – a fejed tudást! 📦",
+  "Vas a bátraké, gyémánt a kitartóké, {n}! 💎",
+  "{n}, a hídépítés a láva felett figyelmet kér – a matek is! 🌉",
+  "Egy ágy a Netherben robban – a tudásod sosem hagy cserben, {n}! 🛏️",
+  "{n}, gyűjts tapasztalatot, mint az endermanok a blokkokat! 🧱",
+  "A respawn-pont beállítva, {n}: bátran próbálkozz! 🎯",
+  "{n}, a kaland ott kezdődik, ahol a komfortzóna véget ér! 🚀",
+  "Speedrun helyett smart-run, {n}! 🏃",
+  "{n}, minden boss-harc előtt felkészülés kell – ez az! 🗡️",
+  "A kredit-képernyőig meg sem állunk, {n}! 🎬",
+  "{n}, az achievementek maguktól nem jönnek – gyűjtsd őket! 🏆",
+  "Új nap, új spawn, {n} – használd ki! 🌄",
+  "{n}, a totem újraéleszt – a gyakorlás újraindít! 🪅",
+  "Legendás felszerelés helyett legendás tudás, {n}! ✨",
+  "{n}, a világod te építed – a tudásodat is! 🌍"
+];
+const KOSZONTOK_MC3 = [
+  // Farm és állatok
+  "{n}, a búza is naponta nő – a tudásod is! 🌾",
+  "Csirkefarm vagy számfarm, {n}? Ma az utóbbi terem! 🐔",
+  "{n}, a tehén tejet ad, a gyakorlás magabiztosságot! 🐄",
+  "Ültess ma tudás-magot, {n} – holnapra kihajt! 🌱",
+  "{n}, a répa a szamárnak, a feladat a bajnoknak jár! 🥕",
+  "A birkák színesek, {n} – a feladatok is változatosak! 🐑",
+  "{n}, a méhkaptár tele – a naplód is teljen pontokkal! 🍯",
+  "Csontot a kutyának, dicséretet a számolónak, {n}! 🦴",
+  "{n}, a dinnye szeletenként terem – a tudás feladatonként! 🍉",
+  "Ma aratás van, {n}: pontokat aratunk! 🌾",
+  "{n}, a ló felnyergelve – vágtass végig a körön! 🐴",
+  "A tök is megnő, ha öntözik, {n} – az agyad is, ha edzed! 🎃",
+  "{n}, a cukornád az égig ér – a lelkesedésed is! 🎋",
+  "Kakaóbabból csoki, gyakorlásból tudás, {n}! 🍫",
+  "{n}, a halastó nyugodt – a fejed is legyen az számoláskor! 🐟",
+  "Minden állatnak karám kell, minden tudásnak rendszer, {n}! 🚧",
+  "{n}, a kecske fejel – te fejben számolsz! 🐐",
+  "A csibék sorban követik a tyúkot, {n} – a lépések a megoldást! 🐤",
+  "{n}, komposztból csontliszt, hibából tanulság! ♻️",
+  "Bőséges termést, {n} – tele kosárral térj vissza! 🧺",
+  "{n}, a földet előbb felkapáljuk – a feladatot előbb elolvassuk! 🪓",
+  "A szorgos farmer titka a napi rutin, {n}! ☀️",
+  "{n}, a legjobb vetőmag a kíváncsiság! 🌻",
+  "Az istálló rendben, {n} – az agyad is rendezett! 🏇",
+  "{n}, egy jól gondozott farm sosem hagy éhezni – a tudás sem! 🍞",
+  // Építés
+  "{n}, ma katedrálist építünk – számokból! 🏗️",
+  "Blokk blokk hátán, {n} – tudás tudás hátán! 🧱",
+  "{n}, az alap a legfontosabb – kezdjük az egyszerűvel! 🏠",
+  "Szimmetrikus építmény, pontos számolás, {n}! 📐",
+  "{n}, a felhőkarcolódhoz ma is jön pár emelet! 🏙️",
+  "Építs hidat a nemtudásból a tudásba, {n}! 🌉",
+  "{n}, a kreatív mód a fejedben van – használd! 🎨",
+  "Kastély vagy kunyhó, {n}? A tudásod dönt! 🏰",
+  "{n}, a jó építész tervez – a jó számoló gondolkodik! 📋",
+  "Világítótorony légy, {n} – mutasd az utat! 🗼",
+  "{n}, ma a részletek döntenek – egy blokk, egy számjegy! 🔍",
+  "Az akvárium üvegből van, a tudás gyakorlásból, {n}! 🐠",
+  "{n}, tetőt a házra, koronát a körre! 👑",
+  "A vörös szőnyeg kigördítve, {n} – vár a feladatpalota! 🟥",
+  "{n}, építs lépcsőt – a tudás emeletről emeletre nő! 🪜",
+  "Egy jó fal egyenes sorokból áll, {n} – egy jó számolás lépésekből! 🧱",
+  "{n}, a beacon fénye az égig ér – a mai teljesítményed is! 💠",
+  "Titkos ajtót építünk, {n} – a jelszó: tudás! 🚪",
+  "{n}, a vízesés-lift felfelé visz – a gyakorlás is! ⬆️",
+  "Ma szobrot építünk, {n} – a kitartás szobrát! 🗿",
+  "{n}, a kert dísze a virág, a naplódé a jó eredmény! 🌷",
+  "Minden nagy építmény egy blokkal kezdődik, {n}! 1️⃣",
+  "{n}, az állványzat ideiglenes – a tudás örök! 🪵",
+  "Pixel-pontos munkát, {n}! 🎯",
+  "{n}, ma te vagy az építőmester! 👷",
+  // Túlélés-tippek és érdekességek
+  "Tudtad, {n}? Egy Minecraft-nap pont 20 perc – két gyakorlókör! ⏰",
+  "{n}, egy stack éppen 64 – ez ám a kerek szám! 6️⃣4️⃣",
+  "Tudtad, {n}? A térkép 128×128 blokkot mutat – csupa hatvány! 🗺️",
+  "{n}, a craftrács 3×3 = 9 hely – máris szoroztál! ✖️",
+  "Tudtad, {n}? A gyémánthoz vas-csákány kell – a tudáshoz alapok! ⛏️",
+  "{n}, az éhségcsík 10 combból áll – oszd be okosan! 🍗",
+  "Tudtad, {n}? A szívsor 10 szív = 20 életpont – dupla számolás! ❤️",
+  "{n}, 9 vasrúd = 1 vasblokk – ez bizony bennfoglalás! 🔩",
+  "Tudtad, {n}? Az óra a nap állását mutatja – az idő matek! 🕐",
+  "{n}, a kemence 8 tárgyat süt egy szénnel – hatékonyság! 🔥",
+  "Tudtad, {n}? A víz 8 blokkot folyik – számolj utána! 💧",
+  "{n}, 4 hógolyó = 1 hóblokk – építs télen is! ⛄",
+  "Tudtad, {n}? Az arany-répa a legjobb kaja – a tudás a legjobb erő! 🥕",
+  "{n}, a teli páncél 20 pont védelem – a gyakorlás 100! 🛡️",
+  "Tudtad, {n}? A világ határa 30 millió blokk – a tudásé végtelen! ♾️",
+  "{n}, 3 papír + 1 bőr = könyv: olvasni Minecraftban is jó! 📖",
+  "Tudtad, {n}? A jelzőfény piramisa 164 blokkból áll – nagy szorzás! 💎",
+  "{n}, egy ágy 3 gyapjú + 3 deszka – arányok mindenhol! 🛏️",
+  "Tudtad, {n}? A teknőstojás 4-5 nap alatt kel ki – türelemjáték! 🥚",
+  "{n}, 60 tick = 3 másodperc – a redstone is számol! ⏱️",
+  "Tudtad, {n}? Az üst 3 palacknyi vizet tárol – harmadolás! 🧪",
+  "{n}, a nap keleten kel Minecraftban is – tájékozódj! 🧭",
+  "Tudtad, {n}? A hopper 5 rekeszes – kis raktár, nagy rend! 📥",
+  "{n}, 2 fadeszka = 4 bot – ez bizony kétszerezés! 🪵",
+  "Tudtad, {n}? A creeper 3 blokkos hatósugárban robban – távolságmatek! 💥",
+  // Rejtély és kaland
+  "{n}, a kincstérkép X-e a következő feladaton áll! ❌",
+  "Titkos járat nyílik, {n} – a jó válasz a rugója! 🚪",
+  "{n}, ma nyomozunk: hol bujkál a megoldás? 🔎",
+  "A romok között kincs van, {n} – a feladatok között tudás! 🏛️",
+  "{n}, a sfinx… izé, a falusi kérdez: mennyi 6×7? 😄",
+  "Elhagyott bánya, felfedezetlen tudás, {n} – irány befelé! 🕳️",
+  "{n}, a láda zárva – a kulcs egy jó válasz! 🔐",
+  "Rejtélyes portál dereng, {n} – ki tudja, mi vár mögötte? 🌀",
+  "{n}, kövesd a nyomokat: szám, szám hátán! 👣",
+  "A hajóroncs mélyén smaragd, {n} – a kör végén siker! ⚓",
+  "{n}, éjfélkor a legjobb agyalni… vagy inkább délután! 🌙",
+  "Kalandornapló, {n}: ma is felfedeztél valami újat! 📔",
+  "{n}, a labirintusból a logika vezet ki! 🌀",
+  "Sűrű köd, tiszta fej, {n} – így kell ezt! 🌫️",
+  "{n}, a barlang visszhangozza: ügyes-ügyes-ügyes! 🗣️",
+  "A kincsesládához 3 kulcs kell, {n}: figyelem, tudás, türelem! 🗝️",
+  "{n}, minden ajtó mögött új feladat – nyisd bátran! 🚪",
+  "Csillagfényes égbolt alatt is számolunk, {n}! ✨",
+  "{n}, az idegen torony tetején zászló – tűzd ki a tiédet! 🚩",
+  "A rejtvény fele megfejtve, {n} – hajrá, a másik fele vár! 🧩",
+  "{n}, hallod? A mélyből dobbanás… az a tudásvágy! 🥁",
+  "Expedíció indul, {n} – cél: a hibátlan kör! 🎒",
+  "{n}, a titok nyitja mindig az első lépés! 🐾",
+  "Homokviharban is előre, {n} – a cél már látszik! 🌪️",
+  "{n}, kalandra fel: a következő feladat már vár! ⚔️"
+];
+const KOSZONTOK_MC4 = [
+  "{n}, respawnoltál? Akkor irány a gyakorlópálya! 🎮",
+  "Mentés kész, {n} – a tudásod nem vész el! 💾",
+  "{n}, a hardcore mód a bátraké – a napi kör a kitartóké! 💀",
+  "Békés mód a szívnek, kihívás az agynak, {n}! ☮️",
+  "{n}, a szerveren mindenki rólad beszél: micsoda számoló! 🌐",
+  "Skin-cserénél is te maradsz a bajnok, {n}! 🎭",
+  "{n}, F5: nézz rá kívülről a feladatra – úgy könnyebb! 📷",
+  "A hotbar 9 rekeszes, {n} – a kilencedikben a mai lelkesedésed! 🎛️",
+  "{n}, dupla ugrás nincs – de dupla pontszám lehet! ⏫",
+  "Az inventory rendben, {n}? Akkor jöhet a matek-loot! 🎒",
+  "{n}, a shift-lopakodás óvatos – a számolásod is legyen pontos! 🤫",
+  "Multiplayerben is te vagy az MVP, {n}! 🏅",
+  "{n}, egy jó seedből jó világ lesz – egy jó szokásból jó tudás! 🌱",
+  "A day-night ciklus pörög, {n} – a te köröd is! 🔄",
+  "{n}, screenshot-ot érdemel a mai eredményed! 📸",
+  "Loading… kész! {n}, a feladatvilág betöltve! ⏳",
+  "{n}, a kockavilág kerek egész – a tudásod is az lesz! 🎲",
+  "Pixelről pixelre, számról számra, {n}! 🖼️",
+  "{n}, a crafting sikerült – most a fejedben kattanjon a recept! 💡",
+  "GG, {n} – de a meccs még csak most kezdődik! 🕹️",
+  "{n}, a villámgyors klikkelésnél csak a villámgyors fejszámolás menőbb! ⚡",
+  "Frissítés érkezett, {n}: +1 nap gyakorlás, +sok tudás! 🆕",
+  "{n}, a te világodban te írod a szabályokat – az első: sosem adjuk fel! 📜",
+  "Nether-csillag ritkaság, {n} – a napi gyakorlás szuperképesség! ⭐",
+  "{n}, kaland, kocka, számolás – ez a te napod! 🎯"
+];
+const DICSERET_MC = [
+  "Gyémántot találtál! 💎","Achievement feloldva! 🏆","Level up! 🆙","Kritikus találat! ⚔️",
+  "Smaragd-szintű válasz! 🟢","Netherit-kemény tudás! 🟤","Enchantolt agy! ✨","Fullos válasz! 💯",
+  "Egy stack pont jár érte! 6️⃣4️⃣","A creeper is elismerően sziszeg! 💥","A falusi hangosan hümmög: hmm! 🧑‍🌾",
+  "Vasgólem-erős megoldás! 🤖","Redstone-pontosság! 🔴","Boss legyőzve! 🐉","Loot megszerzett! 🧰",
+  "XP-eső hullik! 💚","A sárkány is meghajol! 🐲","Beacon-fényes teljesítmény! 💠","Totemet érő válasz! 🪅",
+  "Craft mesterfokon! 🛠️","A láda kinyílt – tiéd a kincs! 🗝️","Speedrun-tempó! 🏃","Precíz, mint az iránytű! 🧭",
+  "A hotbar tele sikerrel! 🎛️","GG! Szép munka! 🕹️","A szerver tapsol! 🌐","MVP-válasz! 🏅",
+  "Egy blokkal magasabb a tudástorony! 🧱","A méhek is táncolnak örömükben! 🐝","Csontváz-pontos célzás! 🏹",
+  "A kemence is felizzott – forró válasz! 🔥","Piglin is aranyat adna érte! 🐷","A térkép új területet mutat! 🗺️",
+  "Elytra-magasság! 🪂","A kaktusz is virágba borult! 🌵","Arany-répát érdemelsz! 🥕","A delfin ugrik egyet örömében! 🐬",
+  "Hardcore-szintű teljesítmény! 💀","A phantomok ma messze elkerülnek! 👻","Tökéletes, mint a 3×3-as craft! 🔲",
+  "A jelzőfény az égig ér! 🗼","Enderman is idenézett – lenyűgözted! 🌀","Hopper-hatékonyság! 📥",
+  "A kút mélyéről is felhallatszik: bravó! 💧","A csillagos ég is neked ragyog! ✨","Falu hőse lettél! 🦸",
+  "A vándorkereskedő ingyen adná a lámát! 🦙","Óramű-pontosság! 🕰️","A tekintélyed nő, mint a bambusz! 🎋",
+  "A slime is nagyobbat pattant örömében! 🟢","Szivárványos birka-ritkaság! 🌈","Kincs a kincsesládában! 📦",
+  "A zsákmánylista bővült! 📜","Aranyalma-erő! 🍎","A respawn-pont büszke rád! 🎯","A dzsungeltemplom titka megfejtve! 🌴",
+  "Óriás-szörnyirtó válasz! 🗡️","A jégvár is elolvad ekkora tudástól! ❄️","A wither is fejet hajt! 💀",
+  "Nether-csillagot érő pillanat! ⭐","A könyvespolcod ma is bővült! 📚","A varázsasztal 30-as szintet mutat! 📖",
+  "Shulker-doboznyi tudás! 📦","A gyakorlás gyümölcse beérett! 🍉","A pálya királya vagy! 👑",
+  "Csont nélkül is hű társ a tudásod! 🦴","Az üllő is cseng: kész a remekmű! ⚒️","A karod erős, az eszed erősebb! 💪",
+  "Az őrtorony jelzett: győzelem! 🚩","Frissen sült siker! 🍞","A mob-aréna bajnoka! 🏟️",
+  "A parancsblokk is elismer: /jó válasz! ⌨️","A kockák neked dolgoznak! 🎲","Pixel-tökéletes! 🖼️",
+  "A tudásfád újabb ágat hajtott! 🌳","A láva sem állít meg! 🌋","Bátor lépés, szép eredmény! 🐾",
+  "A hídon átértél – szilárd tudás! 🌉","Az aratás gazdag! 🌾","A szikla is megrepedt a tudásodtól! 🪨",
+  "Az ész a legjobb csákány! ⛏️","Zseblámpád a logika! 🔦","Mestermunka! 👷","A kaptár tele mézzel, a naplód ponttal! 🍯",
+  "Az éjszakát is átvészelted – hibátlanul! 🌙","A világítótorony rád mutat! 🗼","A titkos ajtó feltárult! 🚪",
+  "A kalandnapló új fejezettel bővült! 📔","Supersonic számolás! 💨","A kviíz… azaz a kör ura vagy! 🎮",
+  "A vasút célba ért! 🛤️","Az öreg tölgy is meghajol! 🌳","A hógolyó telibe talált! ⛄",
+  "A tűzijáték a te tiszteletedre szól! 🎆","A zászló felhúzva: győzelem! 🚩","A csorda éljenez! 🐄",
+  "Aranyat érő gondolat! 🪙","A szomszéd falu is rólad beszél! 🏘️","A kincstérkép X-ét megtaláltad! ❌",
+  "A logika bajnoka! 🧠","A nap is fényesebben süt rád! ☀️","A kockavilág büszkesége vagy! 🎮",
+  "Építőmesteri pontosság! 📐","A végtelen világ is kevés a tudásodnak! ♾️","Csillagos ötös… azaz gyémántos! 💎",
+  "A kockák is neked szurkolnak! 🎲"
+];
+const VIGASZ_MC = [
+  "A creeper is csak ölelni akart – gyere, próbáld újra! 💥",
+  "Minden respawn egy új esély! 🎯",
+  "Steve is beleesett párszor a lávába – aztán megtanulta az utat! 🌋",
+  "Egy elvesztett csata még nem elvesztett háború – új kör, új szerencse! ⚔️",
+  "A gyémántot sem találod meg elsőre – áss tovább! 💎",
+  "Az első ház mindig földkunyhó – aztán jön a kastély! 🏠",
+  "A zombik sem adják fel soha – te se tedd! 🧟",
+  "Elfogyott az éhségcsík? Tölts újra egy kis gyakorlással! 🍗",
+  "A leégett ház újraépíthető – a hiba kijavítható! 🔥",
+  "Még a profik is esnek le az elytrával! 🪂",
+  "Rossz recept? Nézd meg újra a hozzávalókat! 📜",
+  "A kezdő bányász is sokszor üt mellé – aztán belejön! ⛏️",
+  "Az enderman is elteleportál néha – a figyelem visszahozható! 🌀",
+  "Egy törött csákány nem a világ vége – craftolj újat! 🛠️",
+  "A sárkányt sem győzik le elsőre! 🐉",
+  "Éjszaka után mindig felkel a nap! 🌅",
+  "A térkép széle nem a világ vége – menj tovább! 🗺️",
+  "Hibáztál? Ez csak egy checkpoint, nem game over! 🎮",
+  "A wither is legyőzhető – lépésről lépésre! 💀",
+  "Elveszett a loot? A tudásod megmarad! 🎒",
+  "A híd leszakadt? Építs erősebbet! 🌉",
+  "Minden nagy építő rontott már el falat! 🧱",
+  "A phantom csak akkor jön, ha feladod – ne add fel! 👻",
+  "Egy rossz ugrás után jön a jól kiszámított! 🦘",
+  "A kaktusz is szúr néha – de kibírod! 🌵",
+  "A láva mellett óvatosan – a hibából tanulva biztosabban! 🔦",
+  "A tél is elmúlik, a nehéz feladat is! ❄️",
+  "Beragadt a redstone? Egy új ötlet megoldja! 🔴",
+  "A falusi hümmög: hmm-hmm, azaz: menni fog ez! 🧑‍🌾",
+  "Nem baj, ha lassan megy – a teknős is célba ér! 🐢",
+  "Egy rossz csere után jön a jó üzlet! 🔄",
+  "A bányában néha eltévedsz – a fáklyák hazavezetnek! 🕯️",
+  "A vetés sem kel ki egy nap alatt! 🌱",
+  "Az achievement még vár rád – közelebb vagy, mint hiszed! 🏆",
+  "Egy kis crafting-hiba, és már tudod is a helyes receptet! 🛠️",
+  "A pók is leesik a falról – aztán újra mászik! 🕷️",
+  "A hógolyó elolvadt? Gyúrj újat! ⛄",
+  "A legmélyebb barlangból is van kiút! 🕳️",
+  "Az iránytű mindig mutatja az utat – a tiéd a gyakorlás! 🧭",
+  "A szakadék szélén fordulj vissza, és keress hidat! 🌉",
+  "A villám is csak egy pillanat – a tudásod tartós! ⚡",
+  "Egy elszalasztott cikesz… izé, nyúl után jön a következő! 🐇",
+  "A kezdet nehéz, mint az obszidián-bányászat – de megéri! ⬛",
+  "Az elrontott bájital is tapasztalat! 🧪",
+  "A holnapi nap új seed – új lehetőség! 🌍",
+  "Egy vereség a mob-arénában edzés a győzelemhez! 🏟️",
+  "A tudásod nem despawnol – minden próbával nő! ✨",
+  "Beesteledett? Aludj rá egyet, holnap újra menni fog! 🛏️",
+  "Nem a páncél véd meg igazán, hanem az újrapróbálás! 🛡️",
+  "A hiba csak egy blokk az úton – lépj át rajta! 🧱"
+];
+/* ---- témák (bővíthető: új kulcs = új téma) ---- */
+const TEMAK = {
+  hp: { nev:"Harry Potter", koszontok: KOSZONTOK_HP.concat(KOSZONTOK_HP2),
+        dics: DICSERET_HP, vigasz: VIGASZ_HP },
+  mc: { nev:"Minecraft", koszontok: KOSZONTOK_MC.concat(KOSZONTOK_MC2, KOSZONTOK_MC3, KOSZONTOK_MC4),
+        dics: DICSERET_MC, vigasz: VIGASZ_MC }
+};
+const aktTema = () => TEMAK[beall.tema] || TEMAK.hp;
 const KOSZONTOK_SIMA = [
   "Szia! Jó munkát! 💪","Hajrá, ma is menni fog! 🚀","Minden kör egy szint felfelé! 🆙",
   "A gyakorlás bajnokot csinál! 🏆","Kalandra fel! A számok várnak! 🗺️"
 ];
 function veletlenUzenet(){
   const n = nevOlvas();
-  return n ? valaszt(KOSZONTOK_NEVES.concat(KOSZONTOK_HP, KOSZONTOK_HP2)).replaceAll("{n}", n)
+  return n ? valaszt(KOSZONTOK_NEVES.concat(aktTema().koszontok)).replaceAll("{n}", n)
            : valaszt(KOSZONTOK_SIMA);
 }
 function frissitKoszonto(){ $("koszonto").textContent = veletlenUzenet(); }
@@ -849,10 +1265,12 @@ const nevelo = x => { const sz=Math.floor(x/100)%10, t=Math.floor(x/10)%10;
 const Nevelo = x => nevelo(x)==="az" ? "Az" : "A";
 
 /* ================= beállítások (életkor, kör-hossz) ================= */
-let beall = { kor:9, dbKor:10 };
+let beall = { kor:9, dbKor:10, tema:"hp" };
 function beallMent(){ try{ localStorage.setItem("matekBeall", JSON.stringify(beall)); }catch(e){} }
 function beallTolt(){ try{ const x=JSON.parse(localStorage.getItem("matekBeall"));
-  if(x && x.kor>=7 && x.kor<=11 && x.dbKor>=5 && x.dbKor<=20) beall=x; }catch(e){} }
+  if(x && x.kor>=7 && x.kor<=11 && x.dbKor>=5 && x.dbKor<=20){
+    if(!x.tema || !TEMAK[x.tema]) x.tema="hp";
+    beall=x; } }catch(e){} }
 const szamkor = () => beall.kor<=7 ? 20 : beall.kor===8 ? 100 : 1000;
 const nehezKor = () => beall.kor>=10;
 function korTablak(){ kivTablak.clear();
@@ -864,10 +1282,17 @@ function leptet(mez,d){
   else beall.dbKor=Math.min(20,Math.max(5,beall.dbKor+d));
   beallMent(); beallKijelez();
 }
+function temaValt(d){
+  const kulcsok = Object.keys(TEMAK);
+  const i = (kulcsok.indexOf(beall.tema) + d + kulcsok.length) % kulcsok.length;
+  beall.tema = kulcsok[i];
+  beallMent(); beallKijelez(); frissitKoszonto();
+}
 function beallKijelez(){
   $("kor-kijelzo").textContent = beall.kor+" év";
+  $("tema-kijelzo").textContent = aktTema().nev;
   $("db-kijelzo").textContent = beall.dbKor;
-  $("kor-info").textContent = `1 kör = ${beall.dbKor} feladat`;
+  $("kor-info").textContent = `1 kör = ${beall.dbKor} feladat · a rövid, mindennapos gyakorlás ér a legtöbbet!`;
   const m = szamkor();
   $("alcim").textContent = `${m===20?"Húszas":m===100?"Százas":"Ezres"} számkör · napi 10–15 perc`;
   menuFrissit();
@@ -912,10 +1337,11 @@ const stat = { szorzas:[0,0], helyi:[0,0], muvelet:[0,0], potlas:[0,0], irasbeli
 let menuScroll = 0; // a főmenü görgetési pozíciója (lapfrissítéskor nullázódik)
 function mutat(id){
   if($("scr-menu").classList.contains("aktiv") && id!=="scr-menu") menuScroll = window.scrollY;
+  const ugyanaz = $(id).classList.contains("aktiv"); // pl. szűrőváltás: marad a görgetés
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("aktiv"));
   $(id).classList.add("aktiv");
   if(id==="scr-menu") requestAnimationFrame(()=>window.scrollTo(0, menuScroll));
-  else window.scrollTo(0,0);
+  else if(!ugyanaz) window.scrollTo(0,0);
 }
 function menu(){ clearInterval(villamTimer); villamAktiv=false; hibaCache=null; ujraMod=false; mutat("scr-menu"); frissitStat(); frissitKoszonto(); }
 function frissitStat(){
@@ -2103,7 +2529,7 @@ function irKesz(){
                  f:ir.snap?ir.snap.f:"", b:"", g:"", q: {...aktKerdes} });
     v.className="visszajelzes rossz";
     v.innerHTML=`Kijött a végeredmény, de volt piros számjegy.<span class="hint">${aktKerdes.cimke} = ${aktKerdes.eredmeny} — nézzétek meg, melyik oszlopnál akadt el!</span>`
-      + `<span class="hint vigasz">${valaszt(VIGASZ_HP)}</span>`;
+      + `<span class="hint vigasz">${valaszt(aktTema().vigasz)}</span>`;
     keszNyil();
   }
   naploFrissit();
@@ -2170,7 +2596,7 @@ function ellenoriz(){
     v.className="visszajelzes rossz";
     v.innerHTML = `A helyes válasz: <b>${aktKerdes.valasz}</b><span class="hint">${aktKerdes.hint}</span>`
       + (aktKerdes.pontos ? `<span class="hint">Pontosan: ${aktKerdes.pontos}</span>` : "")
-      + `<span class="hint vigasz">${valaszt(VIGASZ_HP)}</span>`;
+      + `<span class="hint vigasz">${valaszt(aktTema().vigasz)}</span>`;
     hibak.push({ c:`${aktKerdes.cimke} → helyesen: ${aktKerdes.valasz}`,
                  tf:aktKerdes.tf||"", k:$("kerdes").innerHTML, f:v.innerHTML,
                  b:bevitel, g: aktKerdes.tipus==="valaszto" ? $("valaszgombok").innerHTML : "",
@@ -2234,7 +2660,7 @@ function naploSzoveg(){ // a szülői áttekintés látható formája szövegké
   t += "\nUtolsó 7 nap:\n";
   Object.keys(napok).slice(-7).reverse().forEach(k=>{
     const l = napok[k], j = l.reduce((x,e)=>x+e.jok,0), o = l.reduce((x,e)=>x+e.ossz,0);
-    t += `• ${k}: ${l.length} kör, ${j}/${o} jó\n`;
+    t += `• ${k}: ${l.length} kör, ${Math.round(100*j/o)}% (${j}/${o})\n`;
   });
   { const tj = n.reduce((x,e)=>x+e.jok,0), to = n.reduce((x,e)=>x+e.ossz,0);
     t += `\nTeljes átlag: ${Math.round(100*tj/to)}% (${tj}/${to})\n`; }
@@ -2274,7 +2700,7 @@ function naploHTML(){ // formázott változat e-mailbe illesztéshez (inline st�
   Object.keys(napok).slice(-7).reverse().forEach(k=>{
     const l = napok[k], j = l.reduce((x,e)=>x+e.jok,0), o = l.reduce((x,e)=>x+e.ossz,0);
     h += `<tr><td style="padding:2px 16px 2px 0;border-bottom:1px dashed #ddd">${k}</td>` +
-         `<td style="padding:2px 0;border-bottom:1px dashed #ddd">${l.length} kör · <b>${j}/${o}</b> jó</td></tr>`;
+         `<td style="padding:2px 0;border-bottom:1px dashed #ddd">${l.length} kör · <b>${Math.round(100*j/o)}%</b> <span style="color:#8a82b0">(${j}/${o})</span></td></tr>`;
   });
   h += `</table>`;
   { const tj = n.reduce((x,e)=>x+e.jok,0), to = n.reduce((x,e)=>x+e.ossz,0);
@@ -2357,7 +2783,7 @@ const SZULO_KERDESEK = [
   "A hibáid egyre okosabbak – melyikből lett ma tudás?"
 ];
 function naploIr(n){ try{ localStorage.setItem("matekNaplo", JSON.stringify(n)); }catch(e){} }
-function ujSzuloKerdes(){ $("szulo-kerdes").textContent = `„${valaszt(SZULO_KERDESEK)}”`; }
+function ujSzuloKerdes(){ $("szulo-kerdes").textContent = valaszt(SZULO_KERDESEK); }
 function szuloNezet(){
   mutat("scr-szulo"); pinMegse(); ujSzuloKerdes();
   $("szulo-kuldes").style.display="block";
@@ -2370,7 +2796,7 @@ function szuloNezet(){
   n.forEach(e=>{ const k = new Date(e.t).toLocaleDateString("hu-HU"); (napok[k]=napok[k]||[]).push(e); });
   Object.keys(napok).slice(-7).reverse().forEach(k=>{
     const l = napok[k], j = l.reduce((s,e)=>s+e.jok,0), o = l.reduce((s,e)=>s+e.ossz,0);
-    h += `<div class="szulo-sor"><span>${k}</span><span>${l.length} kör · <b>${j}/${o}</b> jó</span></div>`;
+    h += `<div class="szulo-sor"><span>${k}</span><span>${l.length} kör · <b>${Math.round(100*j/o)}%</b> <small>(${j}/${o})</small></span></div>`;
   });
   { const tj = n.reduce((x,e)=>x+e.jok,0), to = n.reduce((x,e)=>x+e.ossz,0);
     h += `<div class="szulo-sor"><span><b>Teljes átlag</b></span>` +
