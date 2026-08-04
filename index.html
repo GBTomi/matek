@@ -44,13 +44,14 @@
   .tipp{margin-top:auto; padding:12px; font-size:.8rem; color:var(--halvany); text-align:center;}
   .beallito{display:flex; flex-direction:column; gap:8px; margin-top:10px;}
   .lepteto{flex:1; background:var(--kartya); border-radius:14px; padding:7px 9px;
-           display:flex; align-items:center; justify-content:space-between; gap:4px;
+           display:grid; grid-template-columns:96px 32px 1fr 32px; align-items:center; gap:4px;
            box-shadow:0 3px 10px rgba(90,63,217,.10); font-size:.85rem;}
   .lepteto span{color:var(--halvany); font-weight:600;}
   .lepteto button{width:32px; height:32px; border:none; border-radius:50%; background:#e9e4fb;
-                  color:var(--lila-s); font-size:1.25rem; font-weight:800; cursor:pointer; flex:none;}
+                  color:var(--lila-s); font-size:1.25rem; font-weight:800; cursor:pointer;
+                  justify-self:center;}
   .lepteto button:active{transform:scale(.9);}
-  .lepteto b{font-size:1rem; min-width:44px; text-align:center;}
+  .lepteto b{font-size:1rem; text-align:center;}
   .statsor{font-size:.85rem; color:var(--halvany); text-align:center; margin-top:8px;}
 
   /* ---- BEÁLLÍTÁS ---- */
@@ -299,9 +300,9 @@
     <div class="statsor" id="stat-sor"></div>
     <div class="beallito">
       <div class="lepteto"><span>Életkor</span>
-        <button onclick="leptet('kor',-1)">−</button><b id="kor-kijelzo">9 év</b><button onclick="leptet('kor',1)">+</button></div>
+        <button onclick="leptet('kor',-1)">−</button><b id="kor-kijelzo">9 éves</b><button onclick="leptet('kor',1)">+</button></div>
       <div class="lepteto"><span>Feladat/kör</span>
-        <button onclick="leptet('db',-1)">−</button><b id="db-kijelzo">10</b><button onclick="leptet('db',1)">+</button></div>
+        <button onclick="leptet('db',-1)">−</button><b id="db-kijelzo">10 db</b><button onclick="leptet('db',1)">+</button></div>
       <div class="lepteto"><span>Téma</span>
         <button onclick="temaValt(-1)">◀</button><b id="tema-kijelzo" style="min-width:110px">Harry Potter</b><button onclick="temaValt(1)">▶</button></div>
     </div>
@@ -1940,9 +1941,9 @@ function temaValt(d){
 }
 function beallKijelez(){
   avatarAlkalmaz();
-  $("kor-kijelzo").textContent = beall.kor+" év";
+  $("kor-kijelzo").textContent = beall.kor+" éves";
   $("tema-kijelzo").textContent = aktTema().nev;
-  $("db-kijelzo").textContent = beall.dbKor;
+  $("db-kijelzo").textContent = beall.dbKor+" db";
   $("kor-info").textContent = `1 kör = ${beall.dbKor} feladat · Napi 10–15 perc, a rövid, mindennapos gyakorlás ér a legtöbbet!`;
   menuFrissit();
 }
