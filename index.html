@@ -3469,8 +3469,10 @@ async function hangDict(szo){
   hangAllapotIr("⏳ szótári felvétel keresése…");
   try{
     if(hangCache[szo]===undefined){
-      const r = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(szo)}`);
-      if(!r.ok) throw new Error("nincs talalat");
+      let r;
+      try{ r = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(szo)}`); }
+      catch(fe){ throw new Error("hálózati hiba: "+(fe.message||fe)); }
+      if(!r.ok) throw new Error("HTTP "+r.status);
       const d = await r.json();
       let url = "";
       for(const e of d){ for(const p of (e.phonetics||[])){ if(p.audio){ url = p.audio; break; } } if(url) break; }
@@ -3478,23 +3480,23 @@ async function hangDict(szo){
     }
     if(hangCache[szo]){
       const audio = new Audio(hangCache[szo]);
-      audio.addEventListener("error", () => hangWeb(szo, "🔊 Böngésző hangja (a szótári felvétel nem töltött be)"));
+      audio.addEventListener("error", () => hangWeb(szo, "🔊 Böngésző hangja (szótár-hiba: a hangfájl nem töltött be)"));
       await audio.play();
       hangAllapotIr("🔊 Szótári felvétel");
     } else {
       hangWeb(szo, "🔊 Böngésző hangja (erre a szóra nincs szótári felvétel)");
     }
-  }catch(e){ hangWeb(szo, "🔊 Böngésző hangja (a szótár most nem érhető el)"); }
+  }catch(e){ hangWeb(szo, `🔊 Böngésző hangja (szótár-hiba: ${e.message||e})`); }
 }
 function hangGoogle(szo){
   hangAllapotIr("⏳ Google hang betöltése…");
   try{
     const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(szo)}&tl=en&client=tw-ob`;
     const audio = new Audio(url);
-    audio.addEventListener("error", () => hangWeb(szo, "🔊 Böngésző hangja (a Google hang nem töltött be)"));
+    audio.addEventListener("error", () => hangWeb(szo, "🔊 Böngésző hangja (Google-hiba: a hangfájl nem töltött be)"));
     audio.play().then(() => hangAllapotIr("🔊 Google hangja"))
-                .catch(() => hangWeb(szo, "🔊 Böngésző hangja (a Google most nem érhető el)"));
-  }catch(e){ hangWeb(szo, "🔊 Böngésző hangja (a Google most nem érhető el)"); }
+                .catch(e => hangWeb(szo, `🔊 Böngésző hangja (Google-hiba: ${e.message||e})`));
+  }catch(e){ hangWeb(szo, `🔊 Böngésző hangja (Google-hiba: ${e.message||e})`); }
 }
 function genAnszo(){
   const [hu, en, tema] = valaszt(ANGOL_SZAVAK);
