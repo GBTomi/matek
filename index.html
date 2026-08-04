@@ -3421,9 +3421,11 @@ function genIrasjel(){
 const HANGFORRASOK = { // bővíthető: új kulcs = új kiejtés-forrás
   web:   { nev:"Böngésző" },
   dict:  { nev:"Szótár" },
-  google:{ nev:"Google" }
+  google:{ nev:"Google" },
+  wiki:  { nev:"Wikiszótár" }
 };
 let hangCache = {}; // dictionaryapi.dev válaszok cache-elve szónként (URL vagy "" = nincs találat)
+let wikiCache = {}; // Wikimédia Commons válaszok cache-elve szónként (URL vagy "" = nincs találat)
 let hangHangok = []; // speechSynthesis hangjai, betöltés után frissül
 function hangHangokBetolt(){
   try{ hangHangok = speechSynthesis.getVoices(); }catch(e){}
@@ -3460,6 +3462,7 @@ function hangLejatszik(szo){
   const forras = beall.hangforras || "web";
   if(forras==="dict") hangDict(szo);
   else if(forras==="google") hangGoogle(szo);
+  else if(forras==="wiki") hangWiki(szo);
   else hangWeb(szo);
 }
 function hangWeb(szo, allapotSzoveg){
@@ -3506,6 +3509,32 @@ function hangGoogle(szo){
     audio.play().then(() => hangAllapotIr("🔊 Google hangja"))
                 .catch(e => hangWeb(szo, `🔊 Böngésző hangja (Google-hiba: ${e.message||e})`));
   }catch(e){ hangWeb(szo, `🔊 Böngésző hangja (Google-hiba: ${e.message||e})`); }
+}
+async function hangWiki(szo){
+  hangAllapotIr("⏳ Wikiszótár keresése…");
+  try{
+    if(wikiCache[szo]===undefined){
+      const cim = `File:en-us-${szo}.ogg`;
+      let r;
+      try{
+        r = await fetch(`https://commons.wikimedia.org/w/api.php?action=query&titles=${encodeURIComponent(cim)}&prop=imageinfo&iiprop=url&format=json&origin=*`);
+      }catch(fe){ throw new Error("hálózati hiba: "+(fe.message||fe)); }
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      const d = await r.json();
+      let url = "";
+      const lapok = (d.query && d.query.pages) ? Object.values(d.query.pages) : [];
+      for(const lap of lapok){ if(lap.imageinfo && lap.imageinfo[0] && lap.imageinfo[0].url){ url = lap.imageinfo[0].url; break; } }
+      wikiCache[szo] = url;
+    }
+    if(wikiCache[szo]){
+      const audio = new Audio(wikiCache[szo]);
+      audio.addEventListener("error", () => hangWeb(szo, "🔊 Böngésző hangja (Wikiszótár-hiba: a hangfájl nem töltött be)"));
+      await audio.play();
+      hangAllapotIr("🔊 Wikiszótár (anyanyelvi felvétel)");
+    } else {
+      hangWeb(szo, "🔊 Böngésző hangja (erre a szóra nincs Wikiszótár-felvétel)");
+    }
+  }catch(e){ hangWeb(szo, `🔊 Böngésző hangja (Wikiszótár-hiba: ${e.message||e})`); }
 }
 /* ---- egyszerű példamondatok az angol szavakhoz (a válasz után jelennek meg) ---- */
 const ANGOL_MONDAT = {
