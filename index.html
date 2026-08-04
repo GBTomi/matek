@@ -100,6 +100,7 @@
   }
   .hangforras-sor span{font-size:.8rem; color:var(--halvany); margin-right:2px;}
   .hangforras-sor .chip{padding:5px 11px; font-size:.82rem;}
+  .hangforras-sor #hang-allapot{flex-basis:100%; text-align:center; margin-top:2px; min-height:1.1em;}
   .valasz-kijelzo{
     text-align:center; font-size:1.9rem; font-weight:800; letter-spacing:2px;
     min-height:40px; margin:6px 0 2px; color:var(--lila-s);
@@ -3429,6 +3430,7 @@ function hangforrasSorEpit(){
   let h = '<span>Kiejtés:</span>';
   for(const [k,f] of Object.entries(HANGFORRASOK))
     h += `<button type="button" class="chip" data-k="${k}" onclick="hangForrasValt('${k}')">${f.nev}</button>`;
+  h += '<span id="hang-allapot"></span>';
   c.innerHTML = h;
   hangforrasKijelez();
 }
@@ -3436,10 +3438,13 @@ function hangforrasKijelez(){
   const c = $("hangforras-sor"); if(!c) return;
   c.querySelectorAll(".chip").forEach(g => g.classList.toggle("on", g.dataset.k===beall.hangforras));
 }
+function hangAllapotIr(szoveg){
+  const e = $("hang-allapot"); if(e) e.textContent = szoveg || "";
+}
 function hangForrasValt(k){
   if(!HANGFORRASOK[k]) return;
   beall.hangforras = k; beallMent(); hangforrasKijelez();
-  if(aktKerdes && aktKerdes.hangSzo) hangLejatszik(aktKerdes.hangSzo);
+  hangAllapotIr(""); // csak a forrás vált, lejátszás csak a 🔊 gombra
 }
 function hangLejatszik(szo){
   if(!szo) return;
@@ -3448,18 +3453,20 @@ function hangLejatszik(szo){
   else if(forras==="google") hangGoogle(szo);
   else hangWeb(szo);
 }
-function hangWeb(szo){
+function hangWeb(szo, allapotSzoveg){
   try{
-    if(!("speechSynthesis" in window)) return;
+    if(!("speechSynthesis" in window)){ hangAllapotIr("Ezen a készüléken nincs böngésző-felolvasás"); return; }
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(szo);
     u.lang = "en-US"; u.rate = 0.85;
     const en = hangHangok.find(v=>v.lang==="en-US") || hangHangok.find(v=>v.lang && v.lang.startsWith("en"));
     if(en) u.voice = en;
     speechSynthesis.speak(u);
-  }catch(e){}
+    hangAllapotIr(allapotSzoveg || "🔊 Böngésző hangja");
+  }catch(e){ hangAllapotIr("Hiba történt a böngésző-felolvasásnál"); }
 }
 async function hangDict(szo){
+  hangAllapotIr("⏳ szótári felvétel keresése…");
   try{
     if(hangCache[szo]===undefined){
       const r = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(szo)}`);
@@ -3469,15 +3476,25 @@ async function hangDict(szo){
       for(const e of d){ for(const p of (e.phonetics||[])){ if(p.audio){ url = p.audio; break; } } if(url) break; }
       hangCache[szo] = url;
     }
-    if(hangCache[szo]) new Audio(hangCache[szo]).play().catch(()=>hangWeb(szo));
-    else hangWeb(szo); // nincs felvétel erre a szóra -> böngésző TTS
-  }catch(e){ hangWeb(szo); }
+    if(hangCache[szo]){
+      const audio = new Audio(hangCache[szo]);
+      audio.addEventListener("error", () => hangWeb(szo, "🔊 Böngésző hangja (a szótári felvétel nem töltött be)"));
+      await audio.play();
+      hangAllapotIr("🔊 Szótári felvétel");
+    } else {
+      hangWeb(szo, "🔊 Böngésző hangja (erre a szóra nincs szótári felvétel)");
+    }
+  }catch(e){ hangWeb(szo, "🔊 Böngésző hangja (a szótár most nem érhető el)"); }
 }
 function hangGoogle(szo){
+  hangAllapotIr("⏳ Google hang betöltése…");
   try{
     const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(szo)}&tl=en&client=tw-ob`;
-    new Audio(url).play().catch(()=>hangWeb(szo));
-  }catch(e){ hangWeb(szo); }
+    const audio = new Audio(url);
+    audio.addEventListener("error", () => hangWeb(szo, "🔊 Böngésző hangja (a Google hang nem töltött be)"));
+    audio.play().then(() => hangAllapotIr("🔊 Google hangja"))
+                .catch(() => hangWeb(szo, "🔊 Böngésző hangja (a Google most nem érhető el)"));
+  }catch(e){ hangWeb(szo, "🔊 Böngésző hangja (a Google most nem érhető el)"); }
 }
 function genAnszo(){
   const [hu, en, tema] = valaszt(ANGOL_SZAVAK);
@@ -3789,7 +3806,7 @@ function kovetkezo(elso, fixKerdes){
     $("kerdes").insertAdjacentHTML("beforeend",
       `<button type="button" class="hang-gomb" onclick="hangLejatszik('${aktKerdes.hangSzo.replace(/'/g,"\\'")}')" title="Kiejtés meghallgatása">🔊</button>`);
     $("hangforras-sor").style.display = "flex";
-    hangforrasKijelez();
+    hangforrasKijelez(); hangAllapotIr("");
   } else {
     $("hangforras-sor").style.display = "none";
   }
