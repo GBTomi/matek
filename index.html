@@ -3465,6 +3465,15 @@ function hangLejatszik(szo){
   else if(forras==="wiki") hangWiki(szo);
   else hangWeb(szo);
 }
+// teljes mondatokhoz: a Szótár és a Wikiszótár csak egyes szavakhoz van (sosem találnának mondatot),
+// ezért mondatnál csak a Böngésző és a Google (mindkettő valódi szövegfelolvasó) közül választunk
+function mondatLejatszik(szoveg){
+  if(!szoveg) return;
+  const forras = beall.hangforras || "web";
+  if(forras==="google") hangGoogle(szoveg);
+  else hangWeb(szoveg, (forras==="dict"||forras==="wiki")
+    ? "🔊 Böngésző hangja (a Szótár/Wikiszótár csak egyes szavakhoz van, mondathoz nem)" : undefined);
+}
 function hangWeb(szo, allapotSzoveg){
   try{
     if(!("speechSynthesis" in window)){ hangAllapotIr("Ezen a készüléken nincs böngésző-felolvasás"); return; }
@@ -3571,7 +3580,7 @@ function peldaMondatHtml(k){
   if(!mondat) return "";
   const jsEsc = mondat.replace(/'/g,"\\'");
   return `<div class="pelda-mondat"><span>${mondat}</span>`
-    + `<button type="button" onclick="hangLejatszik('${jsEsc}')" title="Példamondat meghallgatása">🔊</button></div>`;
+    + `<button type="button" onclick="mondatLejatszik('${jsEsc}')" title="Példamondat meghallgatása">🔊</button></div>`;
 }
 function genAnszo(){
   const [hu, en, tema] = valaszt(ANGOL_SZAVAK);
