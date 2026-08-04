@@ -130,6 +130,15 @@
   .visszajelzes.rossz{display:block; background:#ffe3e8; color:#b3283e;}
   .visszajelzes .hint{display:block; font-weight:400; font-size:.92rem; margin-top:6px;}
   .visszajelzes .vigasz{font-style:italic; opacity:.85; font-size:.88rem;}
+  .pelda-mondat{
+    display:flex; align-items:center; justify-content:center; gap:8px; margin-top:9px;
+    font-size:.92rem; font-weight:400; font-style:italic; color:var(--szoveg);
+  }
+  .pelda-mondat button{
+    width:28px; height:28px; border-radius:50%; border:none; background:var(--lila); color:#fff;
+    font-size:.95rem; line-height:1; cursor:pointer; flex:none;
+  }
+  .pelda-mondat button:active{transform:scale(.92);}
   .tovabb{margin-top:8px; background:var(--lila); color:#fff; border:none;
           border-radius:12px; padding:9px; font-size:1.05rem; font-weight:700;
           width:100%; cursor:pointer; display:none;}
@@ -3498,6 +3507,43 @@ function hangGoogle(szo){
                 .catch(e => hangWeb(szo, `🔊 Böngésző hangja (Google-hiba: ${e.message||e})`));
   }catch(e){ hangWeb(szo, `🔊 Böngésző hangja (Google-hiba: ${e.message||e})`); }
 }
+/* ---- egyszerű példamondatok az angol szavakhoz (a válasz után jelennek meg) ---- */
+const ANGOL_MONDAT = {
+  dog:"The dog runs in the garden.", cat:"The cat sleeps on the sofa.", bird:"The bird sings in the tree.",
+  fish:"The fish swims in the water.", horse:"The horse runs fast.", mouse:"The mouse is very small.",
+  bear:"The bear sleeps in winter.", lion:"The lion is the king of animals.", elephant:"The elephant is very big.",
+  rabbit:"The rabbit likes carrots.",
+  red:"The apple is red.", blue:"The sky is blue.", green:"The grass is green.", yellow:"The sun is yellow.",
+  black:"The cat is black.", white:"The snow is white.", brown:"The bear is brown.", pink:"Her dress is pink.",
+  mother:"I love my mother.", father:"My father works every day.", brother:"My brother is ten years old.",
+  sister:"My sister likes to read.", grandmother:"My grandmother makes cookies.", baby:"The baby is sleeping.",
+  book:"I read a book every day.", pen:"The pen is on the table.", pencil:"I write with a pencil.",
+  bag:"My bag is heavy.", table:"The book is on the table.", chair:"Sit on the chair, please.",
+  school:"I go to school every morning.", teacher:"The teacher is very kind.",
+  head:"I have one head.", hand:"Wash your hands, please.", leg:"I have two legs.", eye:"I have two eyes.",
+  ear:"I have two ears.", nose:"My nose is small.", mouth:"Open your mouth, please.", hair:"Her hair is long.",
+  apple:"I eat an apple every day.", bread:"I like fresh bread.", milk:"I drink milk in the morning.",
+  egg:"I eat an egg for breakfast.", cheese:"I like cheese on my bread.", water:"I drink a lot of water.",
+  meat:"We eat meat for dinner.", soup:"The soup is hot.", banana:"The monkey eats a banana.",
+  orange:"The orange is sweet.",
+  house:"I live in a big house.", car:"My father drives a car.", sun:"The sun is shining today.",
+  moon:"I can see the moon at night.", star:"I see a star in the sky.", tree:"The tree is very tall.",
+  flower:"This flower smells nice.", ball:"I play with a ball.", toy:"This is my favorite toy.",
+  door:"Please close the door.", window:"Open the window, please."
+};
+function peldaMondat(szo){
+  if(ANGOL_MONDAT[szo]) return ANGOL_MONDAT[szo];
+  if(ANGOL_SZAMOK.some(x=>x[1]===szo)) return `I have ${szo} ${szo==="one"?"apple":"apples"}.`;
+  return null; // nincs (még) példamondat erre a szóra - biztonsági háló
+}
+function peldaMondatHtml(k){
+  if(!k || !k.hangSzo) return "";
+  const mondat = peldaMondat(k.hangSzo);
+  if(!mondat) return "";
+  const jsEsc = mondat.replace(/'/g,"\\'");
+  return `<div class="pelda-mondat"><span>${mondat}</span>`
+    + `<button type="button" onclick="hangLejatszik('${jsEsc}')" title="Példamondat meghallgatása">🔊</button></div>`;
+}
 function genAnszo(){
   const [hu, en, tema] = valaszt(ANGOL_SZAVAK);
   const tarsak = ANGOL_SZAVAK.filter(x=>x[1]!==en && x[0]!==hu);
@@ -3589,7 +3635,7 @@ function betuzKesz(){
   if(!anb.hibas){
     jok++; sorozat++; maxSorozat=Math.max(maxSorozat,sorozat); st[0]++;
     if(pont && pont.classList) pont.classList.add("jo");
-    v.className="visszajelzes jo"; v.innerHTML = dicseret();
+    v.className="visszajelzes jo"; v.innerHTML = dicseret() + peldaMondatHtml(aktKerdes);
   } else {
     sorozat=0; if(pont && pont.classList) pont.classList.add("rossz");
     hibak.push({ c:`${aktKerdes.cimke} → helyesen: ${aktKerdes.valasz}`,
@@ -3597,7 +3643,8 @@ function betuzKesz(){
                  b:"", g:"", q: {...aktKerdes} });
     v.className="visszajelzes rossz";
     v.innerHTML = `A helyes betűzés: <b>${aktKerdes.valasz}</b>`
-      + `<span class="hint vigasz">${valaszt(aktTema().vigasz)}</span>`;
+      + `<span class="hint vigasz">${valaszt(aktTema().vigasz)}</span>`
+      + peldaMondatHtml(aktKerdes);
   }
   naploFrissit();
   frissitSorozat();
@@ -4007,7 +4054,8 @@ function ellenoriz(){
     jok++; sorozat++; maxSorozat=Math.max(maxSorozat,sorozat); s[0]++;
     if(p && p.classList) p.classList.add("jo");
     v.className="visszajelzes jo"; v.innerHTML = dicseret()
-      + (aktKerdes.pontos ? `<span class="hint">Pontosan: ${aktKerdes.pontos}</span>` : "");
+      + (aktKerdes.pontos ? `<span class="hint">Pontosan: ${aktKerdes.pontos}</span>` : "")
+      + peldaMondatHtml(aktKerdes);
     // gyenge tény javítva → kivesszük
     if(aktKerdes.teny) gyengeTenyek = gyengeTenyek.filter(f=>!(f[0]===aktKerdes.teny[0]&&f[1]===aktKerdes.teny[1]));
     if(idoMod()) setTimeout(kovetkezo, 350);
@@ -4020,7 +4068,8 @@ function ellenoriz(){
     v.className="visszajelzes rossz";
     v.innerHTML = `A helyes válasz: <b>${aktKerdes.valasz}</b><span class="hint">${aktKerdes.hint}</span>`
       + (aktKerdes.pontos ? `<span class="hint">Pontosan: ${aktKerdes.pontos}</span>` : "")
-      + `<span class="hint vigasz">${valaszt(aktTema().vigasz)}</span>`;
+      + `<span class="hint vigasz">${valaszt(aktTema().vigasz)}</span>`
+      + peldaMondatHtml(aktKerdes);
     hibak.push({ c:`${aktKerdes.cimke} → helyesen: ${aktKerdes.valasz}`,
                  tf:aktKerdes.tf||"", k:$("kerdes").innerHTML, f:v.innerHTML,
                  b:bevitel, g: aktKerdes.tipus==="valaszto" ? $("valaszgombok").innerHTML : "",
