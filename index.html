@@ -139,6 +139,13 @@
     font-size:.95rem; line-height:1; cursor:pointer; flex:none;
   }
   .pelda-mondat button:active{transform:scale(.92);}
+  .kotta{display:inline-block; margin:4px 0; max-width:100%; height:auto;}
+  .zene-gomb{
+    width:38px; height:38px; border-radius:50%; border:none; background:var(--lila); color:#fff;
+    font-size:1.1rem; line-height:1; cursor:pointer; margin:4px 4px 0;
+    box-shadow:0 2px 6px rgba(90,63,217,.25);
+  }
+  .zene-gomb:active{transform:scale(.92);}
   .tovabb{margin-top:8px; background:var(--lila); color:#fff; border:none;
           border-radius:12px; padding:9px; font-size:1.05rem; font-weight:700;
           width:100%; cursor:pointer; display:none;}
@@ -305,6 +312,26 @@
       <span>Angol számok<small>seven = ? – írd be számmal</small></span></button>
     <button class="modul" id="menu-anbetuz" onclick="inditAnbetuz()"><span class="ikon">🔤</span>
       <span>Angol betűzés<small>rakd ki betűnként az angol szót!</small></span></button>
+    <button class="modul" id="menu-evszak" onclick="inditEvszak()"><span class="ikon">🍂</span>
+      <span>Évszakok, hónapok<small>évszakok, hónapok, a hét napjai</small></span></button>
+    <button class="modul" id="menu-elolenyek" onclick="inditElolenyek()"><span class="ikon">🦋</span>
+      <span>Élőlények<small>állatok, növények, élőhelyek</small></span></button>
+    <button class="modul" id="menu-test" onclick="inditTest()"><span class="ikon">💪</span>
+      <span>Testünk, egészség<small>érzékszervek, szervek, egészség</small></span></button>
+    <button class="modul" id="menu-kozlekedes" onclick="inditKozlekedes()"><span class="ikon">🚦</span>
+      <span>Közlekedés<small>lámpák, zebra, biztonság</small></span></button>
+    <button class="modul" id="menu-egtaj" onclick="inditEgtaj()"><span class="ikon">🧭</span>
+      <span>Térkép, égtájak<small>észak, dél, kelet, nyugat – térképjelek</small></span></button>
+    <button class="modul" id="menu-megye" onclick="inditMegye()"><span class="ikon">🗺️</span>
+      <span>Vármegyék<small>vármegyék és székhelyeik</small></span></button>
+    <button class="modul" id="menu-hangjegy" onclick="inditHangjegy()"><span class="ikon">🎼</span>
+      <span>Kottaolvasás<small>melyik hang ez a vonalrendszeren?</small></span></button>
+    <button class="modul" id="menu-ritmus" onclick="inditRitmus()"><span class="ikon">🥁</span>
+      <span>Ritmusértékek<small>egész, fél, negyed, nyolcad</small></span></button>
+    <button class="modul" id="menu-szolmizacio" onclick="inditSzolmizacio()"><span class="ikon">🎵</span>
+      <span>Szolmizáció<small>dó, ré, mi… és az ABC-s hangnevek</small></span></button>
+    <button class="modul" id="menu-hangkoz" onclick="inditHangkoz()"><span class="ikon">🎹</span>
+      <span>Hangmagasság<small>melyik magasabb? lépés vagy ugrás?</small></span></button>
     <button class="modul" onclick="megnyit('vegyes')"><span class="ikon">🎲</span>
       <span>Vegyes kör<small>mindenből egy kicsit – simán vagy időre</small></span></button>
     <div class="statsor" id="stat-sor"></div>
@@ -2110,7 +2137,7 @@ function leptet(mez,d){
   if(mez==="kor"){ const regi=beall.kor;
     beall.kor=Math.min(11,Math.max(7,beall.kor+d));
     if(beall.kor!==regi) korTablak();
-    if(beall.kor<=7 && beall.targy==="angol") beall.targy="matek"; }
+    targyEllenoriz(); }
   else beall.dbKor=Math.min(20,Math.max(5,beall.dbKor+d));
   beallMent(); beallKijelez();
 }
@@ -2155,7 +2182,10 @@ const TANTARGYAK = { // bővíthető: új kulcs = új tantárgy
     "mertek","romai","sorrend","szamalkotas","tortek","negativ","igazhamis","jelek",
     "kakukk","tablazat","kombi","egyenlotlen"] },
   nyelvtan: { nev:"Nyelvtan", modulok:["mgh","jly","szotag","irasjel"] },
-  angol: { nev:"Angol", modulok:["anszo","anszam","anbetuz"] }
+  angol: { nev:"Angol", modulok:["anszo","anszam","anbetuz"] },
+  kornyezet: { nev:"Környezet", modulok:["evszak","elolenyek","test","kozlekedes"] },
+  foldrajz: { nev:"Földrajz", modulok:["egtaj","megye"] },
+  zene: { nev:"Zene", modulok:["hangjegy","ritmus","szolmizacio","hangkoz"] }
 };
 function targyValt(k){
   beall.targy = k; beallMent(); beallKijelez();
@@ -2163,24 +2193,35 @@ function targyValt(k){
 function rajzolTargyak(){
   const c = $("targy-valaszto"); if(!c) return;
   c.innerHTML="";
+  const rejtett = rejtettModulok();
   for(const [k,t] of Object.entries(TANTARGYAK)){
     if(k==="angol" && beall.kor<=7) continue; // idegen nyelv később kezdődik
+    // olyan tantárgy nem jelenik meg, aminek ebben a korban egyetlen modulja sem érhető el
+    if(!t.modulok.some(m=>!rejtett.includes(m))) continue;
     const g=document.createElement("button");
     g.className="chip"+(beall.targy===k?" on":"");
     g.textContent=t.nev; g.onclick=()=>targyValt(k);
     c.appendChild(g);
   }
 }
+// ha a beállított életkorban a kiválasztott tantárgy nem elérhető, visszaáll matekra
+function targyEllenoriz(){
+  const t = TANTARGYAK[beall.targy], rejtett = rejtettModulok();
+  const tiltott = (beall.targy==="angol" && beall.kor<=7)
+    || !t || !t.modulok.some(m=>!rejtett.includes(m));
+  if(tiltott){ beall.targy = "matek"; beallMent(); }
+}
 function rejtettModulok(){
   const k = beall.kor;
   if(k<=7) return ["szorzas","osztas","villam","irasbeli",
                    "becsles","mertek","romai","sorrend","szamalkotas","tortek","negativ",
                    "kakukk","tablazat","kombi","egyenlotlen",
-                   "jly","szotag","irasjel","anszo","anszam","anbetuz"];
+                   "jly","szotag","irasjel","anszo","anszam","anbetuz",
+                   "test","kozlekedes","egtaj","megye","hangjegy","hangkoz"];
   if(k===8) return ["irasbeli","becsles","mertek","romai","sorrend","tortek","negativ","kombi",
-                    "anbetuz"];
-  if(k===9) return ["tortek","negativ"];
-  if(k===10) return ["negativ"];
+                    "anbetuz","egtaj","megye","hangkoz"];
+  if(k===9) return ["tortek","negativ","megye","hangkoz"];
+  if(k===10) return ["negativ","megye"];
   return [];
 }
 function menuFrissit(){
@@ -3418,11 +3459,11 @@ function genIrasjel(){
            modul:"irasjel", cimke:`${mondat} ▢`, tf:"Mondatvégi írásjel" };
 }
 /* ---- angol kiejtés lejátszás (teszt: több forrás közül választható) ---- */
-const HANGFORRASOK = { // bővíthető: új kulcs = új kiejtés-forrás
+const HANGFORRASOK = { // bővíthető: új kulcs = új kiejtés-forrás (a sorrend a gombok sorrendje is)
   web:   { nev:"Böngésző" },
-  dict:  { nev:"Szótár" },
+  wiki:  { nev:"Wikiszótár" },
   google:{ nev:"Google" },
-  wiki:  { nev:"Wikiszótár" }
+  dict:  { nev:"Szótár" }
 };
 let hangCache = {}; // dictionaryapi.dev válaszok cache-elve szónként (URL vagy "" = nincs találat)
 let wikiCache = {}; // Wikimédia Commons válaszok cache-elve szónként (URL vagy "" = nincs találat)
@@ -3688,6 +3729,398 @@ function betuzKesz(){
   frissitSorozat();
   tovabbMutat();
 }
+/* ================= KÖRNYEZET · FÖLDRAJZ · ZENE ================= */
+/* Adatvezérelt modulok: [kérdés, [opciók], helyes válasz, magyarázat] */
+
+const EVSZAK_HONAP = [["január","tél",31],["február","tél",28],["március","tavasz",31],
+  ["április","tavasz",30],["május","tavasz",31],["június","nyár",30],["július","nyár",31],
+  ["augusztus","nyár",31],["szeptember","ősz",30],["október","ősz",31],["november","ősz",30],
+  ["december","tél",31]];
+const NAPOK = ["hétfő","kedd","szerda","csütörtök","péntek","szombat","vasárnap"];
+
+function genEvszak(){
+  const t = rnd(1, beall.kor<=7 ? 3 : 5);
+  if(t===1){ // melyik évszakhoz tartozik a hónap?
+    const i = rnd(0,11), [ho, evszak] = EVSZAK_HONAP[i];
+    return { szoveg:`Melyik évszakhoz tartozik?<br><span class="nagy">${ho}</span>`,
+             tipus:"valaszto", opciok:["tavasz","nyár","ősz","tél"], valasz:evszak,
+             hint:`A ${ho} a ${evszak} egyik hónapja.`,
+             modul:"evszak", cimke:`${ho} évszaka`, tf:"Évszakok, hónapok, napok" };
+  }
+  if(t===2){ // melyik nap jön utána / előtte
+    const i = rnd(0,6), utan = Math.random()<0.5;
+    const nap = NAPOK[i], jo = utan ? NAPOK[(i+1)%7] : NAPOK[(i+6)%7];
+    const opciok = [jo];
+    while(opciok.length<3){ const d = valaszt(NAPOK); if(!opciok.includes(d)) opciok.push(d); }
+    for(let k=opciok.length-1;k>0;k--){ const j=rnd(0,k); [opciok[k],opciok[j]]=[opciok[j],opciok[k]]; }
+    return { szoveg:`Melyik nap jön ${utan?"a":"az"} <b>${nap}</b> ${utan?"után":"előtt"}?`,
+             tipus:"valaszto", opciok, valasz:jo,
+             hint:`A hét napjai: hétfő, kedd, szerda, csütörtök, péntek, szombat, vasárnap.`,
+             modul:"evszak", cimke:`${nap} ${utan?"után":"előtt"}`, tf:"Évszakok, hónapok, napok" };
+  }
+  if(t===3){ // hányadik hónap
+    const i = rnd(0,11), ho = EVSZAK_HONAP[i][0];
+    return { szoveg:`Hányadik hónap az évben?<br><span class="nagy">${ho}</span>`,
+             valasz:i+1,
+             hint:`Az év hónapjai sorban: január (1.) … december (12.). A ${ho} a ${i+1}. hónap.`,
+             modul:"evszak", cimke:`${ho} sorszáma`, tf:"Évszakok, hónapok, napok" };
+  }
+  if(t===4){ // hány napos a hónap
+    const i = rnd(0,11), [ho,,nap] = EVSZAK_HONAP[i];
+    if(i===1) return { szoveg:`Hány napos a <b>február</b> a nem szökőévekben?`, valasz:28,
+             hint:`A február 28 napos, szökőévben 29.`,
+             modul:"evszak", cimke:`február napjai`, tf:"Évszakok, hónapok, napok" };
+    return { szoveg:`Hány napos ez a hónap?<br><span class="nagy">${ho}</span>`, valasz:nap,
+             hint:`A ${ho} ${nap} napos.`,
+             modul:"evszak", cimke:`${ho} napjai`, tf:"Évszakok, hónapok, napok" };
+  }
+  // évszakhoz tartozó jellemző
+  const p = valaszt([
+    ["Melyik évszakban hullanak le a falevelek?", "ősz"],
+    ["Melyik évszakban van a leghosszabb nappal?", "nyár"],
+    ["Melyik évszakban virágzanak a fák?", "tavasz"],
+    ["Melyik évszakban van a legrövidebb nappal?", "tél"],
+    ["Melyik évszakban kezdődik a tanév?", "ősz"],
+    ["Melyik évszakban van a nyári szünet?", "nyár"],
+    ["Melyik évszakban jönnek vissza a fecskék?", "tavasz"],
+    ["Melyik évszakban esik a hó?", "tél"]
+  ]);
+  return { szoveg:p[0], tipus:"valaszto", opciok:["tavasz","nyár","ősz","tél"], valasz:p[1],
+           hint:`A helyes válasz: ${p[1]}.`,
+           modul:"evszak", cimke:p[0], tf:"Évszakok, hónapok, napok" };
+}
+
+const ELOLENY_KERDESEK = [
+  ["Hol él a hal?", ["vízben","fán","föld alatt"], "vízben", "A halak vízben élnek, kopoltyúval lélegeznek."],
+  ["Mit eszik a nyúl?", ["növényeket","húst","köveket"], "növényeket", "A nyúl növényevő: füvet, répát, leveleket eszik."],
+  ["Melyik állat tojással szaporodik?", ["tyúk","kutya","ló"], "tyúk", "A madarak – így a tyúk is – tojással szaporodnak."],
+  ["Melyik állat repül?", ["fecske","teknős","hal"], "fecske", "A fecske madár, szárnyaival repül."],
+  ["Hány lába van a rovaroknak?", ["6","4","8"], "6", "Minden rovarnak 6 lába van (pl. hangya, méh, lepke)."],
+  ["Hány lába van a póknak?", ["8","6","4"], "8", "A pók nem rovar: 8 lába van."],
+  ["Melyik a növény része, ami felszívja a vizet?", ["gyökér","virág","levél"], "gyökér", "A gyökér szívja fel a vizet és a tápanyagokat a földből."],
+  ["Melyik növényi rész alakul terméssé?", ["virág","gyökér","szár"], "virág", "A megporzott virágból fejlődik a termés."],
+  ["Mire van szüksége a növénynek a növekedéshez?", ["fényre és vízre","sötétre","sóra"], "fényre és vízre", "A növénynek fény, víz, levegő és talaj kell."],
+  ["Melyik madár költözik el ősszel?", ["gólya","veréb","széncinege"], "gólya", "A gólya költöző madár, ősszel melegebb tájra repül."],
+  ["Melyik madár marad itt télen?", ["veréb","fecske","gólya"], "veréb", "A veréb itthon telel, télen etetni is lehet."],
+  ["Mivel lélegeznek a halak?", ["kopoltyúval","tüdővel","bőrükkel"], "kopoltyúval", "A halak kopoltyúval veszik ki az oxigént a vízből."],
+  ["Melyik állat emlős?", ["kutya","béka","kígyó"], "kutya", "Az emlősök tejjel táplálják a kicsinyeiket – ilyen a kutya is."],
+  ["Mivel táplálják kicsinyeiket az emlősök?", ["tejjel","maggal","fűvel"], "tejjel", "Az emlős anyák tejjel táplálják a kicsinyeiket."],
+  ["Melyik állat él a víz és a szárazföld között is?", ["béka","macska","veréb"], "béka", "A béka kétéltű: vízben és szárazon is él."],
+  ["Melyik állat ragadozó?", ["róka","őz","nyúl"], "róka", "A róka ragadozó: más állatokkal táplálkozik."],
+  ["Hol készíti a mézet a méh?", ["kaptárban","fészekben","odúban"], "kaptárban", "A méhek kaptárban (méhcsaládban) élnek és ott raktározzák a mézet."],
+  ["Melyik évszakban alszik téli álmot a medve?", ["télen","nyáron","tavasszal"], "télen", "A medve télen alszik téli álmot, amikor kevés az élelem."],
+  ["Melyik fa lombja marad zöld télen is?", ["fenyő","tölgy","nyár"], "fenyő", "A fenyő örökzöld: tűlevelei télen is a fán maradnak."],
+  ["Mi lesz a hernyóból?", ["lepke","méh","bogár"], "lepke", "A hernyó bábbá alakul, abból kel ki a lepke."],
+  ["Melyik állat gerinces?", ["hal","hangya","pók"], "hal", "A halaknak van gerincoszlopuk, a rovaroknak és pókoknak nincs."],
+  ["Mit termel a növény a fény segítségével?", ["oxigént","szenet","vasat"], "oxigént", "A növények fény segítségével oxigént juttatnak a levegőbe."]
+];
+function genElolenyek(){
+  const [k, opc, jo, magy] = valaszt(ELOLENY_KERDESEK);
+  const opciok = [...opc];
+  for(let i=opciok.length-1;i>0;i--){ const j=rnd(0,i); [opciok[i],opciok[j]]=[opciok[j],opciok[i]]; }
+  return { szoveg:k, tipus:"valaszto", opciok, valasz:jo, hint:magy,
+           modul:"elolenyek", cimke:k, tf:"Élőlények · állatok és növények" };
+}
+
+const TEST_KERDESEK = [
+  ["Melyik érzékszervünkkel látunk?", ["szem","fül","orr"], "szem", "A szemünkkel látunk."],
+  ["Melyik érzékszervünkkel hallunk?", ["fül","szem","nyelv"], "fül", "A fülünkkel hallunk."],
+  ["Melyik érzékszervünkkel szagolunk?", ["orr","fül","bőr"], "orr", "Az orrunkkal szagolunk."],
+  ["Melyik érzékszervünkkel érezzük az ízeket?", ["nyelv","orr","szem"], "nyelv", "A nyelvünkkel ízlelünk."],
+  ["Melyik érzékszervünkkel tapintunk?", ["bőr","fül","nyelv"], "bőr", "A bőrünkkel tapintunk: érezzük a meleget, hideget, érintést."],
+  ["Melyik szervünk pumpálja a vért?", ["szív","tüdő","gyomor"], "szív", "A szív pumpálja a vért az egész testünkben."],
+  ["Melyik szervünkkel lélegzünk?", ["tüdő","szív","máj"], "tüdő", "A tüdőnkkel lélegzünk: oxigént veszünk fel."],
+  ["Melyik szervünkben emésztjük meg az ételt?", ["gyomor","tüdő","szív"], "gyomor", "Az étel a gyomorban kezd megemésztődni."],
+  ["Melyik szervünk irányítja a testünket?", ["agy","szív","tüdő"], "agy", "Az agyunk irányít és gondolkodik."],
+  ["Mi tartja a testünket?", ["csontváz","bőr","haj"], "csontváz", "A csontváz tartja és védi a testünket."],
+  ["Mi védi az agyunkat?", ["koponya","bordák","gerinc"], "koponya", "A koponyacsontok védik az agyat."],
+  ["Mi védi a szívünket és a tüdőnket?", ["bordák","koponya","medence"], "bordák", "A bordák védik a mellkasban lévő szerveket."],
+  ["Naponta hányszor mossunk fogat?", ["2","1","0"], "2", "Naponta legalább kétszer: reggel és este."],
+  ["Mit igyunk a legtöbbet?", ["vizet","üdítőt","kávét"], "vizet", "A víz a legegészségesebb ital."],
+  ["Miből együnk minden nap?", ["zöldségből és gyümölcsből","édességből","chipsből"], "zöldségből és gyümölcsből", "Zöldség és gyümölcs minden nap kell."],
+  ["Mit tegyünk étkezés előtt?", ["kezet mosunk","tévézünk","futunk"], "kezet mosunk", "Étkezés előtt mindig kezet kell mosni."],
+  ["Kb. hány óra alvás kell egy iskolásnak?", ["9-10","4-5","2-3"], "9-10", "Egy iskolásnak kb. 9-10 óra alvás kell."],
+  ["Mi erősíti a csontokat?", ["tej és mozgás","édesség","tévénézés"], "tej és mozgás", "A tejtermékek kalciuma és a mozgás erősíti a csontokat."],
+  ["Hány tejfoga van egy gyereknek?", ["20","32","10"], "20", "A gyerekeknek 20 tejfoguk van, a felnőtteknek 32 foguk."],
+  ["Mit teszünk, ha tüsszentünk?", ["a könyökhajlatba","a levegőbe","a kezünkbe"], "a könyökhajlatba", "A könyökhajlatba tüsszentünk, így nem terjed a fertőzés."],
+  ["Mennyi mozgás kell naponta?", ["legalább 1 óra","5 perc","semennyi"], "legalább 1 óra", "Naponta legalább egy óra mozgás ajánlott."]
+];
+function genTest(){
+  const [k, opc, jo, magy] = valaszt(TEST_KERDESEK);
+  const opciok = [...opc];
+  for(let i=opciok.length-1;i>0;i--){ const j=rnd(0,i); [opciok[i],opciok[j]]=[opciok[j],opciok[i]]; }
+  return { szoveg:k, tipus:"valaszto", opciok, valasz:jo, hint:magy,
+           modul:"test", cimke:k, tf:"Testünk · egészség" };
+}
+
+const KOZLEKEDES_KERDESEK = [
+  ["Mit jelent a piros lámpa?", ["állj meg","mehetsz","fuss"], "állj meg", "Piros lámpánál meg kell állni."],
+  ["Mit jelent a zöld lámpa a gyalogosnak?", ["átmehetsz","állj","várj"], "átmehetsz", "Zöld lámpánál átmehetsz – de előbb nézz körül!"],
+  ["Mit jelent a sárga lámpa?", ["készülj a megállásra","gyorsíts","fordulj"], "készülj a megállásra", "A sárga lámpa a váltást jelzi: készülj a megállásra."],
+  ["Hol kelünk át az úton?", ["kijelölt gyalogátkelőn","bárhol","a kanyarban"], "kijelölt gyalogátkelőn", "A zebrán (kijelölt gyalogátkelőn) kelünk át."],
+  ["Mit teszünk átkelés előtt?", ["körülnézünk","futunk","telefonozunk"], "körülnézünk", "Átkelés előtt balra, jobbra, majd újra balra nézünk."],
+  ["Hol közlekedik a gyalogos?", ["a járdán","az úttesten","a bicikliúton"], "a járdán", "A gyalogos a járdán megy."],
+  ["Mit veszünk fel biciklizéskor a fejünkre?", ["bukósisakot","sapkát","semmit"], "bukósisakot", "Biciklizéskor a bukósisak védi a fejed."],
+  ["Mit kapcsolunk fel sötétben biciklin?", ["lámpát","rádiót","csengőt"], "lámpát", "Sötétben elöl fehér, hátul piros lámpa kell."],
+  ["Mit kötünk be az autóban?", ["biztonsági övet","a cipőnket","az ablakot"], "biztonsági övet", "Az autóban mindig be kell kötni a biztonsági övet."],
+  ["Melyik oldalon szállunk ki az autóból?", ["a járda felőli oldalon","az úttest felől","mindegy"], "a járda felőli oldalon", "A járda felőli oldalon biztonságos kiszállni."],
+  ["Mit teszünk, ha nincs járda?", ["az út bal szélén megyünk","az út közepén","futunk"], "az út bal szélén megyünk", "Járda hiányában az út bal szélén, a forgalommal szemben megyünk."],
+  ["Mit jelent a háromszög alakú tábla?", ["veszélyt jelez","tilalmat jelez","utat mutat"], "veszélyt jelez", "A háromszög alakú táblák veszélyre figyelmeztetnek."],
+  ["Milyen alakú a Stop tábla?", ["nyolcszög","kör","négyzet"], "nyolcszög", "A Stop tábla nyolcszög alakú, piros színű."],
+  ["Hol várakozunk a buszra?", ["a megállóban","az úttesten","a zebrán"], "a megállóban", "A buszra a megállóban, a járdán várakozunk."],
+  ["Mikor szállunk fel a buszra?", ["ha megállt","menet közben","induláskor"], "ha megállt", "Csak akkor szállunk fel, ha a busz teljesen megállt."],
+  ["Mit teszünk villamos- vagy vasúti átjárónál?", ["megállunk és figyelünk","átfutunk","kerékpározunk"], "megállunk és figyelünk", "Átjárónál megállunk, figyelünk és csak biztonságosan kelünk át."],
+  ["Miért jó a világos, fényvisszaverő ruha?", ["mert jobban látnak minket","mert szép","mert meleg"], "mert jobban látnak minket", "Sötétben a fényvisszaverő ruhában messziről látnak a járművezetők."],
+  ["Kinek van elsőbbsége a zebránál?", ["a gyalogosnak","az autónak","a bicikliseknek"], "a gyalogosnak", "A gyalogosnak van elsőbbsége a kijelölt gyalogátkelőn."],
+  ["Hol biciklizünk, ha van kerékpárút?", ["a kerékpárúton","a járdán","az út közepén"], "a kerékpárúton", "Ha van kerékpárút, azon kell biciklizni."],
+  ["Mivel jelzünk biciklivel kanyarodás előtt?", ["kinyújtott karral","csengővel","kiabálással"], "kinyújtott karral", "Kanyarodás előtt kinyújtott karral jelzünk."]
+];
+function genKozlekedes(){
+  const [k, opc, jo, magy] = valaszt(KOZLEKEDES_KERDESEK);
+  const opciok = [...opc];
+  for(let i=opciok.length-1;i>0;i--){ const j=rnd(0,i); [opciok[i],opciok[j]]=[opciok[j],opciok[i]]; }
+  return { szoveg:k, tipus:"valaszto", opciok, valasz:jo, hint:magy,
+           modul:"kozlekedes", cimke:k, tf:"Közlekedés · biztonság" };
+}
+
+/* ---- FÖLDRAJZ ---- */
+const EGTAJAK = ["észak","kelet","dél","nyugat"]; // óramutató járása szerint
+const EGTAJ_KERDESEK = [
+  ["Merre kel fel a Nap?", ["keleten","nyugaton","északon"], "keleten", "A Nap keleten kel és nyugaton nyugszik."],
+  ["Merre nyugszik le a Nap?", ["nyugaton","keleten","délen"], "nyugaton", "A Nap nyugaton nyugszik le."],
+  ["Melyik égtájat mutatja az iránytű?", ["északot","délt","keletet"], "északot", "Az iránytű tűje mindig északra mutat."],
+  ["A térképen melyik irány van felül?", ["észak","dél","kelet"], "észak", "A térképeken felül van észak, alul dél."],
+  ["Milyen színnel jelölik a vizeket a térképen?", ["kékkel","zölddel","barnával"], "kékkel", "A folyókat és tavakat kékkel jelölik."],
+  ["Milyen színnel jelölik a hegyeket a térképen?", ["barnával","kékkel","zölddel"], "barnával", "A hegységeket barna színnel jelölik."],
+  ["Milyen színnel jelölik az alföldeket a térképen?", ["zölddel","kékkel","pirossal"], "zölddel", "Az alacsony, sík vidékeket zölddel jelölik."],
+  ["Mi mutatja a térképen a távolságokat?", ["a méretarány","a cím","a színek"], "a méretarány", "A méretarány (aránymérték) mutatja, mekkora a valódi távolság."],
+  ["Melyik a négy fő égtáj?", ["észak, kelet, dél, nyugat","fel, le, jobb, bal","közel, távol, fent, lent"], "észak, kelet, dél, nyugat", "A négy fő égtáj: észak, kelet, dél, nyugat."],
+  ["Melyik égtáj van északkal szemben?", ["dél","kelet","nyugat"], "dél", "Az északkal szemben dél található."],
+  ["Melyik égtáj van kelettel szemben?", ["nyugat","észak","dél"], "nyugat", "A kelettel szemben nyugat található."],
+  ["Délben merre van a Nap Magyarországon?", ["délen","északon","nyugaton"], "délen", "Délben a Nap délen, a legmagasabban áll."]
+];
+function genEgtaj(){
+  if(Math.random()<0.4){ // térbeli tájékozódás: ha X felé nézel, merre van Y?
+    const i = rnd(0,3), nezes = EGTAJAK[i];
+    const t = rnd(1,3);
+    const jo = t===1 ? EGTAJAK[(i+1)%4] : t===2 ? EGTAJAK[(i+3)%4] : EGTAJAK[(i+2)%4];
+    const kerdes = t===1 ? "merre van a jobb kezed" : t===2 ? "merre van a bal kezed" : "merre van a hátad mögött";
+    return { szoveg:`Ha <b>${nezes}</b> felé fordulsz, ${kerdes}?`,
+             tipus:"valaszto", opciok:[...EGTAJAK], valasz:jo,
+             hint:`Az égtájak körben: észak → kelet → dél → nyugat. ${nezes.charAt(0).toUpperCase()+nezes.slice(1)} felé nézve ${kerdes.replace("merre van ","")} ${jo} van.`,
+             modul:"egtaj", cimke:`${nezes} felé nézve: ${kerdes}`, tf:"Térkép · égtájak" };
+  }
+  const [k, opc, jo, magy] = valaszt(EGTAJ_KERDESEK);
+  const opciok = [...opc];
+  for(let i=opciok.length-1;i>0;i--){ const j=rnd(0,i); [opciok[i],opciok[j]]=[opciok[j],opciok[i]]; }
+  return { szoveg:k, tipus:"valaszto", opciok, valasz:jo, hint:magy,
+           modul:"egtaj", cimke:k, tf:"Térkép · égtájak" };
+}
+
+// 2023-tól hivatalosan vármegye a nevük; a székhelyek a hivatalos megyeszékhelyek
+const VARMEGYEK = [
+  ["Bács-Kiskun","Kecskemét"],["Baranya","Pécs"],["Békés","Békéscsaba"],
+  ["Borsod-Abaúj-Zemplén","Miskolc"],["Csongrád-Csanád","Szeged"],["Fejér","Székesfehérvár"],
+  ["Győr-Moson-Sopron","Győr"],["Hajdú-Bihar","Debrecen"],["Heves","Eger"],
+  ["Jász-Nagykun-Szolnok","Szolnok"],["Komárom-Esztergom","Tatabánya"],["Nógrád","Salgótarján"],
+  ["Pest","Budapest"],["Somogy","Kaposvár"],["Szabolcs-Szatmár-Bereg","Nyíregyháza"],
+  ["Tolna","Szekszárd"],["Vas","Szombathely"],["Veszprém","Veszprém"],["Zala","Zalaegerszeg"]
+];
+function genMegye(){
+  const i = rnd(0, VARMEGYEK.length-1);
+  const [megye, szekhely] = VARMEGYEK[i];
+  const varmegyeIrany = Math.random()<0.5;
+  if(varmegyeIrany){ // vármegye -> székhely
+    const opciok = [szekhely];
+    while(opciok.length<3){ const d = valaszt(VARMEGYEK)[1]; if(!opciok.includes(d)) opciok.push(d); }
+    for(let k=opciok.length-1;k>0;k--){ const j=rnd(0,k); [opciok[k],opciok[j]]=[opciok[j],opciok[k]]; }
+    return { szoveg:`Mi a székhelye?<br><span class="nagy">${megye} vármegye</span>`,
+             tipus:"valaszto", opciok, valasz:szekhely,
+             hint:`${megye} vármegye székhelye: ${szekhely}.`,
+             modul:"megye", cimke:`${megye} székhelye`, tf:"Vármegyék és székhelyeik" };
+  }
+  const opciok = [megye]; // székhely -> vármegye
+  while(opciok.length<3){ const d = valaszt(VARMEGYEK)[0]; if(!opciok.includes(d)) opciok.push(d); }
+  for(let k=opciok.length-1;k>0;k--){ const j=rnd(0,k); [opciok[k],opciok[j]]=[opciok[j],opciok[k]]; }
+  return { szoveg:`Melyik vármegye székhelye?<br><span class="nagy">${szekhely}</span>`,
+           tipus:"valaszto", opciok, valasz:megye,
+           hint:`${szekhely} ${megye} vármegye székhelye.`,
+           modul:"megye", cimke:`${szekhely} vármegyéje`, tf:"Vármegyék és székhelyeik" };
+}
+
+/* ---- ZENE · szolfézs ---- */
+// violinkulcs: a hang neve, függőleges pozíciója a vonalrendszeren és a frekvenciája
+// y=20..52 az öt vonal (fentről lefelé), a közök közte; C4 pótvonalat kap
+const HANGOK = [
+  ["c", 60, 261.63, true ], ["d", 56, 293.66, false],
+  ["e", 52, 329.63, false], ["f", 48, 349.23, false],
+  ["g", 44, 392.00, false], ["a", 40, 440.00, false],
+  ["h", 36, 493.88, false], ["c'",32, 523.25, false],
+  ["d'",28, 587.33, false], ["e'",24, 659.25, false],
+  ["f'",20, 698.46, false], ["g'",16, 783.99, false]
+];
+const SZOLM = ["dó","ré","mi","fá","szó","lá","ti"];
+const SZOLM_ABC = [["dó","c"],["ré","d"],["mi","e"],["fá","f"],["szó","g"],["lá","a"],["ti","h"]];
+
+// Web Audio API: rövid, halk szinuszhang – nem kell hangfájl, offline is működik
+let zeneCtx = null;
+function hangotJatszik(frek){
+  try{
+    if(!zeneCtx) zeneCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(zeneCtx.state === "suspended") zeneCtx.resume();
+    const osc = zeneCtx.createOscillator(), gain = zeneCtx.createGain();
+    osc.type = "sine"; osc.frequency.value = frek;
+    gain.gain.setValueAtTime(0.0001, zeneCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.25, zeneCtx.currentTime + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.0001, zeneCtx.currentTime + 0.9);
+    osc.connect(gain); gain.connect(zeneCtx.destination);
+    osc.start(); osc.stop(zeneCtx.currentTime + 0.95);
+  }catch(e){}
+}
+// vonalrendszer + egy hangjegy kirajzolása
+function kottaSvg(y, potvonal){
+  let h = '<svg class="kotta" viewBox="0 0 140 78" width="200" height="112" aria-label="kotta">';
+  for(let i=0;i<5;i++){ const ly = 20 + i*8;
+    h += `<line x1="8" y1="${ly}" x2="132" y2="${ly}" stroke="#333" stroke-width="1.1"/>`; }
+  h += '<text x="14" y="52" font-size="46" fill="#333" font-family="serif">&#119070;</text>';
+  if(potvonal) h += `<line x1="80" y1="${y}" x2="102" y2="${y}" stroke="#333" stroke-width="1.1"/>`;
+  h += `<ellipse cx="91" cy="${y}" rx="5.4" ry="3.9" fill="#5a3fd9" transform="rotate(-18 91 ${y})"/>`;
+  h += (y >= 36)
+    ? `<line x1="96" y1="${y-1}" x2="96" y2="${y-26}" stroke="#5a3fd9" stroke-width="1.7"/>`
+    : `<line x1="86" y1="${y+1}" x2="86" y2="${y+26}" stroke="#5a3fd9" stroke-width="1.7"/>`;
+  return h + '</svg>';
+}
+function hangGombSvg(frek){
+  return `<button type="button" class="zene-gomb" onclick="hangotJatszik(${frek})" title="Hallgasd meg">🔊</button>`;
+}
+function genHangjegy(){
+  // 8-9 évesen csak a vonalrendszeren belüli hangok, 10+ a pótvonalas C is
+  const keszlet = beall.kor<=9 ? HANGOK.filter(x=>!x[3]) : HANGOK;
+  const [nev, y, frek, potvonal] = valaszt(keszlet);
+  const opciok = [nev];
+  while(opciok.length<4){ const d = valaszt(keszlet)[0]; if(!opciok.includes(d)) opciok.push(d); }
+  for(let i=opciok.length-1;i>0;i--){ const j=rnd(0,i); [opciok[i],opciok[j]]=[opciok[j],opciok[i]]; }
+  return { szoveg:`Melyik hang ez?<br>${kottaSvg(y, potvonal)}<br>${hangGombSvg(frek)}`,
+           tipus:"valaszto", opciok, valasz:nev,
+           hint:`Ez a hang: ${nev}. A vonalrendszer alsó vonalán az e hang van, onnan felfelé: e, f, g, a, h, c', d', e', f'.`,
+           modul:"hangjegy", cimke:`kottahang: ${nev}`, tf:"Kottaolvasás · violinkulcs" };
+}
+
+// ritmusértékek: [név, hány negyedet ér, üres fej?, van szár?, van zászló?]
+const RITMUSOK = [["egészkotta",4,true,false,false],["félkotta",2,true,true,false],
+                  ["negyedkotta",1,false,true,false],["nyolcadkotta",0.5,false,true,true]];
+function ritmusSvg(uresFej, szar, zaszlo){
+  let h = '<svg class="kotta" viewBox="0 0 60 60" width="90" height="90" aria-label="ritmusérték">';
+  h += `<ellipse cx="22" cy="42" rx="8.4" ry="6.2" transform="rotate(-18 22 42)" `
+     + (uresFej ? 'fill="none" stroke="#5a3fd9" stroke-width="2.4"' : 'fill="#5a3fd9"') + '/>';
+  if(szar) h += '<line x1="30" y1="40" x2="30" y2="8" stroke="#5a3fd9" stroke-width="2.4"/>';
+  if(zaszlo) h += '<path d="M30 8 q12 6 8 18 q0-10-8-12 z" fill="#5a3fd9"/>';
+  return h + '</svg>';
+}
+function genRitmus(){
+  const t = rnd(1,3);
+  if(t===1){ // hogy hívják ezt a kottát?
+    const [nev, , uf, sz, za] = valaszt(RITMUSOK);
+    const opciok = RITMUSOK.map(x=>x[0]);
+    for(let i=opciok.length-1;i>0;i--){ const j=rnd(0,i); [opciok[i],opciok[j]]=[opciok[j],opciok[i]]; }
+    return { szoveg:`Hogy hívják ezt a kottát?<br>${ritmusSvg(uf,sz,za)}`,
+             tipus:"valaszto", opciok, valasz:nev,
+             hint:`Ez egy ${nev}.`,
+             modul:"ritmus", cimke:`kottafajta: ${nev}`, tf:"Ritmusértékek" };
+  }
+  if(t===2){ // hány negyedet ér? (csak az egész számot érő kották)
+    const l = RITMUSOK.filter(x=>Number.isInteger(x[1]));
+    const [nev, ertek, uf, sz, za] = valaszt(l);
+    return { szoveg:`Hány negyedet ér ez a kotta?<br>${ritmusSvg(uf,sz,za)}`,
+             valasz:ertek,
+             hint:`A ${nev} ${ertek} negyedet ér.`,
+             modul:"ritmus", cimke:`${nev} értéke`, tf:"Ritmusértékek" };
+  }
+  const p = valaszt([
+    ["Hány negyedkotta ér ki egy egészkottát?", 4, "Egy egészkotta 4 negyedkottával egyenlő."],
+    ["Hány negyedkotta ér ki egy félkottát?", 2, "Egy félkotta 2 negyedkottával egyenlő."],
+    ["Hány félkotta ér ki egy egészkottát?", 2, "Egy egészkotta 2 félkottával egyenlő."],
+    ["Hány nyolcadkotta ér ki egy negyedkottát?", 2, "Egy negyedkotta 2 nyolcadkottával egyenlő."],
+    ["Hány nyolcadkotta ér ki egy félkottát?", 4, "Egy félkotta 4 nyolcadkottával egyenlő."],
+    ["Hány negyed van egy 4/4-es ütemben?", 4, "A 4/4-es ütemben 4 negyed fér el."],
+    ["Hány negyed van egy 3/4-es ütemben?", 3, "A 3/4-es ütemben 3 negyed fér el."],
+    ["Hány negyed van egy 2/4-es ütemben?", 2, "A 2/4-es ütemben 2 negyed fér el."]
+  ]);
+  return { szoveg:p[0], valasz:p[1], hint:p[2],
+           modul:"ritmus", cimke:p[0], tf:"Ritmusértékek" };
+}
+
+function genSzolmizacio(){
+  const t = rnd(1,3);
+  if(t===1){ // melyik hang jön utána/előtte a szolmizációs sorban
+    const i = rnd(0,6), utan = Math.random()<0.5;
+    if((utan && i===6) || (!utan && i===0)) return genSzolmizacio();
+    const jo = utan ? SZOLM[i+1] : SZOLM[i-1];
+    const opciok = [jo];
+    while(opciok.length<3){ const d = valaszt(SZOLM); if(!opciok.includes(d)) opciok.push(d); }
+    for(let k=opciok.length-1;k>0;k--){ const j=rnd(0,k); [opciok[k],opciok[j]]=[opciok[j],opciok[k]]; }
+    return { szoveg:`Melyik szolmizációs hang jön <b>${SZOLM[i]}</b> ${utan?"után":"előtt"}?`,
+             tipus:"valaszto", opciok, valasz:jo,
+             hint:`A szolmizációs sor: dó, ré, mi, fá, szó, lá, ti.`,
+             modul:"szolmizacio", cimke:`${SZOLM[i]} ${utan?"után":"előtt"}`, tf:"Szolmizáció" };
+  }
+  if(t===2){ // szolmizáció -> ABC-s hangnév (C-dúrban)
+    const [szolm, abc] = valaszt(SZOLM_ABC);
+    const opciok = [abc];
+    while(opciok.length<3){ const d = valaszt(SZOLM_ABC)[1]; if(!opciok.includes(d)) opciok.push(d); }
+    for(let k=opciok.length-1;k>0;k--){ const j=rnd(0,k); [opciok[k],opciok[j]]=[opciok[j],opciok[k]]; }
+    return { szoveg:`C-dúrban melyik hang ez?<br><span class="nagy">${szolm}</span>`,
+             tipus:"valaszto", opciok, valasz:abc,
+             hint:`C-dúrban: dó=c, ré=d, mi=e, fá=f, szó=g, lá=a, ti=h.`,
+             modul:"szolmizacio", cimke:`${szolm} ABC-neve`, tf:"Szolmizáció" };
+  }
+  // ABC-s hangnév -> szolmizáció
+  const [szolm, abc] = valaszt(SZOLM_ABC);
+  const opciok = [szolm];
+  while(opciok.length<3){ const d = valaszt(SZOLM_ABC)[0]; if(!opciok.includes(d)) opciok.push(d); }
+  for(let k=opciok.length-1;k>0;k--){ const j=rnd(0,k); [opciok[k],opciok[j]]=[opciok[j],opciok[k]]; }
+  return { szoveg:`C-dúrban hogyan szolmizáljuk?<br><span class="nagy">${abc}</span>`,
+           tipus:"valaszto", opciok, valasz:szolm,
+           hint:`C-dúrban: c=dó, d=ré, e=mi, f=fá, g=szó, a=lá, h=ti.`,
+           modul:"szolmizacio", cimke:`${abc} szolmizálva`, tf:"Szolmizáció" };
+}
+
+function genHangkoz(){
+  const t = rnd(1,3);
+  const alap = HANGOK.filter(x=>!x[3]); // pótvonal nélküli hangok
+  if(t===1){ // melyik magasabb?
+    let i = rnd(0, alap.length-1), j = rnd(0, alap.length-1);
+    while(i===j) j = rnd(0, alap.length-1);
+    const magasabb = alap[i][2] > alap[j][2] ? alap[i][0] : alap[j][0];
+    return { szoveg:`Melyik hang a magasabb?<br><span class="nagy">${alap[i][0]} vagy ${alap[j][0]}</span>`
+             + `<br>${hangGombSvg(alap[i][2])}${hangGombSvg(alap[j][2])}`,
+             tipus:"valaszto", opciok:[alap[i][0], alap[j][0]].sort(), valasz:magasabb,
+             hint:`A hangsor felfelé: e, f, g, a, h, c', d', e', f', g' – a későbbi a magasabb. Itt: ${magasabb}.`,
+             modul:"hangkoz", cimke:`${alap[i][0]} vagy ${alap[j][0]} magasabb`, tf:"Hangmagasság · hangközök" };
+  }
+  if(t===2){ // lépés vagy ugrás?
+    const i = rnd(0, alap.length-2);
+    const lepes = Math.random()<0.5;
+    const masodik = lepes ? alap[i+1] : alap[Math.min(i+rnd(2,3), alap.length-1)];
+    if(masodik[0]===alap[i][0]) return genHangkoz();
+    const tavolsag = alap.indexOf(masodik) - i;
+    const jo = tavolsag===1 ? "lépés" : "ugrás";
+    return { szoveg:`Lépés vagy ugrás?<br><span class="nagy">${alap[i][0]} → ${masodik[0]}</span>`,
+             tipus:"valaszto", opciok:["lépés","ugrás"], valasz:jo,
+             hint: tavolsag===1 ? `Szomszédos hangok között lépés van (${alap[i][0]} → ${masodik[0]}).`
+                                : `Ha kimarad hang közben, az ugrás (${alap[i][0]} → ${masodik[0]}).`,
+             modul:"hangkoz", cimke:`${alap[i][0]} → ${masodik[0]}`, tf:"Hangmagasság · hangközök" };
+  }
+  const p = valaszt([
+    ["Hány hangból áll egy dúr skála a következő dó-ig?", 8, "A dúr skála 8 hangból áll: dó-ré-mi-fá-szó-lá-ti-dó."],
+    ["Hány vonala van a vonalrendszernek?", 5, "A vonalrendszer 5 vonalból áll."],
+    ["Hány különböző ABC-s hangnév van (c-től h-ig)?", 7, "Hét hangnév van: c, d, e, f, g, a, h."],
+    ["Hány szolmizációs hang van dó-tól ti-ig?", 7, "Hét szolmizációs hang: dó, ré, mi, fá, szó, lá, ti."]
+  ]);
+  return { szoveg:p[0], valasz:p[1], hint:p[2],
+           modul:"hangkoz", cimke:p[0], tf:"Hangmagasság · hangközök" };
+}
+
 function genVegyes(){
   if(beall.targy==="nyelvtan"){
     const l = ["mgh","jly","szotag","irasjel"].filter(x=>!rejtettModulok().includes(x));
@@ -3698,6 +4131,23 @@ function genVegyes(){
     const l = ["anszo","anszam","anbetuz"].filter(x=>!rejtettModulok().includes(x));
     const m2 = valaszt(l.length?l:["anszo"]);
     return m2==="anszo"?genAnszo() : m2==="anszam"?genAnszam() : genAnbetuz();
+  }
+  if(beall.targy==="kornyezet"){
+    const l = ["evszak","elolenyek","test","kozlekedes"].filter(x=>!rejtettModulok().includes(x));
+    const m2 = valaszt(l.length?l:["evszak"]);
+    return m2==="evszak"?genEvszak() : m2==="elolenyek"?genElolenyek()
+         : m2==="test"?genTest() : genKozlekedes();
+  }
+  if(beall.targy==="foldrajz"){
+    const l = ["egtaj","megye"].filter(x=>!rejtettModulok().includes(x));
+    const m2 = valaszt(l.length?l:["egtaj"]);
+    return m2==="megye"?genMegye() : genEgtaj();
+  }
+  if(beall.targy==="zene"){
+    const l = ["hangjegy","ritmus","szolmizacio","hangkoz"].filter(x=>!rejtettModulok().includes(x));
+    const m2 = valaszt(l.length?l:["ritmus"]);
+    return m2==="hangjegy"?genHangjegy() : m2==="ritmus"?genRitmus()
+         : m2==="szolmizacio"?genSzolmizacio() : genHangkoz();
   }
   let lista = ["szorzas","helyi","muvelet","potlas","osztas","lanc","szoveges","szamegyenes",
                "sorozat","nyitott","ora","penz","becsles","mertek","romai","sorrend",
@@ -3778,6 +4228,16 @@ function inditIrasjel(){ mod="irasjel"; korHossz=beall.dbKor; inditKor(); }
 function inditAnszo(){ mod="anszo"; korHossz=beall.dbKor; inditKor(); }
 function inditAnszam(){ mod="anszam"; korHossz=beall.dbKor; inditKor(); }
 function inditAnbetuz(){ mod="anbetuz"; korHossz=Math.max(5,Math.round(beall.dbKor*0.8)); inditKor(); }
+function inditEvszak(){ mod="evszak"; korHossz=beall.dbKor; inditKor(); }
+function inditElolenyek(){ mod="elolenyek"; korHossz=beall.dbKor; inditKor(); }
+function inditTest(){ mod="test"; korHossz=beall.dbKor; inditKor(); }
+function inditKozlekedes(){ mod="kozlekedes"; korHossz=beall.dbKor; inditKor(); }
+function inditEgtaj(){ mod="egtaj"; korHossz=beall.dbKor; inditKor(); }
+function inditMegye(){ mod="megye"; korHossz=beall.dbKor; inditKor(); }
+function inditHangjegy(){ mod="hangjegy"; korHossz=beall.dbKor; inditKor(); }
+function inditRitmus(){ mod="ritmus"; korHossz=beall.dbKor; inditKor(); }
+function inditSzolmizacio(){ mod="szolmizacio"; korHossz=beall.dbKor; inditKor(); }
+function inditHangkoz(){ mod="hangkoz"; korHossz=beall.dbKor; inditKor(); }
 
 const idoMod = () => mod==="villam" || mod==="vegyesido";
 function inditVillam(){ if(kivTablak.size===0) return; inditIdoKor("villam"); }
@@ -3857,6 +4317,16 @@ function ujKerdes(){
   if(mod==="anszo")    return genAnszo();
   if(mod==="anszam")   return genAnszam();
   if(mod==="anbetuz")  return genAnbetuz();
+  if(mod==="evszak")   return genEvszak();
+  if(mod==="elolenyek")return genElolenyek();
+  if(mod==="test")     return genTest();
+  if(mod==="kozlekedes") return genKozlekedes();
+  if(mod==="egtaj")    return genEgtaj();
+  if(mod==="megye")    return genMegye();
+  if(mod==="hangjegy") return genHangjegy();
+  if(mod==="ritmus")   return genRitmus();
+  if(mod==="szolmizacio") return genSzolmizacio();
+  if(mod==="hangkoz")  return genHangkoz();
   return genVegyes();
 }
 function rajzolPontok(){
@@ -4150,7 +4620,11 @@ const MODNEV = {szorzas:"Szorzótábla", helyi:"Helyiérték", muvelet:"Összead
                 kakukk:"Kakukktojás", tablazat:"Számgép", kombi:"Hányféleképpen?",
                 egyenlotlen:"Egyenlőtlenség", mgh:"Magánhangzók", jly:"J vagy Ly",
                 szotag:"Szótagolás", irasjel:"Mondatvégi írásjel", anszo:"Angol szókincs",
-                anszam:"Angol számok", anbetuz:"Angol betűzés"};
+                anszam:"Angol számok", anbetuz:"Angol betűzés",
+                evszak:"Évszakok, hónapok", elolenyek:"Élőlények", test:"Testünk, egészség",
+                kozlekedes:"Közlekedés", egtaj:"Térkép, égtájak", megye:"Vármegyék",
+                hangjegy:"Kottaolvasás", ritmus:"Ritmusértékek", szolmizacio:"Szolmizáció",
+                hangkoz:"Hangmagasság"};
 // localStorage csak a weben él; az asztali artifact-nézetben tiltott lehet -> try/catch
 function naploOlvas(){ try{ return JSON.parse(localStorage.getItem("matekNaplo")||"[]"); }catch(e){ return null; } }
 let korId = null; // az aktuális kör napló-azonosítója
