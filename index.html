@@ -2508,8 +2508,12 @@ const aktivKepernyo = () => { const e = document.querySelector(".screen.aktiv");
 let gorgetes = {};
 const lapKulcs = id => id==="scr-menu" ? "menu:"+(beall.targy||"matek") : id;
 let histSzint = 0, sajatBackDb = 0; // Android/böngésző vissza-gomb: szintenként egy history-bejegyzés
+// Szint-2 képernyőre (feladat, szülői lap, hiba-visszanézés) többféle helyről lehet lépni:
+// a tantárgy menüjéből VAGY közvetlenül a főmenüből (Szülőknek). A vissza-gomb oda térjen vissza.
+let szint2Honnan = "scr-menu";
 function mutat(id){
   const regi = aktivKepernyo();
+  if(szintje(id) >= 2 && szintje(regi) <= 1) szint2Honnan = regi;
   if(szintje(regi) === 1 && regi !== id) gorgetes[lapKulcs(regi)] = window.scrollY;
   const ugyanaz = regi === id; // pl. szűrőváltás: marad a görgetés
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("aktiv"));
@@ -2529,7 +2533,7 @@ try{
     if(sajatBackDb > 0){ sajatBackDb--; return; } // saját history.go() visszhangja
     const akt = szintje(aktivKepernyo());
     if(histSzint > 0) histSzint--;
-    if(akt >= 2) menu();          // feladatból/beállításból a tantárgy menüjébe
+    if(akt >= 2){ szint2Honnan === "scr-fomenu" ? fomenu() : menu(); } // oda, ahonnan jöttünk
     else if(akt === 1) fomenu();  // tantárgy menüjéből a tantárgyak közé
   });
 }catch(e){}
@@ -5177,7 +5181,7 @@ function nevMegse(){
 }
 
 // VERZIÓ: minden publikálásnál (commitnál) eggyel emelni - a szülői lap alján látszik
-const VERZIO = "v40";
+const VERZIO = "v41";
 $("verzio-cimke").textContent = VERZIO;
 
 beallTolt();
