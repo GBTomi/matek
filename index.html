@@ -384,6 +384,8 @@
     <button class="masol-gomb" onclick="naploMasol(this)">📋 Formázott másolás (e-mailhez)</button>
     <button class="vissza" id="szulo-mindtorles" onclick="torlesKer('mind')">🗑 Teljes napló törlése (PIN)</button>
     <button class="vissza" onclick="fomenu()">← vissza a tantárgyakhoz</button>
+    <!-- Verzió-kijelző: a VERZIO konstansból tölti a JS (a szülői lap legalja) -->
+    <div id="verzio-cimke" style="text-align:center;margin-top:14px;opacity:.45;font-size:12px"></div>
   </div>
 
   <!-- HIBA-VISSZANÉZÉS (pillanatkép) -->
@@ -5173,6 +5175,10 @@ function nevMegse(){
   if(nevOlvas()===null){ try{ localStorage.setItem("matekNev", ""); }catch(e){} } // többet ne kérdezze
   $("nev-panel").style.display = "none"; frissitKoszonto();
 }
+
+// VERZIÓ: minden publikálásnál (commitnál) eggyel emelni - a szülői lap alján látszik
+const VERZIO = "v40";
+$("verzio-cimke").textContent = VERZIO;
 
 beallTolt();
 if(beall.kor!==9) korTablak();
