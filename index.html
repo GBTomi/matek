@@ -42,6 +42,22 @@
   .modul .ikon{font-size:1.7rem;}
   .modul small{display:block; font-weight:400; color:var(--halvany); font-size:.82rem;}
   .tipp{margin-top:auto; padding:12px; font-size:.8rem; color:var(--halvany); text-align:center;}
+  /* tantárgy-kártya a főmenüben */
+  .targy-kartya{
+    background:var(--kartya); border:none; border-radius:18px; padding:18px;
+    margin:8px 0; font-size:1.25rem; font-weight:700; color:var(--szoveg);
+    display:flex; align-items:center; gap:15px; cursor:pointer; width:100%; text-align:left;
+    box-shadow:0 3px 10px rgba(90,63,217,.10); transition:transform .1s;
+  }
+  .targy-kartya:active{transform:scale(.97);}
+  .targy-kartya .ikon{font-size:2rem;}
+  .targy-kartya small{display:block; font-weight:400; color:var(--halvany); font-size:.82rem;}
+  /* a tantárgy menüjének fejléce */
+  .targy-fejlec{
+    display:flex; align-items:center; justify-content:center; gap:9px; margin:2px 0 10px;
+    font-size:1.15rem; font-weight:700; color:var(--lila-s);
+  }
+  .targy-fejlec .ikon{font-size:1.5rem;}
   .beallito{display:flex; flex-direction:column; gap:8px; margin-top:10px;}
   .lepteto{flex:1; background:var(--kartya); border-radius:14px; padding:7px 9px;
            display:grid; grid-template-columns:96px 32px 1fr 32px; align-items:center; gap:4px;
@@ -230,12 +246,12 @@
 </head>
 <body>
 <div class="app">
-  <h1><span id="avatar-gomb" onclick="avatarPanelNyit()" title="Kattints az avatar cseréjéhez">🦊</span> Gyakorló feladatok</h1>
+  <h1><span id="avatar-gomb" onclick="avatarPanelNyit()" title="Kattints az avatar cseréjéhez">🦊</span> Napi gyakorló</h1>
   <div class="koszonto" id="koszonto" onclick="nevSzerkeszt()" title="Kattints a név módosításához"></div>
   <div class="alcim" id="kor-info">1 kör = 10 feladat · Napi 10–15 perc, a rövid, mindennapos gyakorlás ér a legtöbbet!</div>
 
-  <!-- MENÜ -->
-  <div class="screen aktiv" id="scr-menu">
+  <!-- FŐMENÜ: tantárgyak -->
+  <div class="screen aktiv" id="scr-fomenu">
     <div class="panel" id="nev-panel" style="display:none">
       <h2 id="nev-cim">Mi a neved? 😊</h2>
       <input id="nev-input" class="nev-input" type="text" maxlength="15" placeholder="Írd be a neved">
@@ -243,7 +259,23 @@
       <button class="vissza" id="nev-torles" style="display:none" onclick="nevTorles()">Név törlése</button>
       <button class="vissza" onclick="nevMegse()">Most nem</button>
     </div>
-    <div class="valaszto" id="targy-valaszto" style="justify-content:center; margin-bottom:10px"></div>
+    <div id="targy-lista"></div>
+    <div class="statsor" id="stat-sor"></div>
+    <div class="beallito">
+      <div class="lepteto"><span>Életkor</span>
+        <button onclick="leptet('kor',-1)">−</button><b id="kor-kijelzo">9 éves</b><button onclick="leptet('kor',1)">+</button></div>
+      <div class="lepteto"><span>Feladat/kör</span>
+        <button onclick="leptet('db',-1)">−</button><b id="db-kijelzo">10 db</b><button onclick="leptet('db',1)">+</button></div>
+      <div class="lepteto"><span>Téma</span>
+        <button onclick="temaValt(-1)">◀</button><b id="tema-kijelzo" style="min-width:110px">Harry Potter</b><button onclick="temaValt(1)">▶</button></div>
+    </div>
+    <div class="tipp">
+      <button class="szulo-link" onclick="szuloNezet()">👨‍👩‍👧 Szülőknek</button></div>
+  </div>
+
+  <!-- TANTÁRGY MENÜJE: feladattípusok -->
+  <div class="screen" id="scr-menu">
+    <div class="targy-fejlec" id="targy-fejlec"></div>
     <button class="modul" id="menu-szorzas" onclick="megnyit('szorzas')"><span class="ikon">✖️</span>
       <span>Szorzótábla<small>2-től 10-ig, a nehezebbeket többször kérdezi</small></span></button>
     <button class="modul" id="menu-helyi" onclick="megnyit('helyi')"><span class="ikon">🏗️</span>
@@ -334,17 +366,7 @@
       <span>Hangmagasság<small>melyik magasabb? lépés vagy ugrás?</small></span></button>
     <button class="modul" onclick="megnyit('vegyes')"><span class="ikon">🎲</span>
       <span>Vegyes kör<small>mindenből egy kicsit – simán vagy időre</small></span></button>
-    <div class="statsor" id="stat-sor"></div>
-    <div class="beallito">
-      <div class="lepteto"><span>Életkor</span>
-        <button onclick="leptet('kor',-1)">−</button><b id="kor-kijelzo">9 éves</b><button onclick="leptet('kor',1)">+</button></div>
-      <div class="lepteto"><span>Feladat/kör</span>
-        <button onclick="leptet('db',-1)">−</button><b id="db-kijelzo">10 db</b><button onclick="leptet('db',1)">+</button></div>
-      <div class="lepteto"><span>Téma</span>
-        <button onclick="temaValt(-1)">◀</button><b id="tema-kijelzo" style="min-width:110px">Harry Potter</b><button onclick="temaValt(1)">▶</button></div>
-    </div>
-    <div class="tipp">
-      <button class="szulo-link" onclick="szuloNezet()">👨‍👩‍👧 Szülőknek</button></div>
+    <button class="vissza" onclick="fomenu()">← vissza a tantárgyakhoz</button>
   </div>
 
   <!-- SZÜLŐI NÉZET -->
@@ -361,7 +383,7 @@
     <button class="fo-gomb" id="szulo-kuldes" onclick="naploKuldes(this)">📤 Napló küldése</button>
     <button class="masol-gomb" onclick="naploMasol(this)">📋 Formázott másolás (e-mailhez)</button>
     <button class="vissza" id="szulo-mindtorles" onclick="torlesKer('mind')">🗑 Teljes napló törlése (PIN)</button>
-    <button class="vissza" onclick="menu()">← vissza a menübe</button>
+    <button class="vissza" onclick="fomenu()">← vissza a tantárgyakhoz</button>
   </div>
 
   <!-- HIBA-VISSZANÉZÉS (pillanatkép) -->
@@ -2372,33 +2394,56 @@ function beallKijelez(){
 }
 // kerettanterv szerint: 1. osztályban nincs szorzás/osztás/írásbeli művelet,
 // az írásbeli összeadás-kivonás 3. osztálytól tananyag
-const TANTARGYAK = { // bővíthető: új kulcs = új tantárgy
-  matek: { nev:"Matek", modulok:["szorzas","helyi","muvelet","irasbeli","potlas","osztas",
+const TANTARGYAK = { // bővíthető: új kulcs = új tantárgy (ikon + leírás a főmenü kártyájához)
+  matek: { nev:"Matek", ikon:"🔢", leiras:"számolás, mértékegység, logika",
+    modulok:["szorzas","helyi","muvelet","irasbeli","potlas","osztas",
     "villam","szamegyenes","lanc","szoveges","sorozat","nyitott","ora","penz","becsles",
     "mertek","romai","sorrend","szamalkotas","tortek","negativ","igazhamis","jelek",
     "kakukk","tablazat","kombi","egyenlotlen"] },
-  nyelvtan: { nev:"Nyelvtan", modulok:["mgh","jly","szotag","irasjel"] },
-  angol: { nev:"Angol", modulok:["anszo","anszam","anbetuz"] },
-  kornyezet: { nev:"Környezet", modulok:["evszak","elolenyek","test","kozlekedes"] },
-  foldrajz: { nev:"Földrajz", modulok:["egtaj","megye"] },
-  zene: { nev:"Zene", modulok:["hangjegy","ritmus","szolmizacio","hangkoz"] }
+  nyelvtan: { nev:"Nyelvtan", ikon:"✏️", leiras:"helyesírás, szótagolás, írásjelek",
+    modulok:["mgh","jly","szotag","irasjel"] },
+  angol: { nev:"Angol", ikon:"🇬🇧", leiras:"szavak, számok, betűzés – kiejtéssel",
+    modulok:["anszo","anszam","anbetuz"] },
+  kornyezet: { nev:"Környezet", ikon:"🌍", leiras:"évszakok, élőlények, testünk, közlekedés",
+    modulok:["evszak","elolenyek","test","kozlekedes"] },
+  foldrajz: { nev:"Földrajz", ikon:"🧭", leiras:"égtájak, térkép, vármegyék",
+    modulok:["egtaj","megye"] },
+  zene: { nev:"Zene", ikon:"🎼", leiras:"kotta, ritmus, szolmizáció",
+    modulok:["hangjegy","ritmus","szolmizacio","hangkoz"] }
 };
 function targyValt(k){
+  if(!TANTARGYAK[k]) return;
   beall.targy = k; beallMent(); beallKijelez();
+  menu(); // a tantárgy kiválasztása egyben be is lép a feladattípusai közé
+}
+// a főmenü tantárgy-kártyái (életkor szerint szűrve)
+function elerhetoTargyak(){
+  const rejtett = rejtettModulok();
+  return Object.entries(TANTARGYAK).filter(([k,t]) => {
+    if(k==="angol" && beall.kor<=7) return false; // idegen nyelv később kezdődik
+    // olyan tantárgy nem jelenik meg, aminek ebben a korban egyetlen modulja sem érhető el
+    return t.modulok.some(m=>!rejtett.includes(m));
+  });
 }
 function rajzolTargyak(){
-  const c = $("targy-valaszto"); if(!c) return;
-  c.innerHTML="";
+  const c = $("targy-lista"); if(!c) return;
   const rejtett = rejtettModulok();
-  for(const [k,t] of Object.entries(TANTARGYAK)){
-    if(k==="angol" && beall.kor<=7) continue; // idegen nyelv később kezdődik
-    // olyan tantárgy nem jelenik meg, aminek ebben a korban egyetlen modulja sem érhető el
-    if(!t.modulok.some(m=>!rejtett.includes(m))) continue;
+  c.innerHTML="";
+  for(const [k,t] of elerhetoTargyak()){
+    const db = t.modulok.filter(m=>!rejtett.includes(m)).length;
     const g=document.createElement("button");
-    g.className="chip"+(beall.targy===k?" on":"");
-    g.textContent=t.nev; g.onclick=()=>targyValt(k);
+    g.className="targy-kartya"; g.id="targy-"+k;
+    g.innerHTML = `<span class="ikon">${t.ikon||"📘"}</span>`
+      + `<span>${t.nev}<small>${t.leiras||""} · ${db} feladattípus</small></span>`;
+    g.onclick=()=>targyValt(k);
     c.appendChild(g);
   }
+}
+// a tantárgy menüjének fejléce (melyik tantárgyban vagyunk)
+function targyFejlecFrissit(){
+  const e = $("targy-fejlec"); if(!e) return;
+  const t = TANTARGYAK[beall.targy] || TANTARGYAK.matek;
+  e.innerHTML = `<span class="ikon">${t.ikon||"📘"}</span><span>${t.nev}</span>`;
 }
 // ha a beállított életkorban a kiválasztott tantárgy nem elérhető, visszaáll matekra
 function targyEllenoriz(){
@@ -2429,6 +2474,7 @@ function menuFrissit(){
     if(e) e.style.display = (sajat.includes(k) && !rejtett.includes(k)) ? "flex" : "none";
   });
   rajzolTargyak();
+  targyFejlecFrissit();
 }
 
 /* ================= állapot ================= */
@@ -2450,28 +2496,44 @@ const stat = { szorzas:[0,0], helyi:[0,0], muvelet:[0,0], potlas:[0,0], irasbeli
                anszo:[0,0], anszam:[0,0], anbetuz:[0,0] }; // [jó, összes]
 
 /* ================= képernyőváltás ================= */
-let menuScroll = 0; // a főmenü görgetési pozíciója (lapfrissítéskor nullázódik)
-let histTolva = false, sajatBack = false; // Android/böngésző vissza-gomb: előbb a főmenüre
+// Menü-szintek: 0 = tantárgyak főmenüje, 1 = a tantárgy feladattípusai, 2 = minden más (setup, játék, szülői)
+const MENU_SZINT = { "scr-fomenu":0, "scr-menu":1 };
+const szintje = id => MENU_SZINT[id] !== undefined ? MENU_SZINT[id] : 2;
+const aktivKepernyo = () => { const e = document.querySelector(".screen.aktiv"); return e ? e.id : "scr-fomenu"; };
+// Görgetés-memória lapokra bontva: a főmenü és MINDEN tantárgy-menü külön pozíciót jegyez meg,
+// így böngészés közben mindig oda tér vissza, ahol a lista közben állt.
+let gorgetes = {};
+const lapKulcs = id => id==="scr-menu" ? "menu:"+(beall.targy||"matek") : id;
+let histSzint = 0, sajatBackDb = 0; // Android/böngésző vissza-gomb: szintenként egy history-bejegyzés
 function mutat(id){
-  if($("scr-menu").classList.contains("aktiv") && id!=="scr-menu") menuScroll = window.scrollY;
-  const ugyanaz = $(id).classList.contains("aktiv"); // pl. szűrőváltás: marad a görgetés
+  const regi = aktivKepernyo();
+  if(szintje(regi) <= 1 && regi !== id) gorgetes[lapKulcs(regi)] = window.scrollY;
+  const ugyanaz = regi === id; // pl. szűrőváltás: marad a görgetés
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("aktiv"));
   $(id).classList.add("aktiv");
   try{
-    if(id!=="scr-menu" && !histTolva){ history.pushState({belso:1}, ""); histTolva = true; }
-    else if(id==="scr-menu" && histTolva){ histTolva = false; sajatBack = true; history.back(); }
+    const cel = szintje(id);
+    if(cel > histSzint){ for(let i=histSzint;i<cel;i++) history.pushState({belso:1}, ""); histSzint = cel; }
+    else if(cel < histSzint){ const db = histSzint - cel; sajatBackDb += db; histSzint = cel; history.go(-db); }
   }catch(e){}
-  if(id==="scr-menu") requestAnimationFrame(()=>window.scrollTo(0, menuScroll));
-  else if(!ugyanaz) window.scrollTo(0,0);
+  if(szintje(id) <= 1 && !ugyanaz){
+    const y = gorgetes[lapKulcs(id)] || 0;
+    requestAnimationFrame(()=>window.scrollTo(0, y));
+  } else if(!ugyanaz) window.scrollTo(0,0);
 }
 try{
   window.addEventListener("popstate", ()=>{
-    if(sajatBack){ sajatBack = false; return; } // saját history.back() visszhangja
-    histTolva = false;
-    if(!$("scr-menu").classList.contains("aktiv")) menu();
+    if(sajatBackDb > 0){ sajatBackDb--; return; } // saját history.go() visszhangja
+    const akt = szintje(aktivKepernyo());
+    if(histSzint > 0) histSzint--;
+    if(akt >= 2) menu();          // feladatból/beállításból a tantárgy menüjébe
+    else if(akt === 1) fomenu();  // tantárgy menüjéből a tantárgyak közé
   });
 }catch(e){}
-function menu(){ clearInterval(villamTimer); villamAktiv=false; hibaCache=null; ujraMod=false; mutat("scr-menu"); frissitStat(); frissitKoszonto(); }
+function fomenu(){ clearInterval(villamTimer); villamAktiv=false; hibaCache=null; ujraMod=false;
+  mutat("scr-fomenu"); frissitStat(); frissitKoszonto(); }
+function menu(){ clearInterval(villamTimer); villamAktiv=false; hibaCache=null; ujraMod=false;
+  menuFrissit(); mutat("scr-menu"); frissitStat(); frissitKoszonto(); }
 function frissitStat(){
   let o=0,j=0; Object.values(stat).forEach(s=>{ j+=s[0]; o+=s[1]; });
   $("stat-sor").textContent = o ? `Ma eddig: ${j} jó válasz ${o} feladatból` : "";
@@ -5115,7 +5177,7 @@ beallTolt();
 if(beall.kor!==9) korTablak();
 beallKijelez();
 hangforrasSorEpit();
-menu();
+fomenu();
 if(nevOlvas()===null) nevSzerkeszt(); // első indulás: "Mi a neved?"
 // PIN: Enter és helyes kód azonnali elfogadása; név: Enter = mentés
 $("pin-input").addEventListener("input", e=>{ if(e.target.value==="9999") pinOk(); });
