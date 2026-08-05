@@ -2500,14 +2500,15 @@ const stat = { szorzas:[0,0], helyi:[0,0], muvelet:[0,0], potlas:[0,0], irasbeli
 const MENU_SZINT = { "scr-fomenu":0, "scr-menu":1 };
 const szintje = id => MENU_SZINT[id] !== undefined ? MENU_SZINT[id] : 2;
 const aktivKepernyo = () => { const e = document.querySelector(".screen.aktiv"); return e ? e.id : "scr-fomenu"; };
-// Görgetés-memória lapokra bontva: a főmenü és MINDEN tantárgy-menü külön pozíciót jegyez meg,
-// így böngészés közben mindig oda tér vissza, ahol a lista közben állt.
+// Görgetés-memória CSAK a tantárgy-menükre (szint 1): mindegyik külön pozíciót jegyez meg,
+// így böngészés közben oda tér vissza, ahol a lista állt. A főmenü (szint 0) NEM jegyez meg
+// pozíciót - oda mindig a lap tetejére érkezünk.
 let gorgetes = {};
 const lapKulcs = id => id==="scr-menu" ? "menu:"+(beall.targy||"matek") : id;
 let histSzint = 0, sajatBackDb = 0; // Android/böngésző vissza-gomb: szintenként egy history-bejegyzés
 function mutat(id){
   const regi = aktivKepernyo();
-  if(szintje(regi) <= 1 && regi !== id) gorgetes[lapKulcs(regi)] = window.scrollY;
+  if(szintje(regi) === 1 && regi !== id) gorgetes[lapKulcs(regi)] = window.scrollY;
   const ugyanaz = regi === id; // pl. szűrőváltás: marad a görgetés
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("aktiv"));
   $(id).classList.add("aktiv");
@@ -2516,7 +2517,7 @@ function mutat(id){
     if(cel > histSzint){ for(let i=histSzint;i<cel;i++) history.pushState({belso:1}, ""); histSzint = cel; }
     else if(cel < histSzint){ const db = histSzint - cel; sajatBackDb += db; histSzint = cel; history.go(-db); }
   }catch(e){}
-  if(szintje(id) <= 1 && !ugyanaz){
+  if(szintje(id) === 1 && !ugyanaz){
     const y = gorgetes[lapKulcs(id)] || 0;
     requestAnimationFrame(()=>window.scrollTo(0, y));
   } else if(!ugyanaz) window.scrollTo(0,0);
