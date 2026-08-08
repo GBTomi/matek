@@ -330,6 +330,8 @@
       <span>Hányféleképpen?<small>sorbaállítás, párosítás, mérkőzések</small></span></button>
     <button class="modul" id="menu-egyenlotlen" onclick="inditEgyenlotlen()"><span class="ikon">🚦</span>
       <span>Egyenlőtlenség<small>▢ + 3 &lt; 12 – mennyi lehet a ▢?</small></span></button>
+    <button class="modul" id="menu-abc" onclick="inditAbc()"><span class="ikon">🔤</span>
+      <span>Ábécé<small>melyik betű jön utána? kis- és nagybetűk</small></span></button>
     <button class="modul" id="menu-mgh" onclick="inditMgh()"><span class="ikon">🅰️</span>
       <span>Magánhangzók<small>rövid vagy hosszú? o-ó, u-ú, i-í…</small></span></button>
     <button class="modul" id="menu-jly" onclick="inditJly()"><span class="ikon">🪶</span>
@@ -2403,7 +2405,7 @@ const TANTARGYAK = { // bővíthető: új kulcs = új tantárgy (ikon + leírás
     "mertek","romai","sorrend","szamalkotas","tortek","negativ","igazhamis","jelek",
     "kakukk","tablazat","kombi","egyenlotlen"] },
   nyelvtan: { nev:"Nyelvtan", ikon:"✏️", leiras:"helyesírás, szótagolás, írásjelek",
-    modulok:["mgh","jly","szotag","irasjel"] },
+    modulok:["abc","mgh","jly","szotag","irasjel"] },
   angol: { nev:"Angol", ikon:"🇬🇧", leiras:"szavak, számok, betűzés – kiejtéssel",
     modulok:["anszo","anszam","anbetuz"] },
   kornyezet: { nev:"Környezet", ikon:"🌍", leiras:"évszakok, élőlények, testünk, közlekedés",
@@ -2494,7 +2496,7 @@ const stat = { szorzas:[0,0], helyi:[0,0], muvelet:[0,0], potlas:[0,0], irasbeli
                mertek:[0,0], romai:[0,0], sorrend:[0,0], szamalkotas:[0,0],
                tortek:[0,0], negativ:[0,0], igazhamis:[0,0], jelek:[0,0],
                kakukk:[0,0], tablazat:[0,0], kombi:[0,0], egyenlotlen:[0,0],
-               mgh:[0,0], jly:[0,0], szotag:[0,0], irasjel:[0,0],
+               abc:[0,0], mgh:[0,0], jly:[0,0], szotag:[0,0], irasjel:[0,0],
                anszo:[0,0], anszam:[0,0], anbetuz:[0,0] }; // [jó, összes]
 
 /* ================= képernyőváltás ================= */
@@ -3691,6 +3693,103 @@ const ANGOL_SZAMOK = [[1,"one"],[2,"two"],[3,"three"],[4,"four"],[5,"five"],[6,"
   [90,"ninety"],[100,"one hundred"]];
 const BETUZ_SZAVAK = ANGOL_SZAVAK.filter(x=>x[1].length>=3 && x[1].length<=6 && !x[1].includes(" "));
 
+/* ================= ÁBÉCÉ (7 éveseknek) =================
+   Cél: a betűrend BEVÉSÉSE, minél kisebb terheléssel. Ezért:
+   - minden feladat 3 válaszgombos (kivéve a párban összehasonlítást: 2 gomb),
+   - a rossz válaszok közül az egyik mindig KÖZELI betű (ez tanít), a másik távoli,
+   - a segítség (hint) mindig kiírja az ábécé érintett darabkáját, kiemelve a jó betűt,
+   - 7 éves korig az EGYSZERŰSÍTETT ábécé megy (nincs ékezetes, kétjegyű, q/w/x/y),
+     8 évtől a teljes, hivatalos 44 betűs magyar ábécé. */
+const ABC_ALAP = ["a","b","c","d","e","f","g","h","i","j","k","l","m",
+                  "n","o","p","r","s","t","u","v","z"];
+const ABC_TELJES = ["a","á","b","c","cs","d","dz","dzs","e","é","f","g","gy","h","i","í","j",
+                    "k","l","ly","m","n","ny","o","ó","ö","ő","p","q","r","s","sz","t","ty",
+                    "u","ú","ü","ű","v","w","x","y","z","zs"];
+const ABC_SZAVAK = [["alma","🍎"],["béka","🐸"],["ceruza","✏️"],["dob","🥁"],["egér","🐭"],
+  ["fa","🌳"],["gomba","🍄"],["hal","🐟"],["iskola","🏫"],["jég","🧊"],["kutya","🐶"],
+  ["labda","⚽"],["méz","🍯"],["nap","☀️"],["olló","✂️"],["pillangó","🦋"],["róka","🦊"],
+  ["sajt","🧀"],["teknős","🐢"],["uborka","🥒"],["virág","🌸"],["zebra","🦓"]];
+const abcLista = () => (beall.kor<=7 ? ABC_ALAP : ABC_TELJES);
+const abcNagy = b => b.charAt(0).toUpperCase() + b.slice(1); // "cs" -> "Cs"
+const abcKever = a => a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]);
+// az ábécé darabkája a betű körül, a keresett betű kiemelve
+function abcReszlet(L, i){
+  const a = Math.max(0,i-2), b = Math.min(L.length-1,i+2);
+  const s = L.slice(a,b+1).map((x,k)=> (a+k===i) ? `<b>${x}</b>` : x).join(" ");
+  return (a>0?"… ":"") + s + (b<L.length-1?" …":"");
+}
+// válaszlehetőségek: a jó betű + egy közeli + egy távoli
+function abcOpciok(L, i, db){
+  db = db || 2;
+  const ki = new Set([L[i]]);
+  const kozel = [i-2,i-1,i+1,i+2].filter(j=>j>=0 && j<L.length && j!==i);
+  if(kozel.length) ki.add(L[valaszt(kozel)]);
+  let vedo = 0;
+  while(ki.size < db+1 && vedo++ < 50) ki.add(valaszt(L));
+  return abcKever([...ki]);
+}
+function genAbc(){
+  const L = abcLista(), r = Math.random();
+  // 1) Mi jön utána? – ez vési be legjobban a sorrendet, ezért ez a leggyakoribb
+  if(r < 0.30){
+    const i = rnd(0, L.length-2);
+    return { szoveg:`Melyik betű jön az ábécében a <b>${L[i]}</b> után?`
+             + `<br><span class="nagy">${L[i]} → ▢</span>`,
+             tipus:"valaszto", opciok:abcOpciok(L,i+1), valasz:L[i+1],
+             hint:`Az ábécében: ${abcReszlet(L,i+1)}`,
+             modul:"abc", cimke:`${L[i]} után`, tf:"Ábécé · mi jön utána?" };
+  }
+  // 2) Hiányzó betű a sorban
+  if(r < 0.50){
+    const i = rnd(1, L.length-2);
+    return { szoveg:`Melyik betű hiányzik?`
+             + `<br><span class="nagy">${L[i-1]} ▢ ${L[i+1]}</span>`,
+             tipus:"valaszto", opciok:abcOpciok(L,i), valasz:L[i],
+             hint:`Az ábécében: ${abcReszlet(L,i)}`,
+             modul:"abc", cimke:`${L[i-1]} ▢ ${L[i+1]}`, tf:"Ábécé · hiányzó betű" };
+  }
+  // 3) Mi van előtte?
+  if(r < 0.62){
+    const i = rnd(1, L.length-1);
+    return { szoveg:`Melyik betű van az ábécében a <b>${L[i]}</b> előtt?`
+             + `<br><span class="nagy">▢ → ${L[i]}</span>`,
+             tipus:"valaszto", opciok:abcOpciok(L,i-1), valasz:L[i-1],
+             hint:`Az ábécében: ${abcReszlet(L,i-1)}`,
+             modul:"abc", cimke:`${L[i]} előtt`, tf:"Ábécé · mi van előtte?" };
+  }
+  // 4) Kis- és nagybetű párosítása (mindkét irányban)
+  if(r < 0.76){
+    const i = rnd(0, L.length-1), nagybol = Math.random()<0.5;
+    const opc = abcOpciok(L,i);
+    return { szoveg: nagybol
+             ? `Melyik ennek a <b>kisbetűs</b> párja?<br><span class="nagy">${abcNagy(L[i])}</span>`
+             : `Melyik ennek a <b>nagybetűs</b> párja?<br><span class="nagy">${L[i]}</span>`,
+             tipus:"valaszto",
+             opciok: nagybol ? opc : opc.map(abcNagy),
+             valasz: nagybol ? L[i] : abcNagy(L[i]),
+             hint:`${abcNagy(L[i])} = ${L[i]} – ugyanaz a betű, csak nagy és kicsi alakban.`,
+             modul:"abc", cimke:`${abcNagy(L[i])} – ${L[i]}`, tf:"Ábécé · kis- és nagybetű" };
+  }
+  // 5) Melyik van előbb? – két betű összehasonlítása (betűrend alapozás)
+  if(r < 0.88){
+    let i = rnd(0, L.length-1), j = rnd(0, L.length-1), vedo = 0;
+    while(j===i && vedo++ < 50) j = rnd(0, L.length-1);
+    const elso = Math.min(i,j), masodik = Math.max(i,j);
+    return { szoveg:`Melyik betű van <b>előbb</b> az ábécében?`,
+             tipus:"valaszto", opciok:abcKever([L[elso],L[masodik]]), valasz:L[elso],
+             hint:`Az ábécében a <b>${L[elso]}</b> hamarabb jön, mint a ${L[masodik]}.`,
+             modul:"abc", cimke:`${L[i]} vagy ${L[j]}`, tf:"Ábécé · melyik van előbb?" };
+  }
+  // 6) Kezdőbetű – a betű és a hang összekapcsolása
+  const [szo, kep] = valaszt(ABC_SZAVAK);
+  const kezdo = szo.charAt(0);
+  const i = L.indexOf(kezdo);
+  const opciok = i >= 0 ? abcOpciok(L,i) : abcKever([kezdo, valaszt(L), valaszt(L)]);
+  return { szoveg:`Melyik betűvel kezdődik?<br><span class="nagy">${kep} ${szo}</span>`,
+           tipus:"valaszto", opciok, valasz:kezdo,
+           hint:`${szo} – az első betűje: <b>${kezdo}</b>.`,
+           modul:"abc", cimke:`${szo} kezdőbetűje`, tf:"Ábécé · kezdőbetű" };
+}
 function genMgh(){
   const [csonk, opciok, jo, teljes] = valaszt(MGH_SZAVAK);
   return { szoveg:`Melyik betű hiányzik?<br><span class="nagy">${csonk}</span>`,
@@ -4388,9 +4487,10 @@ function genHangkoz(){
 
 function genVegyes(){
   if(beall.targy==="nyelvtan"){
-    const l = ["mgh","jly","szotag","irasjel"].filter(x=>!rejtettModulok().includes(x));
-    const m2 = valaszt(l.length?l:["mgh"]);
-    return m2==="mgh"?genMgh() : m2==="jly"?genJly() : m2==="szotag"?genSzotag() : genIrasjel();
+    const l = ["abc","mgh","jly","szotag","irasjel"].filter(x=>!rejtettModulok().includes(x));
+    const m2 = valaszt(l.length?l:["abc"]);
+    return m2==="abc"?genAbc() : m2==="mgh"?genMgh() : m2==="jly"?genJly()
+         : m2==="szotag"?genSzotag() : genIrasjel();
   }
   if(beall.targy==="angol"){
     const l = ["anszo","anszam","anbetuz"].filter(x=>!rejtettModulok().includes(x));
@@ -4486,6 +4586,7 @@ function inditKakukk(){ mod="kakukk"; korHossz=beall.dbKor; inditKor(); }
 function inditTablazat(){ mod="tablazat"; korHossz=beall.dbKor; inditKor(); }
 function inditKombi(){ mod="kombi"; korHossz=Math.max(5,Math.round(beall.dbKor*0.8)); inditKor(); }
 function inditEgyenlotlen(){ mod="egyenlotlen"; korHossz=beall.dbKor; inditKor(); }
+function inditAbc(){ mod="abc"; korHossz=beall.dbKor; inditKor(); }
 function inditMgh(){ mod="mgh"; korHossz=beall.dbKor; inditKor(); }
 function inditJly(){ mod="jly"; korHossz=beall.dbKor; inditKor(); }
 function inditSzotag(){ mod="szotag"; korHossz=beall.dbKor; inditKor(); }
@@ -4575,6 +4676,7 @@ function ujKerdes(){
   if(mod==="tablazat") return genTablazat();
   if(mod==="kombi")    return genKombi();
   if(mod==="egyenlotlen") return genEgyenlotlen();
+  if(mod==="abc")      return genAbc();
   if(mod==="mgh")      return genMgh();
   if(mod==="jly")      return genJly();
   if(mod==="szotag")   return genSzotag();
@@ -4883,7 +4985,7 @@ const MODNEV = {szorzas:"Szorzótábla", helyi:"Helyiérték", muvelet:"Összead
                 szamalkotas:"Számalkotás", tortek:"Törtek", negativ:"Negatív számok",
                 vegyesido:"Vegyes ⚡", igazhamis:"Igaz-hamis", jelek:"Jelek",
                 kakukk:"Kakukktojás", tablazat:"Számgép", kombi:"Hányféleképpen?",
-                egyenlotlen:"Egyenlőtlenség", mgh:"Magánhangzók", jly:"J vagy Ly",
+                egyenlotlen:"Egyenlőtlenség", abc:"Ábécé", mgh:"Magánhangzók", jly:"J vagy Ly",
                 szotag:"Szótagolás", irasjel:"Mondatvégi írásjel", anszo:"Angol szókincs",
                 anszam:"Angol számok", anbetuz:"Angol betűzés",
                 evszak:"Évszakok, hónapok", elolenyek:"Élőlények", test:"Testünk, egészség",
@@ -5181,7 +5283,7 @@ function nevMegse(){
 }
 
 // VERZIÓ: minden publikálásnál (commitnál) eggyel emelni - a szülői lap alján látszik
-const VERZIO = "v41";
+const VERZIO = "v42";
 $("verzio-cimke").textContent = VERZIO;
 
 beallTolt();
