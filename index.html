@@ -155,6 +155,11 @@
     font-size:.95rem; line-height:1; cursor:pointer; flex:none;
   }
   .pelda-mondat button:active{transform:scale(.92);}
+  /* a példamondat magyar fordítása: külön sor, halványabb, felolvasó gomb nélkül */
+  .pelda-forditas{
+    text-align:center; margin-top:2px; font-size:.86rem; font-weight:400;
+    opacity:.75; color:var(--szoveg);
+  }
   .kotta{display:inline-block; margin:4px 0; max-width:100%; height:auto;}
   .zene-gomb{
     width:38px; height:38px; border-radius:50%; border:none; background:var(--lila); color:#fff;
@@ -3951,41 +3956,86 @@ async function hangWiki(szo){
   }catch(e){ hangWeb(szo, `🔊 Böngésző hangja (Wikiszótár-hiba: ${e.message||e})`); }
 }
 /* ---- egyszerű példamondatok az angol szavakhoz (a válasz után jelennek meg) ---- */
+// [angol mondat, magyar fordítás] - a fordítás csak olvasásra kell, felolvasás nincs hozzá
 const ANGOL_MONDAT = {
-  dog:"The dog runs in the garden.", cat:"The cat sleeps on the sofa.", bird:"The bird sings in the tree.",
-  fish:"The fish swims in the water.", horse:"The horse runs fast.", mouse:"The mouse is very small.",
-  bear:"The bear sleeps in winter.", lion:"The lion is the king of animals.", elephant:"The elephant is very big.",
-  rabbit:"The rabbit likes carrots.",
-  red:"The apple is red.", blue:"The sky is blue.", green:"The grass is green.", yellow:"The sun is yellow.",
-  black:"The cat is black.", white:"The snow is white.", brown:"The bear is brown.", pink:"Her dress is pink.",
-  mother:"I love my mother.", father:"My father works every day.", brother:"My brother is ten years old.",
-  sister:"My sister likes to read.", grandmother:"My grandmother makes cookies.", baby:"The baby is sleeping.",
-  book:"I read a book every day.", pen:"The pen is on the table.", pencil:"I write with a pencil.",
-  bag:"My bag is heavy.", table:"The book is on the table.", chair:"Sit on the chair, please.",
-  school:"I go to school every morning.", teacher:"The teacher is very kind.",
-  head:"I have one head.", hand:"Wash your hands, please.", leg:"I have two legs.", eye:"I have two eyes.",
-  ear:"I have two ears.", nose:"My nose is small.", mouth:"Open your mouth, please.", hair:"Her hair is long.",
-  apple:"I eat an apple every day.", bread:"I like fresh bread.", milk:"I drink milk in the morning.",
-  egg:"I eat an egg for breakfast.", cheese:"I like cheese on my bread.", water:"I drink a lot of water.",
-  meat:"We eat meat for dinner.", soup:"The soup is hot.", banana:"The monkey eats a banana.",
-  orange:"The orange is sweet.",
-  house:"I live in a big house.", car:"My father drives a car.", sun:"The sun is shining today.",
-  moon:"I can see the moon at night.", star:"I see a star in the sky.", tree:"The tree is very tall.",
-  flower:"This flower smells nice.", ball:"I play with a ball.", toy:"This is my favorite toy.",
-  door:"Please close the door.", window:"Open the window, please."
+  dog:["The dog runs in the garden.","A kutya fut a kertben."],
+  cat:["The cat sleeps on the sofa.","A macska alszik a kanapén."],
+  bird:["The bird sings in the tree.","A madár énekel a fán."],
+  fish:["The fish swims in the water.","A hal úszik a vízben."],
+  horse:["The horse runs fast.","A ló gyorsan fut."],
+  mouse:["The mouse is very small.","Az egér nagyon kicsi."],
+  bear:["The bear sleeps in winter.","A medve télen alszik."],
+  lion:["The lion is the king of animals.","Az oroszlán az állatok királya."],
+  elephant:["The elephant is very big.","Az elefánt nagyon nagy."],
+  rabbit:["The rabbit likes carrots.","A nyúl szereti a sárgarépát."],
+  red:["The apple is red.","Az alma piros."],
+  blue:["The sky is blue.","Az ég kék."],
+  green:["The grass is green.","A fű zöld."],
+  yellow:["The sun is yellow.","A nap sárga."],
+  black:["The cat is black.","A macska fekete."],
+  white:["The snow is white.","A hó fehér."],
+  brown:["The bear is brown.","A medve barna."],
+  pink:["Her dress is pink.","A ruhája rózsaszín."],
+  mother:["I love my mother.","Szeretem az anyukámat."],
+  father:["My father works every day.","Apukám minden nap dolgozik."],
+  brother:["My brother is ten years old.","A testvérem tízéves."],
+  sister:["My sister likes to read.","A húgom szeret olvasni."],
+  grandmother:["My grandmother makes cookies.","A nagymamám süteményt süt."],
+  baby:["The baby is sleeping.","A kisbaba alszik."],
+  book:["I read a book every day.","Minden nap olvasok egy könyvet."],
+  pen:["The pen is on the table.","A toll az asztalon van."],
+  pencil:["I write with a pencil.","Ceruzával írok."],
+  bag:["My bag is heavy.","A táskám nehéz."],
+  table:["The book is on the table.","A könyv az asztalon van."],
+  chair:["Sit on the chair, please.","Ülj le a székre, kérlek."],
+  school:["I go to school every morning.","Minden reggel iskolába megyek."],
+  teacher:["The teacher is very kind.","A tanár nagyon kedves."],
+  head:["I have one head.","Egy fejem van."],
+  hand:["Wash your hands, please.","Moss kezet, kérlek."],
+  leg:["I have two legs.","Két lábam van."],
+  eye:["I have two eyes.","Két szemem van."],
+  ear:["I have two ears.","Két fülem van."],
+  nose:["My nose is small.","Az orrom kicsi."],
+  mouth:["Open your mouth, please.","Nyisd ki a szádat, kérlek."],
+  hair:["Her hair is long.","A haja hosszú."],
+  apple:["I eat an apple every day.","Minden nap eszem egy almát."],
+  bread:["I like fresh bread.","Szeretem a friss kenyeret."],
+  milk:["I drink milk in the morning.","Reggel tejet iszom."],
+  egg:["I eat an egg for breakfast.","Reggelire tojást eszem."],
+  cheese:["I like cheese on my bread.","Szeretem a sajtot a kenyeremen."],
+  water:["I drink a lot of water.","Sok vizet iszom."],
+  meat:["We eat meat for dinner.","Vacsorára húst eszünk."],
+  soup:["The soup is hot.","A leves forró."],
+  banana:["The monkey eats a banana.","A majom banánt eszik."],
+  orange:["The orange is sweet.","A narancs édes."],
+  house:["I live in a big house.","Egy nagy házban lakom."],
+  car:["My father drives a car.","Apukám autót vezet."],
+  sun:["The sun is shining today.","Ma süt a nap."],
+  moon:["I can see the moon at night.","Éjszaka látom a holdat."],
+  star:["I see a star in the sky.","Látok egy csillagot az égen."],
+  tree:["The tree is very tall.","A fa nagyon magas."],
+  flower:["This flower smells nice.","Ennek a virágnak jó illata van."],
+  ball:["I play with a ball.","Labdával játszom."],
+  toy:["This is my favorite toy.","Ez a kedvenc játékom."],
+  door:["Please close the door.","Kérlek, csukd be az ajtót."],
+  window:["Open the window, please.","Nyisd ki az ablakot, kérlek."]
 };
 function peldaMondat(szo){
   if(ANGOL_MONDAT[szo]) return ANGOL_MONDAT[szo];
-  if(ANGOL_SZAMOK.some(x=>x[1]===szo)) return `I have ${szo} ${szo==="one"?"apple":"apples"}.`;
+  const sz = ANGOL_SZAMOK.find(x=>x[1]===szo);
+  if(sz) return [`I have ${szo} ${szo==="one"?"apple":"apples"}.`,
+                 `Van ${sz[0]} almám.`];
   return null; // nincs (még) példamondat erre a szóra - biztonsági háló
 }
 function peldaMondatHtml(k){
   if(!k || !k.hangSzo) return "";
-  const mondat = peldaMondat(k.hangSzo);
-  if(!mondat) return "";
-  const jsEsc = mondat.replace(/'/g,"\\'");
-  return `<div class="pelda-mondat"><span>${mondat}</span>`
-    + `<button type="button" onclick="mondatLejatszik('${jsEsc}')" title="Példamondat meghallgatása">🔊</button></div>`;
+  const m = peldaMondat(k.hangSzo);
+  if(!m) return "";
+  const en = m[0], hu = m[1];
+  const jsEsc = en.replace(/'/g,"\\'");
+  return `<div class="pelda-mondat"><span>${en}</span>`
+    + `<button type="button" onclick="mondatLejatszik('${jsEsc}')" title="Példamondat meghallgatása">🔊</button></div>`
+    + (hu ? `<div class="pelda-forditas">${hu}</div>` : "");
 }
 function genAnszo(){
   const [hu, en, tema] = valaszt(ANGOL_SZAVAK);
@@ -5283,7 +5333,7 @@ function nevMegse(){
 }
 
 // VERZIÓ: minden publikálásnál (commitnál) eggyel emelni - a szülői lap alján látszik
-const VERZIO = "v42";
+const VERZIO = "v43";
 $("verzio-cimke").textContent = VERZIO;
 
 beallTolt();
