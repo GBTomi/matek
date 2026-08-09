@@ -258,6 +258,13 @@
   #lektor-sav textarea{width:100%; margin-top:6px; border-radius:8px; border:none; padding:6px;
     font-family:inherit; font-size:.85rem; min-height:44px; resize:vertical;}
   #lektor-nyilak{display:inline-flex; gap:4px;}
+  /* szülői visszanézés sávja a játékképernyő alján */
+  #visszanezes-sav{display:none; align-items:center; justify-content:center; gap:8px;
+    flex-wrap:wrap; margin:10px 0 4px; padding:8px; border-radius:12px;
+    background:#f1eefe; color:#2b2350; font-size:.85rem; font-weight:700;}
+  #visszanezes-sav button{background:#5b3fd9; color:#fff; border:none; border-radius:9px;
+    padding:7px 12px; font-size:.85rem; font-weight:700; cursor:pointer;}
+  #visszanezes-sav button:active{transform:scale(.95);}
   #lektor-jelzes{opacity:.85; font-style:italic;}
 </style>
 </head>
@@ -513,6 +520,12 @@
     <div class="visszajelzes" id="visszajelzes"></div>
     <button class="tovabb" id="tovabb" onclick="kovetkezo()" data-t="gomb.tovabb">Tovább →</button>
     <div class="hangforras-sor" id="hangforras-sor"></div>
+    <!-- Szülői visszanézés sávja: csak a naplóból indított visszajátszáskor látszik -->
+    <div id="visszanezes-sav" style="display:none">
+      <span>🔎 Ezt látta a gyerek</span>
+      <button onclick="visszanezesUjra()">🔁 Újra megoldom</button>
+      <button onclick="visszanezesVege()">← vissza a naplóhoz</button>
+    </div>
     <button class="vissza" onclick="menu()" data-t="gomb.megszakit">✕ kör megszakítása</button>
   </div>
 
@@ -2827,6 +2840,13 @@ const stat = { szorzas:[0,0], helyi:[0,0], muvelet:[0,0], potlas:[0,0], irasbeli
    u: pl. "dicseret.hp#42" – a megjelenítendő mondat (enélkül véletlen).
    Lektor-módban NEM írunk se naplót, se beállítást. */
 let lektorMod = false, lektorAdat = null, lektorLista = null, lektorPoz = 0;
+let szuloVisszanezes = false; // a szülői naplóból indított visszajátszás
+// a hiba-bejegyzéshez mentett visszajátszási adatok (a régi bejegyzésekben ezek hiányoznak)
+function visszajatszasAdat(bev){
+  return { sd: (aktKerdes && aktKerdes.mag) || null, md: (aktKerdes && aktKerdes.modul) || mod,
+           bv: String(bev===undefined||bev===null ? "" : bev), uz: utolsoUzenet || null,
+           tm: beall.tema, kr: beall.kor };
+}
 function lektorParam(){
   try{
     const h = (location.hash||"").replace(/^#/,"");
@@ -2866,20 +2886,31 @@ function lektorIndit(){
   lektorJatszik();
   return true;
 }
-function lektorJatszik(){
-  const a = lektorAdat;
-  mod = a.m; korHossz = beall.dbKor;
-  kerdesek=0; jok=0; sorozat=0; maxSorozat=0; hibak=[]; korId=null; ujraMod=false;
+/* Egy feladat visszajátszása a VALÓDI játékképernyőn, ugyanazzal a maggal.
+   Ugyanezt használja a lektor-link és a szülői hiba-visszanézés is, ezért amit a
+   szülő lát, bitre az, amit a gyerek látott. v: "j" | "b" | konkrét válasz | null (nincs válasz) */
+function visszajatszas(modul, mag, v, uzenetKulcs){
+  mod = modul; korHossz = beall.dbKor;
+  kerdesek=0; jok=0; sorozat=0; maxSorozat=0; hibak=[]; korId=null;
+  kenyszUzenet = uzenetKulcs || null;
+  eroltetettMag = (mag>>>0);
+  visszajatszottMag = mag;
   mutat("scr-game"); rajzolPontok();
   // időre menő módoknál (villámkör, vegyes időre) a kör nélkül nincs feladat:
-  // a lektornak megmutatjuk a feladatot, de visszaszámláló nélkül
+  // itt megmutatjuk a feladatot, de visszaszámláló nélkül
   if(idoMod()){ villamAktiv = true; clearInterval(villamTimer); }
   kovetkezo(true);
-  // a válasz beküldése ugyanazon a kódúton, amit a gyerek használ
   const k = aktKerdes;
-  if(!k || k.modul==="irasbeli" || k.tipus==="allit" || k.tipus==="betuz") return; // ezeknél csak a feladat jelenik meg
-  bevitel = a.v==="j" ? String(k.valasz) : a.v==="b" ? lektorRosszValasz(k) : a.v;
+  if(v === null || !k) return;
+  if(k.modul==="irasbeli" || k.tipus==="allit" || k.tipus==="betuz") return; // ezeknél csak a feladat jelenik meg
+  bevitel = v==="j" ? String(k.valasz) : v==="b" ? lektorRosszValasz(k) : v;
   ellenoriz();
+}
+let visszajatszottMag = null, eroltetettMag = null;
+function lektorJatszik(){
+  const a = lektorAdat;
+  ujraMod = false;
+  visszajatszas(a.m, a.s, a.v, a.u);
 }
 // üzenet-léptetés: ugyanabban a csoportban a következő/előző mondat
 function lektorLep(d){
@@ -2964,8 +2995,12 @@ try{
   });
 }catch(e){}
 function fomenu(){ clearInterval(villamTimer); villamAktiv=false; hibaCache=null; ujraMod=false;
+  if(szuloVisszanezes){ szuloVisszanezes=false; kenyszUzenet=null; visszanezesSavKijelez(); }
+  szuloBeallVissza();
   mutat("scr-fomenu"); frissitStat(); frissitKoszonto(); }
 function menu(){ clearInterval(villamTimer); villamAktiv=false; hibaCache=null; ujraMod=false;
+  if(szuloVisszanezes){ szuloVisszanezes=false; kenyszUzenet=null; visszanezesSavKijelez(); }
+  szuloBeallVissza();
   menuFrissit(); mutat("scr-menu"); frissitStat(); frissitKoszonto(); }
 function frissitStat(){
   let o=0,j=0; Object.values(stat).forEach(s=>{ j+=s[0]; o+=s[1]; });
@@ -4552,7 +4587,7 @@ function betuzKesz(){
     sorozat=0; if(pont && pont.classList) pont.classList.add("rossz");
     hibak.push({ c:`${aktKerdes.cimke} → helyesen: ${aktKerdes.valasz}`,
                  tf:aktKerdes.tf||"", k:$("kerdes").innerHTML, f:`Helyesen: ${aktKerdes.valasz}`,
-                 b:"", g:"", q: {...aktKerdes} });
+                 b:"", g:"", q: {...aktKerdes}, ...visszajatszasAdat("") });
     v.className="visszajelzes rossz";
     v.innerHTML = `A helyes betűzés: <b>${aktKerdes.valasz}</b>`
       + `<span class="hint vigasz">${vigaszUzenet()}</span>`
@@ -5185,7 +5220,10 @@ function kovetkezo(elso, fixKerdes){
   }
   // Minden feladat SAJÁT maggal áll elő: ebből a magból a feladat, a válaszlehetőségek
   // és a hozzá tartozó üzenetek pontosan visszajátszhatók (lektor-link, hiba-visszanézés).
-  const fMag = (lektorMod && lektorAdat) ? lektorAdat.s : ujMag();
+  // eroltetettMag: visszajátszáskor (lektor-link, szülői hiba-visszanézés) a mentett mag,
+  // egyébként minden feladat friss maggal indul
+  const fMag = (eroltetettMag !== null) ? eroltetettMag : ujMag();
+  eroltetettMag = null;
   magBeallit(fMag);
   aktKerdes = fixKerdes || ujKerdes(); bevitel=""; zarolva=false; ir=null;
   if(aktKerdes) aktKerdes.mag = fMag;
@@ -5346,7 +5384,7 @@ function irKesz(){
     sorozat=0; p.classList.add("rossz");
     hibak.push({ c:`${aktKerdes.cimke} → helyesen: ${aktKerdes.eredmeny}`,
                  tf:aktKerdes.tf||"", k:ir.snap?ir.snap.k:$("kerdes").innerHTML,
-                 f:ir.snap?ir.snap.f:"", b:"", g:"", q: {...aktKerdes} });
+                 f:ir.snap?ir.snap.f:"", b:"", g:"", q: {...aktKerdes}, ...visszajatszasAdat("") });
     v.className="visszajelzes rossz";
     v.innerHTML=`Kijött a végeredmény, de volt piros számjegy.<span class="hint">${aktKerdes.cimke} = ${aktKerdes.eredmeny} — nézzétek meg, melyik oszlopnál akadt el!</span>`
       + `<span class="hint vigasz">${vigaszUzenet()}</span>`;
@@ -5422,7 +5460,7 @@ function ellenoriz(){
     hibak.push({ c:`${aktKerdes.cimke} → helyesen: ${aktKerdes.valasz}`,
                  tf:aktKerdes.tf||"", k:$("kerdes").innerHTML, f:v.innerHTML,
                  b:bevitel, g: aktKerdes.tipus==="valaszto" ? $("valaszgombok").innerHTML : "",
-                 q: {...aktKerdes} });
+                 q: {...aktKerdes}, ...visszajatszasAdat(bevitel) });
     if(idoMod()) setTimeout(kovetkezo, 1500);
     else if(aktKerdes.tipus==="valaszto"||aktKerdes.tipus==="allit") tovabbMutat();
     else keszNyil();
@@ -5612,7 +5650,7 @@ const SZULO_KERDESEK = [
   "Mi az, amiben ma jobb lettél, mint tegnap?",
   "A hibáid egyre okosabbak – melyikből lett ma tudás?"
 ];
-function naploIr(n){ if(lektorMod) return; try{ localStorage.setItem("matekNaplo", JSON.stringify(n)); }catch(e){} }
+function naploIr(n){ if(lektorMod || szuloVisszanezes) return; try{ localStorage.setItem("matekNaplo", JSON.stringify(n)); }catch(e){} }
 function ujSzuloKerdes(){ $("szulo-kerdes").textContent = valaszt(SZULO_KERDESEK); }
 function szuloNezet(){
   mutat("scr-szulo"); pinMegse(); ujSzuloKerdes();
@@ -5685,6 +5723,9 @@ function hibaMutat(ei,hi){
   const x = n[ei].hibak[hi];
   if(typeof x === "string" || !x.k) return;
   aktHiba = x;
+  if(!x.m){ x.m = 1; naploIr(n); } // olvasottság-jelölés
+  if(x.sd){ szuloHibaVisszajatszas(x); return; } // új bejegyzés: élő visszajátszás
+  // régi bejegyzés (még mag nélkül): a korábbi pillanatkép-nézet
   $("hiba-ujra").style.display = x.q ? "block" : "none";
   $("hiba-tipus").innerHTML = x.tf ? `<span>${x.tf}</span>` : "";
   $("hiba-kerdes").innerHTML = x.k;
@@ -5694,7 +5735,38 @@ function hibaMutat(ei,hi){
   $("hiba-gombok").style.display = x.g ? "flex" : "none";
   $("hiba-uzenet").innerHTML = x.f || x.c;
   mutat("scr-hiba");
-  if(!x.m){ x.m = 1; naploIr(n); } // olvasottság-jelölés
+}
+/* A gyerek hibájának ÉLŐ visszajátszása: ugyanaz a feladat, ugyanaz a beírt válasz,
+   ugyanaz a vigasztaló mondat – a rendes játékképernyőn, a téma és az életkor szerint. */
+function szuloHibaVisszajatszas(x){
+  szuloVisszanezes = true; ujraMod = false;
+  szuloBeallMentes();
+  if(x.tm && TEMAK[x.tm]) beall.tema = x.tm;
+  if(x.kr>=7 && x.kr<=11){ beall.kor = x.kr; korTablak(); }
+  visszajatszas(x.md || "vegyes", x.sd, x.bv!==""? x.bv : "b", x.uz);
+  visszanezesSavKijelez();
+}
+let szuloRegiBeall = null;
+function szuloBeallMentes(){ if(!szuloRegiBeall) szuloRegiBeall = { tema:beall.tema, kor:beall.kor }; }
+function szuloBeallVissza(){
+  if(szuloRegiBeall){ beall.tema = szuloRegiBeall.tema; beall.kor = szuloRegiBeall.kor;
+    korTablak(); szuloRegiBeall = null; beallKijelez(); }
+}
+function visszanezesSavKijelez(){
+  const sav = $("visszanezes-sav"); if(!sav) return;
+  sav.style.display = szuloVisszanezes ? "flex" : "none";
+}
+function visszanezesVege(){ // vissza a naplóhoz
+  szuloVisszanezes = false; kenyszUzenet = null; visszanezesSavKijelez();
+  szuloBeallVissza(); szuloNezet();
+}
+function visszanezesUjra(){ // ugyanaz a feladat, de most a gyerek oldja meg (naplózódik)
+  if(!aktHiba || !aktHiba.sd) return;
+  szuloVisszanezes = false; visszanezesSavKijelez();
+  ujraMod = true; korHossz = 1; korId = Date.now();
+  kenyszUzenet = null;
+  visszajatszas(aktHiba.md || "vegyes", aktHiba.sd, null, null);
+  kerdesek = 0; rajzolPontok();
 }
 
 /* ---- PIN-védett belépés és törlések (PIN: 9999) ---- */
@@ -5757,7 +5829,7 @@ function nevMegse(){
 }
 
 // VERZIÓ: minden publikálásnál (commitnál) eggyel emelni - a szülői lap alján látszik
-const VERZIO = "v46";
+const VERZIO = "v47";
 $("verzio-cimke").textContent = VERZIO;
 
 beallTolt();
