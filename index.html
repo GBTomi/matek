@@ -2871,6 +2871,9 @@ function lektorJatszik(){
   mod = a.m; korHossz = beall.dbKor;
   kerdesek=0; jok=0; sorozat=0; maxSorozat=0; hibak=[]; korId=null; ujraMod=false;
   mutat("scr-game"); rajzolPontok();
+  // időre menő módoknál (villámkör, vegyes időre) a kör nélkül nincs feladat:
+  // a lektornak megmutatjuk a feladatot, de visszaszámláló nélkül
+  if(idoMod()){ villamAktiv = true; clearInterval(villamTimer); }
   kovetkezo(true);
   // a válasz beküldése ugyanazon a kódúton, amit a gyerek használ
   const k = aktKerdes;
@@ -5754,7 +5757,7 @@ function nevMegse(){
 }
 
 // VERZIÓ: minden publikálásnál (commitnál) eggyel emelni - a szülői lap alján látszik
-const VERZIO = "v45";
+const VERZIO = "v46";
 $("verzio-cimke").textContent = VERZIO;
 
 beallTolt();
