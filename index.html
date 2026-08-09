@@ -251,146 +251,151 @@
 </head>
 <body>
 <div class="app">
-  <h1><span id="avatar-gomb" onclick="avatarPanelNyit()" title="Kattints az avatar cseréjéhez">🦊</span> Napi gyakorló</h1>
+  <h1><span id="avatar-gomb" onclick="avatarPanelNyit()" title="Kattints az avatar cseréjéhez">🦊</span> <span data-t="app.cim">Napi gyakorló</span></h1>
   <div class="koszonto" id="koszonto" onclick="nevSzerkeszt()" title="Kattints a név módosításához"></div>
   <div class="alcim" id="kor-info">1 kör = 10 feladat · Napi 10–15 perc, a rövid, mindennapos gyakorlás ér a legtöbbet!</div>
 
   <!-- FŐMENÜ: tantárgyak -->
   <div class="screen aktiv" id="scr-fomenu">
     <div class="panel" id="nev-panel" style="display:none">
-      <h2 id="nev-cim">Mi a neved? 😊</h2>
-      <input id="nev-input" class="nev-input" type="text" maxlength="15" placeholder="Írd be a neved">
-      <button class="fo-gomb" onclick="nevMentes()">Mentés ✔</button>
-      <button class="vissza" id="nev-torles" style="display:none" onclick="nevTorles()">Név törlése</button>
-      <button class="vissza" onclick="nevMegse()">Most nem</button>
+      <h2 id="nev-cim" data-t="nev.cim">Mi a neved? 😊</h2>
+      <input id="nev-input" class="nev-input" type="text" maxlength="15" placeholder="Írd be a neved" data-tph="nev.placeholder">
+      <button class="fo-gomb" onclick="nevMentes()" data-t="nev.mentes">Mentés ✔</button>
+      <button class="vissza" id="nev-torles" style="display:none" onclick="nevTorles()" data-t="nev.torles">Név törlése</button>
+      <button class="vissza" onclick="nevMegse()" data-t="nev.megse">Most nem</button>
     </div>
     <div id="targy-lista"></div>
     <div class="statsor" id="stat-sor"></div>
     <div class="beallito">
-      <div class="lepteto"><span>Életkor</span>
+      <div class="lepteto"><span data-t="beall.kor">Életkor</span>
         <button onclick="leptet('kor',-1)">−</button><b id="kor-kijelzo">9 éves</b><button onclick="leptet('kor',1)">+</button></div>
-      <div class="lepteto"><span>Feladat/kör</span>
+      <div class="lepteto"><span data-t="beall.db">Feladat/kör</span>
         <button onclick="leptet('db',-1)">−</button><b id="db-kijelzo">10 db</b><button onclick="leptet('db',1)">+</button></div>
-      <div class="lepteto"><span>Téma</span>
+      <div class="lepteto"><span data-t="beall.tema">Téma</span>
         <button onclick="temaValt(-1)">◀</button><b id="tema-kijelzo" style="min-width:110px">Harry Potter</b><button onclick="temaValt(1)">▶</button></div>
+      <!-- Nyelv és ország: amíg csak egy választható, a JS rejtve tartja (ld. localeValasztoKijelez) -->
+      <div class="lepteto" id="nyelv-lepteto" style="display:none"><span data-t="beall.nyelv">Nyelv</span>
+        <button onclick="nyelvValt(-1)">◀</button><b id="nyelv-kijelzo" style="min-width:110px">🇭🇺 Magyar</b><button onclick="nyelvValt(1)">▶</button></div>
+      <div class="lepteto" id="orszag-lepteto" style="display:none"><span data-t="beall.orszag">Ország</span>
+        <button onclick="orszagValt(-1)">◀</button><b id="orszag-kijelzo" style="min-width:110px">🇭🇺 Magyarország</b><button onclick="orszagValt(1)">▶</button></div>
     </div>
     <div class="tipp">
-      <button class="szulo-link" onclick="szuloNezet()">👨‍👩‍👧 Szülőknek</button></div>
+      <button class="szulo-link" onclick="szuloNezet()" data-t="fomenu.szulok">👨‍👩‍👧 Szülőknek</button></div>
   </div>
 
   <!-- TANTÁRGY MENÜJE: feladattípusok -->
   <div class="screen" id="scr-menu">
     <div class="targy-fejlec" id="targy-fejlec"></div>
     <button class="modul" id="menu-szorzas" onclick="megnyit('szorzas')"><span class="ikon">✖️</span>
-      <span>Szorzótábla<small>2-től 10-ig, a nehezebbeket többször kérdezi</small></span></button>
+      <span data-t="menu.szorzas">Szorzótábla<small>2-től 10-ig, a nehezebbeket többször kérdezi</small></span></button>
     <button class="modul" id="menu-helyi" onclick="megnyit('helyi')"><span class="ikon">🏗️</span>
-      <span>Helyiérték és számok<small>százasok-tízesek-egyesek, kerekítés, szomszédok</small></span></button>
+      <span data-t="menu.helyi">Helyiérték és számok<small>százasok-tízesek-egyesek, kerekítés, szomszédok</small></span></button>
     <button class="modul" id="menu-muvelet" onclick="megnyit('muvelet')"><span class="ikon">➕➖</span>
-      <span>Összeadás és kivonás<small>1000-ig, átlépéssel vagy anélkül</small></span></button>
+      <span data-t="menu.muvelet">Összeadás és kivonás<small>1000-ig, átlépéssel vagy anélkül</small></span></button>
     <button class="modul" id="menu-irasbeli" onclick="megnyit('irasbeli')"><span class="ikon">✍️</span>
-      <span>Írásbeli számolás<small>egymás alatt, számjegyenként – mint a füzetben</small></span></button>
+      <span data-t="menu.irasbeli">Írásbeli számolás<small>egymás alatt, számjegyenként – mint a füzetben</small></span></button>
     <button class="modul" id="menu-potlas" onclick="megnyit('potlas')"><span class="ikon">🎯</span>
-      <span>Pótlás<small>mennyi hiányzik 100-ig, 1000-ig?</small></span></button>
+      <span data-t="menu.potlas">Pótlás<small>mennyi hiányzik 100-ig, 1000-ig?</small></span></button>
     <button class="modul" id="menu-osztas" onclick="megnyit('osztas')"><span class="ikon">➗</span>
-      <span>Bennfoglalás, osztás<small>a szorzótábla párja, maradékkal is</small></span></button>
+      <span data-t="menu.osztas">Bennfoglalás, osztás<small>a szorzótábla párja, maradékkal is</small></span></button>
     <button class="modul" id="menu-villam" onclick="megnyit('villam')"><span class="ikon">⚡</span>
-      <span>Villámkör<small>1 perc – hány szorzás fér bele?</small></span></button>
+      <span data-t="menu.villam">Villámkör<small>1 perc – hány szorzás fér bele?</small></span></button>
     <button class="modul" id="menu-szamegyenes" onclick="inditSzamegyenes()"><span class="ikon">📏</span>
-      <span>Számegyenes<small>hol van a szám 0 és 1000 között?</small></span></button>
+      <span data-t="menu.szamegyenes">Számegyenes<small>hol van a szám 0 és 1000 között?</small></span></button>
     <button class="modul" id="menu-lanc" onclick="megnyit('lanc')"><span class="ikon">🔗</span>
-      <span>Láncszámolás<small>több lépés fejben, egymás után</small></span></button>
+      <span data-t="menu.lanc">Láncszámolás<small>több lépés fejben, egymás után</small></span></button>
     <button class="modul" id="menu-szoveges" onclick="inditSzoveges()"><span class="ikon">📖</span>
-      <span>Szöveges feladatok<small>rövid történet – melyik művelet kell?</small></span></button>
+      <span data-t="menu.szoveges">Szöveges feladatok<small>rövid történet – melyik művelet kell?</small></span></button>
     <button class="modul" id="menu-sorozat" onclick="inditSorozat()"><span class="ikon">🔁</span>
-      <span>Sorozatok<small>mi a szabály? folytasd a sort!</small></span></button>
+      <span data-t="menu.sorozat">Sorozatok<small>mi a szabály? folytasd a sort!</small></span></button>
     <button class="modul" id="menu-nyitott" onclick="inditNyitott()"><span class="ikon">🔓</span>
-      <span>Nyitott mondatok<small>mi kerül a ▢ helyére?</small></span></button>
+      <span data-t="menu.nyitott">Nyitott mondatok<small>mi kerül a ▢ helyére?</small></span></button>
     <button class="modul" id="menu-ora" onclick="megnyit('ora')"><span class="ikon">🕒</span>
-      <span>Óra<small>hány óra van? mennyi idő telt el?</small></span></button>
+      <span data-t="menu.ora">Óra<small>hány óra van? mennyi idő telt el?</small></span></button>
     <button class="modul" id="menu-penz" onclick="inditPenz()"><span class="ikon">💰</span>
-      <span>Pénzszámolás<small>mennyi pénzed van összesen?</small></span></button>
+      <span data-t="menu.penz">Pénzszámolás<small>mennyi pénzed van összesen?</small></span></button>
     <button class="modul" id="menu-becsles" onclick="inditBecsles()"><span class="ikon">🤔</span>
-      <span>Becslés<small>körülbelül mennyi? kerekíts fejben!</small></span></button>
+      <span data-t="menu.becsles">Becslés<small>körülbelül mennyi? kerekíts fejben!</small></span></button>
     <button class="modul" id="menu-mertek" onclick="inditMertek()"><span class="ikon">📐</span>
-      <span>Mértékegységek<small>m-cm, óra-perc, kg-dkg</small></span></button>
+      <span data-t="menu.mertek">Mértékegységek<small>m-cm, óra-perc, kg-dkg</small></span></button>
     <button class="modul" id="menu-romai" onclick="inditRomai()"><span class="ikon">🏛️</span>
-      <span>Római számok<small>I, V, X, L, C – oda és vissza</small></span></button>
+      <span data-t="menu.romai">Római számok<small>I, V, X, L, C – oda és vissza</small></span></button>
     <button class="modul" id="menu-sorrend" onclick="inditSorrend()"><span class="ikon">⚖️</span>
-      <span>Műveleti sorrend<small>előbb a szorzás, aztán az összeadás</small></span></button>
+      <span data-t="menu.sorrend">Műveleti sorrend<small>előbb a szorzás, aztán az összeadás</small></span></button>
     <button class="modul" id="menu-szamalkotas" onclick="inditSzamalkotas()"><span class="ikon">🎰</span>
-      <span>Számalkotás<small>legnagyobb és legkisebb szám számjegyekből</small></span></button>
+      <span data-t="menu.szamalkotas">Számalkotás<small>legnagyobb és legkisebb szám számjegyekből</small></span></button>
     <button class="modul" id="menu-tortek" onclick="inditTortek()"><span class="ikon">🍕</span>
-      <span>Törtek<small>fele, harmada, negyede</small></span></button>
+      <span data-t="menu.tortek">Törtek<small>fele, harmada, negyede</small></span></button>
     <button class="modul" id="menu-negativ" onclick="inditNegativ()"><span class="ikon">❄️</span>
-      <span>Negatív számok<small>hőmérséklet és számegyenes a nulla alatt</small></span></button>
+      <span data-t="menu.negativ">Negatív számok<small>hőmérséklet és számegyenes a nulla alatt</small></span></button>
     <button class="modul" id="menu-igazhamis" onclick="inditIgazHamis()"><span class="ikon">🧐</span>
-      <span>Igaz vagy hamis?<small>állítások, 9 évtől ÉS-VAGY-NEM logikával</small></span></button>
+      <span data-t="menu.igazhamis">Igaz vagy hamis?<small>állítások, 9 évtől ÉS-VAGY-NEM logikával</small></span></button>
     <button class="modul" id="menu-jelek" onclick="inditJelek()"><span class="ikon">✒️</span>
-      <span>Jelek<small>melyik jel hiányzik? &lt;, &gt;, =, műveleti jelek</small></span></button>
+      <span data-t="menu.jelek">Jelek<small>melyik jel hiányzik? &lt;, &gt;, =, műveleti jelek</small></span></button>
     <button class="modul" id="menu-kakukk" onclick="inditKakukk()"><span class="ikon">🥚</span>
-      <span>Kakukktojás<small>melyik szám nem illik a sorba?</small></span></button>
+      <span data-t="menu.kakukk">Kakukktojás<small>melyik szám nem illik a sorba?</small></span></button>
     <button class="modul" id="menu-tablazat" onclick="inditTablazat()"><span class="ikon">🤖</span>
-      <span>Számgép<small>találd ki a gép szabályát!</small></span></button>
+      <span data-t="menu.tablazat">Számgép<small>találd ki a gép szabályát!</small></span></button>
     <button class="modul" id="menu-kombi" onclick="inditKombi()"><span class="ikon">🔀</span>
-      <span>Hányféleképpen?<small>sorbaállítás, párosítás, mérkőzések</small></span></button>
+      <span data-t="menu.kombi">Hányféleképpen?<small>sorbaállítás, párosítás, mérkőzések</small></span></button>
     <button class="modul" id="menu-egyenlotlen" onclick="inditEgyenlotlen()"><span class="ikon">🚦</span>
-      <span>Egyenlőtlenség<small>▢ + 3 &lt; 12 – mennyi lehet a ▢?</small></span></button>
+      <span data-t="menu.egyenlotlen">Egyenlőtlenség<small>▢ + 3 &lt; 12 – mennyi lehet a ▢?</small></span></button>
     <button class="modul" id="menu-abc" onclick="inditAbc()"><span class="ikon">🔤</span>
-      <span>Ábécé<small>melyik betű jön utána? kis- és nagybetűk</small></span></button>
+      <span data-t="menu.abc">Ábécé<small>melyik betű jön utána? kis- és nagybetűk</small></span></button>
     <button class="modul" id="menu-mgh" onclick="inditMgh()"><span class="ikon">🅰️</span>
-      <span>Magánhangzók<small>rövid vagy hosszú? o-ó, u-ú, i-í…</small></span></button>
+      <span data-t="menu.mgh">Magánhangzók<small>rövid vagy hosszú? o-ó, u-ú, i-í…</small></span></button>
     <button class="modul" id="menu-jly" onclick="inditJly()"><span class="ikon">🪶</span>
-      <span>J vagy Ly?<small>go▢ó, fo▢ó – melyik betű hiányzik?</small></span></button>
+      <span data-t="menu.jly">J vagy Ly?<small>go▢ó, fo▢ó – melyik betű hiányzik?</small></span></button>
     <button class="modul" id="menu-szotag" onclick="inditSzotag()"><span class="ikon">👏</span>
-      <span>Szótagolás<small>hány szótagból áll a szó?</small></span></button>
+      <span data-t="menu.szotag">Szótagolás<small>hány szótagból áll a szó?</small></span></button>
     <button class="modul" id="menu-irasjel" onclick="inditIrasjel()"><span class="ikon">❕</span>
-      <span>Mondatvégi írásjel<small>pont, kérdőjel vagy felkiáltójel?</small></span></button>
+      <span data-t="menu.irasjel">Mondatvégi írásjel<small>pont, kérdőjel vagy felkiáltójel?</small></span></button>
     <button class="modul" id="menu-anszo" onclick="inditAnszo()"><span class="ikon">🇬🇧</span>
-      <span>Angol szókincs<small>állatok, színek, család, iskola…</small></span></button>
+      <span data-t="menu.anszo">Angol szókincs<small>állatok, színek, család, iskola…</small></span></button>
     <button class="modul" id="menu-anszam" onclick="inditAnszam()"><span class="ikon">🔢</span>
-      <span>Angol számok<small>seven = ? – írd be számmal</small></span></button>
+      <span data-t="menu.anszam">Angol számok<small>seven = ? – írd be számmal</small></span></button>
     <button class="modul" id="menu-anbetuz" onclick="inditAnbetuz()"><span class="ikon">🔤</span>
-      <span>Angol betűzés<small>rakd ki betűnként az angol szót!</small></span></button>
+      <span data-t="menu.anbetuz">Angol betűzés<small>rakd ki betűnként az angol szót!</small></span></button>
     <button class="modul" id="menu-evszak" onclick="inditEvszak()"><span class="ikon">🍂</span>
-      <span>Évszakok, hónapok<small>évszakok, hónapok, a hét napjai</small></span></button>
+      <span data-t="menu.evszak">Évszakok, hónapok<small>évszakok, hónapok, a hét napjai</small></span></button>
     <button class="modul" id="menu-elolenyek" onclick="inditElolenyek()"><span class="ikon">🦋</span>
-      <span>Élőlények<small>állatok, növények, élőhelyek</small></span></button>
+      <span data-t="menu.elolenyek">Élőlények<small>állatok, növények, élőhelyek</small></span></button>
     <button class="modul" id="menu-test" onclick="inditTest()"><span class="ikon">💪</span>
-      <span>Testünk, egészség<small>érzékszervek, szervek, egészség</small></span></button>
+      <span data-t="menu.test">Testünk, egészség<small>érzékszervek, szervek, egészség</small></span></button>
     <button class="modul" id="menu-kozlekedes" onclick="inditKozlekedes()"><span class="ikon">🚦</span>
-      <span>Közlekedés<small>lámpák, zebra, biztonság</small></span></button>
+      <span data-t="menu.kozlekedes">Közlekedés<small>lámpák, zebra, biztonság</small></span></button>
     <button class="modul" id="menu-egtaj" onclick="inditEgtaj()"><span class="ikon">🧭</span>
-      <span>Térkép, égtájak<small>észak, dél, kelet, nyugat – térképjelek</small></span></button>
+      <span data-t="menu.egtaj">Térkép, égtájak<small>észak, dél, kelet, nyugat – térképjelek</small></span></button>
     <button class="modul" id="menu-megye" onclick="inditMegye()"><span class="ikon">🗺️</span>
-      <span>Vármegyék<small>vármegyék és székhelyeik</small></span></button>
+      <span data-t="menu.megye">Vármegyék<small>vármegyék és székhelyeik</small></span></button>
     <button class="modul" id="menu-hangjegy" onclick="inditHangjegy()"><span class="ikon">🎼</span>
-      <span>Kottaolvasás<small>melyik hang ez a vonalrendszeren?</small></span></button>
+      <span data-t="menu.hangjegy">Kottaolvasás<small>melyik hang ez a vonalrendszeren?</small></span></button>
     <button class="modul" id="menu-ritmus" onclick="inditRitmus()"><span class="ikon">🥁</span>
-      <span>Ritmusértékek<small>egész, fél, negyed, nyolcad</small></span></button>
+      <span data-t="menu.ritmus">Ritmusértékek<small>egész, fél, negyed, nyolcad</small></span></button>
     <button class="modul" id="menu-szolmizacio" onclick="inditSzolmizacio()"><span class="ikon">🎵</span>
-      <span>Szolmizáció<small>dó, ré, mi… és az ABC-s hangnevek</small></span></button>
+      <span data-t="menu.szolmizacio">Szolmizáció<small>dó, ré, mi… és az ABC-s hangnevek</small></span></button>
     <button class="modul" id="menu-hangkoz" onclick="inditHangkoz()"><span class="ikon">🎹</span>
-      <span>Hangmagasság<small>melyik magasabb? lépés vagy ugrás?</small></span></button>
+      <span data-t="menu.hangkoz">Hangmagasság<small>melyik magasabb? lépés vagy ugrás?</small></span></button>
     <button class="modul" onclick="megnyit('vegyes')"><span class="ikon">🎲</span>
-      <span>Vegyes kör<small>mindenből egy kicsit – simán vagy időre</small></span></button>
-    <button class="vissza" onclick="fomenu()">← vissza a tantárgyakhoz</button>
+      <span data-t="menu.vegyes">Vegyes kör<small>mindenből egy kicsit – simán vagy időre</small></span></button>
+    <button class="vissza" onclick="fomenu()" data-t="gomb.vissza.targyak">← vissza a tantárgyakhoz</button>
   </div>
 
   <!-- SZÜLŐI NÉZET -->
   <div class="screen" id="scr-szulo">
-    <div class="panel"><h2>👨‍👩‍👧 Szülői áttekintés</h2>
+    <div class="panel"><h2 data-t="szulo.cim">👨‍👩‍👧 Szülői áttekintés</h2>
       <div class="szulo-kerdes" id="szulo-kerdes" onclick="ujSzuloKerdes()" title="Kattints egy másik kérdésért"></div>
       <div id="szulo-tartalom"></div></div>
     <div class="panel" id="pin-panel" style="display:none">
       <div id="pin-szoveg" style="font-weight:700"></div>
       <input id="pin-input" class="pin-input" type="password" inputmode="numeric" maxlength="4" placeholder="PIN">
       <button class="fo-gomb" id="pin-ok" onclick="pinOk()">Törlés</button>
-      <button class="vissza" onclick="pinMegse()">Mégse</button>
+      <button class="vissza" onclick="pinMegse()" data-t="pin.megse">Mégse</button>
     </div>
-    <button class="fo-gomb" id="szulo-kuldes" onclick="naploKuldes(this)">📤 Napló küldése</button>
-    <button class="masol-gomb" onclick="naploMasol(this)">📋 Formázott másolás (e-mailhez)</button>
-    <button class="vissza" id="szulo-mindtorles" onclick="torlesKer('mind')">🗑 Teljes napló törlése (PIN)</button>
-    <button class="vissza" onclick="fomenu()">← vissza a tantárgyakhoz</button>
+    <button class="fo-gomb" id="szulo-kuldes" onclick="naploKuldes(this)" data-t="szulo.kuldes">📤 Napló küldése</button>
+    <button class="masol-gomb" onclick="naploMasol(this)" data-t="szulo.masolas">📋 Formázott másolás (e-mailhez)</button>
+    <button class="vissza" id="szulo-mindtorles" onclick="torlesKer('mind')" data-t="szulo.mindtorles">🗑 Teljes napló törlése (PIN)</button>
+    <button class="vissza" onclick="fomenu()" data-t="gomb.vissza.targyak">← vissza a tantárgyakhoz</button>
     <!-- Verzió-kijelző: a VERZIO konstansból tölti a JS (a szülői lap legalja) -->
     <div id="verzio-cimke" style="text-align:center;margin-top:14px;opacity:.45;font-size:12px"></div>
   </div>
@@ -402,68 +407,68 @@
     <div class="valasz-kijelzo" id="hiba-kijelzo" style="color:#b3283e"></div>
     <div class="valaszgombok" id="hiba-gombok" style="display:none"></div>
     <div class="visszajelzes rossz" id="hiba-uzenet" style="display:block"></div>
-    <button class="fo-gomb megoszto" id="hiba-ujra" onclick="hibaUjra()">🔁 Újra megoldom</button>
-    <button class="fo-gomb" onclick="szuloNezet()">← vissza a naplóhoz</button>
+    <button class="fo-gomb megoszto" id="hiba-ujra" onclick="hibaUjra()" data-t="hiba.ujra">🔁 Újra megoldom</button>
+    <button class="fo-gomb" onclick="szuloNezet()" data-t="hiba.vissza">← vissza a naplóhoz</button>
   </div>
 
   <!-- BEÁLLÍTÁS -->
   <div class="screen" id="scr-setup">
     <div class="panel" id="setup-szorzas" style="display:none">
-      <h2>Melyik szorzótáblát gyakoroljuk?</h2>
+      <h2 data-t="setup.szorzas">Melyik szorzótáblát gyakoroljuk?</h2>
       <div class="valaszto" id="tabla-valaszto"></div>
-      <button class="fo-gomb" id="szorzas-start" onclick="inditSzorzas()">Indítás! 🚀</button>
+      <button class="fo-gomb" id="szorzas-start" onclick="inditSzorzas()" data-t="gomb.indit">Indítás! 🚀</button>
     </div>
     <div class="panel" id="setup-helyi" style="display:none">
-      <h2>Helyiérték és számok</h2>
+      <h2 data-t="setup.helyi">Helyiérték és számok</h2>
       <div class="valaszto" id="helyi-valaszto"></div>
-      <button class="fo-gomb" onclick="inditHelyi()">Indítás! 🚀</button>
+      <button class="fo-gomb" onclick="inditHelyi()" data-t="gomb.indit">Indítás! 🚀</button>
     </div>
     <div class="panel" id="setup-muvelet" style="display:none">
-      <h2>Összeadás és kivonás</h2>
+      <h2 data-t="setup.muvelet">Összeadás és kivonás</h2>
       <div class="valaszto" id="muvelet-valaszto"></div>
-      <button class="fo-gomb" onclick="inditMuvelet()">Indítás! 🚀</button>
+      <button class="fo-gomb" onclick="inditMuvelet()" data-t="gomb.indit">Indítás! 🚀</button>
     </div>
     <div class="panel" id="setup-irasbeli" style="display:none">
-      <h2>Írásbeli számolás</h2>
+      <h2 data-t="setup.irasbeli">Írásbeli számolás</h2>
       <div class="valaszto" id="irasbeli-muv-valaszto" style="margin-bottom:10px"></div>
       <div class="valaszto" id="irasbeli-nehez-valaszto" style="margin-bottom:10px"></div>
       <div class="valaszto" id="irasbeli-atvitel-valaszto"></div>
-      <button class="fo-gomb" onclick="inditIrasbeli()">Indítás! 🚀</button>
+      <button class="fo-gomb" onclick="inditIrasbeli()" data-t="gomb.indit">Indítás! 🚀</button>
     </div>
     <div class="panel" id="setup-potlas" style="display:none">
-      <h2>Pótlás – mennyi hiányzik?</h2>
+      <h2 data-t="setup.potlas">Pótlás – mennyi hiányzik?</h2>
       <div class="valaszto" id="potlas-valaszto"></div>
-      <button class="fo-gomb" onclick="inditPotlas()">Indítás! 🚀</button>
+      <button class="fo-gomb" onclick="inditPotlas()" data-t="gomb.indit">Indítás! 🚀</button>
     </div>
     <div class="panel" id="setup-osztas" style="display:none">
-      <h2>Melyik táblából osszunk?</h2>
+      <h2 data-t="setup.osztas">Melyik táblából osszunk?</h2>
       <div class="valaszto" id="oszt-tabla-valaszto" style="margin-bottom:10px"></div>
       <div class="valaszto" id="oszt-maradek-valaszto"></div>
-      <button class="fo-gomb" onclick="inditOsztas()">Indítás! 🚀</button>
+      <button class="fo-gomb" onclick="inditOsztas()" data-t="gomb.indit">Indítás! 🚀</button>
     </div>
     <div class="panel" id="setup-villam" style="display:none">
-      <h2>⚡ Villámkör</h2>
+      <h2 data-t="setup.villam">⚡ Villámkör</h2>
       <div class="valaszto" id="villam-tabla-valaszto" style="margin-bottom:10px"></div>
       <div class="valaszto" id="villam-ido-valaszto"></div>
-      <button class="fo-gomb" onclick="inditVillam()">Rajt! ⚡</button>
+      <button class="fo-gomb" onclick="inditVillam()" data-t="gomb.rajt">Rajt! ⚡</button>
     </div>
     <div class="panel" id="setup-ora" style="display:none">
-      <h2>🕒 Óra – mit gyakoroljunk?</h2>
+      <h2 data-t="setup.ora">🕒 Óra – mit gyakoroljunk?</h2>
       <div class="valaszto" id="ora-valaszto"></div>
-      <button class="fo-gomb" onclick="inditOra()">Indítás! 🚀</button>
+      <button class="fo-gomb" onclick="inditOra()" data-t="gomb.indit">Indítás! 🚀</button>
     </div>
     <div class="panel" id="setup-vegyes" style="display:none">
-      <h2>🎲 Vegyes kör</h2>
+      <h2 data-t="setup.vegyes">🎲 Vegyes kör</h2>
       <div class="valaszto" id="vegyes-mod-valaszto" style="margin-bottom:10px"></div>
       <div class="valaszto" id="vegyes-ido-valaszto"></div>
-      <button class="fo-gomb" onclick="inditVegyesPanel()">Indítás! 🚀</button>
+      <button class="fo-gomb" onclick="inditVegyesPanel()" data-t="gomb.indit">Indítás! 🚀</button>
     </div>
     <div class="panel" id="setup-lanc" style="display:none">
-      <h2>Hány lépéses legyen a lánc?</h2>
+      <h2 data-t="setup.lanc">Hány lépéses legyen a lánc?</h2>
       <div class="valaszto" id="lanc-valaszto"></div>
-      <button class="fo-gomb" onclick="inditLanc()">Indítás! 🚀</button>
+      <button class="fo-gomb" onclick="inditLanc()" data-t="gomb.indit">Indítás! 🚀</button>
     </div>
-    <button class="vissza" onclick="menu()">← vissza a menübe</button>
+    <button class="vissza" onclick="menu()" data-t="gomb.vissza.menu">← vissza a menübe</button>
   </div>
 
   <!-- JÁTÉK -->
@@ -484,9 +489,9 @@
     </div>
     <div class="valaszgombok" id="valaszgombok" style="display:none"></div>
     <div class="visszajelzes" id="visszajelzes"></div>
-    <button class="tovabb" id="tovabb" onclick="kovetkezo()">Tovább →</button>
+    <button class="tovabb" id="tovabb" onclick="kovetkezo()" data-t="gomb.tovabb">Tovább →</button>
     <div class="hangforras-sor" id="hangforras-sor"></div>
-    <button class="vissza" onclick="menu()">✕ kör megszakítása</button>
+    <button class="vissza" onclick="menu()" data-t="gomb.megszakit">✕ kör megszakítása</button>
   </div>
 
   <!-- EREDMÉNY -->
@@ -494,8 +499,8 @@
     <div class="csillagok" id="csillagok"></div>
     <div class="eredmeny-szoveg" id="eredmeny-szoveg"></div>
     <div class="hibalista" id="hibalista" style="display:none"></div>
-    <button class="fo-gomb" onclick="ujraKor()">Még egy kör! 🔁</button>
-    <button class="vissza" onclick="menu()">← vissza a menübe</button>
+    <button class="fo-gomb" onclick="ujraKor()" data-t="gomb.ujrakor">Még egy kör! 🔁</button>
+    <button class="vissza" onclick="menu()" data-t="gomb.vissza.menu">← vissza a menübe</button>
   </div>
 </div>
 
@@ -505,6 +510,212 @@
 const $ = id => document.getElementById(id);
 const rnd = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
 const valaszt = arr => arr[rnd(0,arr.length-1)];
+
+/* ================= NYELV ÉS ORSZÁG (i18n-váz) =================
+   Ma egyetlen kész nyelv van (magyar), az alapértelmezés HU + hu. A váz viszont
+   már készen áll a többnyelvűségre: a felület szövegei kulcsokon keresztül jönnek
+   (data-t attribútum + T() függvény), és a nyelv/ország a beállításokban tárolódik.
+   Amíg csak egy nyelv (ill. egy ország) választható, a választók rejtve maradnak,
+   így a jelenlegi felület pontosan ugyanúgy néz ki, mint eddig. */
+const NYELVEK = {
+  hu:{ nev:"Magyar",   zaszlo:"🇭🇺", kesz:true  },
+  en:{ nev:"English",  zaszlo:"🇬🇧", kesz:false },
+  de:{ nev:"Deutsch",  zaszlo:"🇩🇪", kesz:false },
+  fr:{ nev:"Français", zaszlo:"🇫🇷", kesz:false },
+  es:{ nev:"Español",  zaszlo:"🇪🇸", kesz:false }
+};
+// Az ország nem csak zászló: a pénznem, a számformátum, a mértékegység-rendszer és
+// később a tananyag (pl. vármegyék vs. states) is ettől függ.
+const ORSZAGOK = {
+  HU:{ nev:"Magyarország",  zaszlo:"🇭🇺", nyelv:"hu", penz:"Ft", penzElol:false, tizedes:",", ezres:" ", mertek:"metrikus" },
+  GB:{ nev:"United Kingdom",zaszlo:"🇬🇧", nyelv:"en", penz:"£",  penzElol:true,  tizedes:".", ezres:",", mertek:"angolszasz" },
+  US:{ nev:"United States", zaszlo:"🇺🇸", nyelv:"en", penz:"$",  penzElol:true,  tizedes:".", ezres:",", mertek:"angolszasz" },
+  DE:{ nev:"Deutschland",   zaszlo:"🇩🇪", nyelv:"de", penz:"€",  penzElol:false, tizedes:",", ezres:".", mertek:"metrikus" },
+  AT:{ nev:"Österreich",    zaszlo:"🇦🇹", nyelv:"de", penz:"€",  penzElol:false, tizedes:",", ezres:".", mertek:"metrikus" },
+  FR:{ nev:"France",        zaszlo:"🇫🇷", nyelv:"fr", penz:"€",  penzElol:false, tizedes:",", ezres:" ", mertek:"metrikus" },
+  ES:{ nev:"España",        zaszlo:"🇪🇸", nyelv:"es", penz:"€",  penzElol:false, tizedes:",", ezres:".", mertek:"metrikus" }
+};
+const NYELV_ALAP = "hu", ORSZAG_ALAP = "HU";
+const keszNyelvek = () => Object.keys(NYELVEK).filter(k=>NYELVEK[k].kesz);
+const orszagokNyelvhez = ny => Object.keys(ORSZAGOK).filter(k=>ORSZAGOK[k].nyelv===ny);
+const L = () => ORSZAGOK[(typeof beall!=="undefined" && beall.orszag) || ORSZAG_ALAP];
+
+const SZOVEG_HU = {
+  "app.cim": "Napi gyakorló",
+  "avatar.cim": "Válassz avatart!",
+  "beall.db": "Feladat/kör",
+  "beall.dbErtek": "{db} db",
+  "beall.kor": "Életkor",
+  "beall.korErtek": "{kor} éves",
+  "beall.nyelv": "Nyelv",
+  "beall.orszag": "Ország",
+  "beall.tema": "Téma",
+  "fomenu.korinfo": "1 kör = {db} feladat · Napi 10–15 perc, a rövid, mindennapos gyakorlás ér a legtöbbet!",
+  "fomenu.szulok": "👨‍👩‍👧 Szülőknek",
+  "gomb.indit": "Indítás! 🚀",
+  "gomb.megszakit": "✕ kör megszakítása",
+  "gomb.rajt": "Rajt! ⚡",
+  "gomb.tovabb": "Tovább →",
+  "gomb.ujrakor": "Még egy kör! 🔁",
+  "gomb.vissza.menu": "← vissza a menübe",
+  "gomb.vissza.targyak": "← vissza a tantárgyakhoz",
+  "hiba.ujra": "🔁 Újra megoldom",
+  "hiba.vissza": "← vissza a naplóhoz",
+  "menu.abc": "Ábécé<small>melyik betű jön utána? kis- és nagybetűk</small>",
+  "menu.anbetuz": "Angol betűzés<small>rakd ki betűnként az angol szót!</small>",
+  "menu.anszam": "Angol számok<small>seven = ? – írd be számmal</small>",
+  "menu.anszo": "Angol szókincs<small>állatok, színek, család, iskola…</small>",
+  "menu.becsles": "Becslés<small>körülbelül mennyi? kerekíts fejben!</small>",
+  "menu.egtaj": "Térkép, égtájak<small>észak, dél, kelet, nyugat – térképjelek</small>",
+  "menu.egyenlotlen": "Egyenlőtlenség<small>▢ + 3 &lt; 12 – mennyi lehet a ▢?</small>",
+  "menu.elolenyek": "Élőlények<small>állatok, növények, élőhelyek</small>",
+  "menu.evszak": "Évszakok, hónapok<small>évszakok, hónapok, a hét napjai</small>",
+  "menu.hangjegy": "Kottaolvasás<small>melyik hang ez a vonalrendszeren?</small>",
+  "menu.hangkoz": "Hangmagasság<small>melyik magasabb? lépés vagy ugrás?</small>",
+  "menu.helyi": "Helyiérték és számok<small>százasok-tízesek-egyesek, kerekítés, szomszédok</small>",
+  "menu.igazhamis": "Igaz vagy hamis?<small>állítások, 9 évtől ÉS-VAGY-NEM logikával</small>",
+  "menu.irasbeli": "Írásbeli számolás<small>egymás alatt, számjegyenként – mint a füzetben</small>",
+  "menu.irasjel": "Mondatvégi írásjel<small>pont, kérdőjel vagy felkiáltójel?</small>",
+  "menu.jelek": "Jelek<small>melyik jel hiányzik? &lt;, &gt;, =, műveleti jelek</small>",
+  "menu.jly": "J vagy Ly?<small>go▢ó, fo▢ó – melyik betű hiányzik?</small>",
+  "menu.kakukk": "Kakukktojás<small>melyik szám nem illik a sorba?</small>",
+  "menu.kombi": "Hányféleképpen?<small>sorbaállítás, párosítás, mérkőzések</small>",
+  "menu.kozlekedes": "Közlekedés<small>lámpák, zebra, biztonság</small>",
+  "menu.lanc": "Láncszámolás<small>több lépés fejben, egymás után</small>",
+  "menu.megye": "Vármegyék<small>vármegyék és székhelyeik</small>",
+  "menu.mertek": "Mértékegységek<small>m-cm, óra-perc, kg-dkg</small>",
+  "menu.mgh": "Magánhangzók<small>rövid vagy hosszú? o-ó, u-ú, i-í…</small>",
+  "menu.muvelet": "Összeadás és kivonás<small>1000-ig, átlépéssel vagy anélkül</small>",
+  "menu.negativ": "Negatív számok<small>hőmérséklet és számegyenes a nulla alatt</small>",
+  "menu.nyitott": "Nyitott mondatok<small>mi kerül a ▢ helyére?</small>",
+  "menu.ora": "Óra<small>hány óra van? mennyi idő telt el?</small>",
+  "menu.osztas": "Bennfoglalás, osztás<small>a szorzótábla párja, maradékkal is</small>",
+  "menu.penz": "Pénzszámolás<small>mennyi pénzed van összesen?</small>",
+  "menu.potlas": "Pótlás<small>mennyi hiányzik 100-ig, 1000-ig?</small>",
+  "menu.ritmus": "Ritmusértékek<small>egész, fél, negyed, nyolcad</small>",
+  "menu.romai": "Római számok<small>I, V, X, L, C – oda és vissza</small>",
+  "menu.sorozat": "Sorozatok<small>mi a szabály? folytasd a sort!</small>",
+  "menu.sorrend": "Műveleti sorrend<small>előbb a szorzás, aztán az összeadás</small>",
+  "menu.szamalkotas": "Számalkotás<small>legnagyobb és legkisebb szám számjegyekből</small>",
+  "menu.szamegyenes": "Számegyenes<small>hol van a szám 0 és 1000 között?</small>",
+  "menu.szolmizacio": "Szolmizáció<small>dó, ré, mi… és az ABC-s hangnevek</small>",
+  "menu.szorzas": "Szorzótábla<small>2-től 10-ig, a nehezebbeket többször kérdezi</small>",
+  "menu.szotag": "Szótagolás<small>hány szótagból áll a szó?</small>",
+  "menu.szoveges": "Szöveges feladatok<small>rövid történet – melyik művelet kell?</small>",
+  "menu.tablazat": "Számgép<small>találd ki a gép szabályát!</small>",
+  "menu.test": "Testünk, egészség<small>érzékszervek, szervek, egészség</small>",
+  "menu.tortek": "Törtek<small>fele, harmada, negyede</small>",
+  "menu.vegyes": "Vegyes kör<small>mindenből egy kicsit – simán vagy időre</small>",
+  "menu.villam": "Villámkör<small>1 perc – hány szorzás fér bele?</small>",
+  "nev.cim": "Mi a neved? 😊",
+  "nev.megse": "Most nem",
+  "nev.mentes": "Mentés ✔",
+  "nev.placeholder": "Írd be a neved",
+  "nev.torles": "Név törlése",
+  "pin.megse": "Mégse",
+  "setup.helyi": "Helyiérték és számok",
+  "setup.irasbeli": "Írásbeli számolás",
+  "setup.lanc": "Hány lépéses legyen a lánc?",
+  "setup.muvelet": "Összeadás és kivonás",
+  "setup.ora": "🕒 Óra – mit gyakoroljunk?",
+  "setup.osztas": "Melyik táblából osszunk?",
+  "setup.potlas": "Pótlás – mennyi hiányzik?",
+  "setup.szorzas": "Melyik szorzótáblát gyakoroljuk?",
+  "setup.vegyes": "🎲 Vegyes kör",
+  "setup.villam": "⚡ Villámkör",
+  "szulo.cim": "👨‍👩‍👧 Szülői áttekintés",
+  "szulo.kuldes": "📤 Napló küldése",
+  "szulo.masolas": "📋 Formázott másolás (e-mailhez)",
+  "szulo.mindtorles": "🗑 Teljes napló törlése (PIN)",
+  "targy.angol.leiras": "szavak, számok, betűzés – kiejtéssel",
+  "targy.angol.nev": "Angol",
+  "targy.foldrajz.leiras": "égtájak, térkép, vármegyék",
+  "targy.foldrajz.nev": "Földrajz",
+  "targy.kornyezet.leiras": "évszakok, élőlények, testünk, közlekedés",
+  "targy.kornyezet.nev": "Környezet",
+  "targy.matek.leiras": "számolás, mértékegység, logika",
+  "targy.matek.nev": "Matek",
+  "targy.nyelvtan.leiras": "helyesírás, szótagolás, írásjelek",
+  "targy.nyelvtan.nev": "Nyelvtan",
+  "targy.zene.leiras": "kotta, ritmus, szolmizáció",
+  "targy.zene.nev": "Zene"
+};
+// nyelvenkénti katalógus; új nyelv = új bejegyzés (a hiányzó kulcs magyarra esik vissza)
+const SZOVEG = { hu: SZOVEG_HU };
+/* T("kulcs", {n:"Anna"}) – a felület szövegei. Hiányzó kulcsnál magyar a tartalék;
+   ha az sincs, csendes módban null, egyébként ⟦kulcs⟧ (hogy fejlesztéskor kiszúrjuk). */
+function T(kulcs, adat, csendes){
+  const ny = (typeof beall!=="undefined" && beall.nyelv) || NYELV_ALAP;
+  let sz = SZOVEG[ny] && SZOVEG[ny][kulcs];
+  if(sz === undefined) sz = SZOVEG[NYELV_ALAP][kulcs];
+  if(sz === undefined) return csendes ? null : "\u27e6"+kulcs+"\u27e7";
+  if(adat) for(const k in adat) sz = sz.split("{"+k+"}").join(adat[k]);
+  return sz;
+}
+// a HTML-ben data-t / data-tph attribútummal megjelölt elemek feltöltése
+function feluletFrissit(){
+  document.querySelectorAll("[data-t]").forEach(e=>{
+    const v = T(e.getAttribute("data-t"), null, true);
+    if(v !== null) e.innerHTML = v;
+  });
+  document.querySelectorAll("[data-tph]").forEach(e=>{
+    const v = T(e.getAttribute("data-tph"), null, true);
+    if(v !== null) e.setAttribute("placeholder", v);
+  });
+}
+// nyelv/ország léptetés – csak a kész nyelvek és a hozzájuk tartozó országok között
+function nyelvValt(d){
+  const l = keszNyelvek(); if(l.length<2) return;
+  const i = (l.indexOf(beall.nyelv) + d + l.length) % l.length;
+  beall.nyelv = l[i];
+  const o = orszagokNyelvhez(beall.nyelv);
+  if(!o.includes(beall.orszag)) beall.orszag = o[0] || ORSZAG_ALAP;
+  beallMent(); feluletFrissit(); beallKijelez(); frissitKoszonto();
+}
+function orszagValt(d){
+  const l = orszagokNyelvhez(beall.nyelv); if(l.length<2) return;
+  const i = (l.indexOf(beall.orszag) + d + l.length) % l.length;
+  beall.orszag = l[i];
+  beallMent(); beallKijelez();
+}
+// induláskor: ?lang= / ?country= paraméter, majd a mentett érték, majd a böngésző
+// nyelve – de csak KÉSZ nyelvre váltunk, tehát ma mindig magyar marad
+function localeInit(){
+  let ny = null, or = null;
+  try{
+    const p = new URLSearchParams(location.search);
+    const q = (p.get("lang")||"").toLowerCase(), c = (p.get("country")||"").toUpperCase();
+    if(NYELVEK[q] && NYELVEK[q].kesz) ny = q;
+    if(ORSZAGOK[c]) or = c;
+  }catch(e){}
+  if(!ny && !beall.nyelv){
+    try{
+      const b = (navigator.language||"").slice(0,2).toLowerCase();
+      if(NYELVEK[b] && NYELVEK[b].kesz) ny = b;
+    }catch(e){}
+  }
+  if(ny) beall.nyelv = ny;
+  if(!NYELVEK[beall.nyelv] || !NYELVEK[beall.nyelv].kesz) beall.nyelv = NYELV_ALAP;
+  if(or && ORSZAGOK[or].nyelv === beall.nyelv) beall.orszag = or;
+  if(!ORSZAGOK[beall.orszag] || ORSZAGOK[beall.orszag].nyelv !== beall.nyelv)
+    beall.orszag = orszagokNyelvhez(beall.nyelv)[0] || ORSZAG_ALAP;
+  feluletFrissit();
+}
+// a választók csak akkor látszanak, ha tényleg van mit választani
+function localeValasztoKijelez(){
+  const n = $("nyelv-lepteto"), o = $("orszag-lepteto");
+  if(n){
+    n.style.display = keszNyelvek().length > 1 ? "flex" : "none";
+    const k = $("nyelv-kijelzo");
+    if(k) k.textContent = NYELVEK[beall.nyelv].zaszlo + " " + NYELVEK[beall.nyelv].nev;
+  }
+  if(o){
+    o.style.display = orszagokNyelvhez(beall.nyelv).length > 1 ? "flex" : "none";
+    const k = $("orszag-kijelzo");
+    if(k) k.textContent = ORSZAGOK[beall.orszag].zaszlo + " " + ORSZAGOK[beall.orszag].nev;
+  }
+}
+
 const DICSERET = ["Szuper! 🌟","Ügyes vagy! 👏","Pontosan! ✨","Remek! 🎉","Nagyon jó! 💪",
                   "Ez az! 🙌","Zseniális! 🤩","Telitalálat! 🎯","Mesteri! 🥇","Így kell ezt! 🔥"];
 function nevOlvas(){ try{ return localStorage.getItem("matekNev"); }catch(e){ return ""; } }
@@ -2347,7 +2558,8 @@ const nevelo = x => { const sz=Math.floor(x/100)%10, t=Math.floor(x/10)%10;
 const Nevelo = x => nevelo(x)==="az" ? "Az" : "A";
 
 /* ================= beállítások (életkor, kör-hossz) ================= */
-let beall = { kor:9, dbKor:10, tema:"hp", avatar:"🦊", targy:"matek", hangforras:"web" };
+let beall = { kor:9, dbKor:10, tema:"hp", avatar:"🦊", targy:"matek", hangforras:"web",
+              nyelv:NYELV_ALAP, orszag:ORSZAG_ALAP };
 function beallMent(){ try{ localStorage.setItem("matekBeall", JSON.stringify(beall)); }catch(e){} }
 function beallTolt(){ try{ const x=JSON.parse(localStorage.getItem("matekBeall"));
   if(x && x.kor>=7 && x.kor<=11 && x.dbKor>=5 && x.dbKor<=20){
@@ -2355,6 +2567,9 @@ function beallTolt(){ try{ const x=JSON.parse(localStorage.getItem("matekBeall")
     if(!x.avatar || !AVATAROK.includes(x.avatar)) x.avatar="🦊";
     if(!x.targy || !TANTARGYAK[x.targy]) x.targy="matek";
     if(!x.hangforras || !HANGFORRASOK[x.hangforras]) x.hangforras="web";
+    if(!x.nyelv || !NYELVEK[x.nyelv] || !NYELVEK[x.nyelv].kesz) x.nyelv=NYELV_ALAP;
+    if(!x.orszag || !ORSZAGOK[x.orszag] || ORSZAGOK[x.orszag].nyelv!==x.nyelv)
+      x.orszag=orszagokNyelvhez(x.nyelv)[0]||ORSZAG_ALAP;
     beall=x; } }catch(e){} }
 const szamkor = () => beall.kor<=7 ? 20 : beall.kor===8 ? 100 : 1000;
 const nehezKor = () => beall.kor>=10;
@@ -2395,10 +2610,11 @@ function temaValt(d){
 }
 function beallKijelez(){
   avatarAlkalmaz();
-  $("kor-kijelzo").textContent = beall.kor+" éves";
+  $("kor-kijelzo").textContent = T("beall.korErtek", {kor:beall.kor});
   $("tema-kijelzo").textContent = aktTema().nev;
-  $("db-kijelzo").textContent = beall.dbKor+" db";
-  $("kor-info").textContent = `1 kör = ${beall.dbKor} feladat · Napi 10–15 perc, a rövid, mindennapos gyakorlás ér a legtöbbet!`;
+  $("db-kijelzo").textContent = T("beall.dbErtek", {db:beall.dbKor});
+  $("kor-info").textContent = T("fomenu.korinfo", {db:beall.dbKor});
+  localeValasztoKijelez();
   menuFrissit();
 }
 // kerettanterv szerint: 1. osztályban nincs szorzás/osztás/írásbeli művelet,
@@ -2440,10 +2656,12 @@ function rajzolTargyak(){
   c.innerHTML="";
   for(const [k,t] of elerhetoTargyak()){
     const db = t.modulok.filter(m=>!rejtett.includes(m)).length;
+    const nev = T("targy."+k+".nev", null, true) || t.nev;
+    const leiras = T("targy."+k+".leiras", null, true) || t.leiras || "";
     const g=document.createElement("button");
     g.className="targy-kartya"; g.id="targy-"+k;
     g.innerHTML = `<span class="ikon">${t.ikon||"📘"}</span>`
-      + `<span>${t.nev}<small>${t.leiras||""} · ${db} feladattípus</small></span>`;
+      + `<span>${nev}<small>${leiras} · ${db} feladattípus</small></span>`;
     g.onclick=()=>targyValt(k);
     c.appendChild(g);
   }
@@ -2452,7 +2670,8 @@ function rajzolTargyak(){
 function targyFejlecFrissit(){
   const e = $("targy-fejlec"); if(!e) return;
   const t = TANTARGYAK[beall.targy] || TANTARGYAK.matek;
-  e.innerHTML = `<span class="ikon">${t.ikon||"📘"}</span><span>${t.nev}</span>`;
+  const nev = T("targy."+beall.targy+".nev", null, true) || t.nev;
+  e.innerHTML = `<span class="ikon">${t.ikon||"📘"}</span><span>${nev}</span>`;
 }
 // ha a beállított életkorban a kiválasztott tantárgy nem elérhető, visszaáll matekra
 function targyEllenoriz(){
@@ -5333,10 +5552,11 @@ function nevMegse(){
 }
 
 // VERZIÓ: minden publikálásnál (commitnál) eggyel emelni - a szülői lap alján látszik
-const VERZIO = "v43";
+const VERZIO = "v44";
 $("verzio-cimke").textContent = VERZIO;
 
 beallTolt();
+localeInit();
 if(beall.kor!==9) korTablak();
 beallKijelez();
 hangforrasSorEpit();
@@ -5348,7 +5568,7 @@ $("pin-input").addEventListener("keydown", e=>{ if(e.key==="Enter") pinOk(); });
 $("nev-input").addEventListener("keydown", e=>{ if(e.key==="Enter") nevMentes(); });
 </script>
 <div id="avatar-panel" onclick="avatarPanelZar(event)">
-  <div class="avatar-doboz"><h3>Válassz avatart!</h3><div id="avatar-racs"></div></div>
+  <div class="avatar-doboz"><h3 data-t="avatar.cim">Válassz avatart!</h3><div id="avatar-racs"></div></div>
 </div>
 </body>
 </html>
