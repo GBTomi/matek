@@ -247,10 +247,32 @@
   #avatar-racs{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:10px;}
   #avatar-racs button{font-size:1.9rem; line-height:1; background:#f1eefe; border:2px solid transparent; border-radius:12px; padding:8px 4px; cursor:pointer;}
   #avatar-racs button.aktiv{border-color:#5b3fd9; background:#e6e0ff;}
+  /* ---- lektor-sáv: csak a ?#l=1 linkkel nyitva látszik, a gyerek sosem látja ---- */
+  #lektor-sav{display:none; position:sticky; top:0; z-index:40; background:#2b2350; color:#fff;
+    padding:8px 10px; border-radius:0 0 12px 12px; font-size:.82rem; text-align:left; margin-bottom:8px;}
+  #lektor-sav .sor{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  #lektor-sav b{font-weight:700; word-break:break-all;}
+  #lektor-sav button{background:#5b3fd9; color:#fff; border:none; border-radius:8px;
+    padding:5px 10px; font-size:.82rem; cursor:pointer;}
+  #lektor-sav button:active{transform:scale(.95);}
+  #lektor-sav textarea{width:100%; margin-top:6px; border-radius:8px; border:none; padding:6px;
+    font-family:inherit; font-size:.85rem; min-height:44px; resize:vertical;}
+  #lektor-nyilak{display:inline-flex; gap:4px;}
+  #lektor-jelzes{opacity:.85; font-style:italic;}
 </style>
 </head>
 <body>
 <div class="app">
+  <div id="lektor-sav">
+    <div class="sor">
+      <span>🔍 Lektor mód</span><b id="lektor-kulcs"></b>
+      <span id="lektor-nyilak"><button onclick="lektorLep(-1)">◀ előző</button><button onclick="lektorLep(1)">következő ▶</button></span>
+      <button onclick="lektorMegjegyzesMent()">megjegyzés mentése</button>
+      <button onclick="lektorExport()">export CSV</button>
+      <span id="lektor-jelzes"></span>
+    </div>
+    <textarea id="lektor-megjegyzes" placeholder="Megjegyzés ehhez a szöveghez…"></textarea>
+  </div>
   <h1><span id="avatar-gomb" onclick="avatarPanelNyit()" title="Kattints az avatar cseréjéhez">🦊</span> <span data-t="app.cim">Napi gyakorló</span></h1>
   <div class="koszonto" id="koszonto" onclick="nevSzerkeszt()" title="Kattints a név módosításához"></div>
   <div class="alcim" id="kor-info">1 kör = 10 feladat · Napi 10–15 perc, a rövid, mindennapos gyakorlás ér a legtöbbet!</div>
@@ -508,7 +530,24 @@
 "use strict";
 /* ================= segédek ================= */
 const $ = id => document.getElementById(id);
-const rnd = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+/* ---- seedelheto veletlen ----
+   Mag nelkul a rendes Math.random megy (a gyerek szamara semmi nem valtozik).
+   Maggal viszont az egesz alkalmazas determinisztikus: ugyanaz a mag ugyanazt a
+   feladatsort, ugyanazokat a valaszlehetosegeket es ugyanazokat az uzeneteket adja.
+   Erre epul a lektor-link es a hibak pontos visszajatszasa. */
+let VEL_MAG = null, velAllapot = 0;
+function magBeallit(m){ VEL_MAG = (m>>>0); velAllapot = VEL_MAG; }
+function magTorol(){ VEL_MAG = null; }
+function vel(){ // mulberry32
+  if(VEL_MAG === null) return Math.random();
+  velAllapot = (velAllapot + 0x6D2B79F5) >>> 0;
+  let t = velAllapot;
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+const ujMag = () => Math.floor(Math.random()*2147483647);
+const rnd = (a,b) => Math.floor(vel()*(b-a+1))+a;
 const valaszt = arr => arr[rnd(0,arr.length-1)];
 
 /* ================= NYELV ÉS ORSZÁG (i18n-váz) =================
@@ -718,17 +757,67 @@ function localeValasztoKijelez(){
 
 const DICSERET = ["Szuper! 🌟","Ügyes vagy! 👏","Pontosan! ✨","Remek! 🎉","Nagyon jó! 💪",
                   "Ez az! 🙌","Zseniális! 🤩","Telitalálat! 🎯","Mesteri! 🥇","Így kell ezt! 🔥"];
-function nevOlvas(){ try{ return localStorage.getItem("matekNev"); }catch(e){ return ""; } }
+function nevOlvas(){ if(lektorMod && lektorAdat && lektorAdat.n!==null) return lektorAdat.n;
+  try{ return localStorage.getItem("matekNev"); }catch(e){ return ""; } }
+const DICSERET_NEVES = ["Ez az, {n}! 🙌","{n}, ez kitartó munka volt! 😎","Ügyes vagy, {n}! 🌟",
+  "{n}, a gyakorlásod meghozta! 🏆","Így kell ezt, {n}! 🔥",
+  "{n}, jól gondolkodtál! 🤝","Szép munka, {n}! 🧠"];
+/* ---- üzenet-csoportok azonosítóval ----
+   Minden dicséret / vigasz / köszöntő egy csoport egy indexén ül ("dicseret.hp#42").
+   Ezt jegyezzük meg (naplózáshoz, lektor-linkhez), és lektor-módban ez kényszeríthető,
+   így egy linkkel pontosan az a mondat hozható vissza, amit a gyerek látott. */
+function uzCsoport(kulcs){
+  if(kulcs==="dicseret.folyamat")  return DICSERET_FOLYAMAT;
+  if(kulcs==="dicseret.altalanos") return DICSERET;
+  if(kulcs==="dicseret.neves")     return DICSERET_NEVES;
+  if(kulcs==="koszonto.neves")     return KOSZONTOK_NEVES;
+  if(kulcs==="koszonto.sima")      return KOSZONTOK_SIMA;
+  const r = kulcs.split("."), t = TEMAK[r[1]];
+  if(!t) return null;
+  if(r[0]==="dicseret") return t.dics;
+  if(r[0]==="vigasz")   return t.vigasz;
+  if(r[0]==="koszonto") return t.koszontok;
+  return null;
+}
+function uzCsoportok(){ // a lektor-lista és az export építéséhez
+  const l = ["dicseret.folyamat","dicseret.altalanos","dicseret.neves","koszonto.neves","koszonto.sima"];
+  for(const t in TEMAK) l.push("dicseret."+t, "vigasz."+t, "koszonto."+t);
+  return l;
+}
+let utolsoUzenet = null;  // az utoljára megjelenített üzenet azonosítója
+let kenyszUzenet = null;  // lektor-mód: "csoport#index" – ezt kell megjeleníteni
+function valasztUz(csoport){
+  const t = uzCsoport(csoport) || [];
+  if(!t.length) return "";
+  let i = -1;
+  if(kenyszUzenet){
+    const r = kenyszUzenet.split("#");
+    if(r[0]===csoport){ const x = parseInt(r[1],10); if(x>=0 && x<t.length) i = x; }
+  }
+  if(i<0) i = rnd(0, t.length-1);
+  utolsoUzenet = csoport+"#"+i;
+  return t[i];
+}
+const uzNev = sz => { const n = nevOlvas(); return n ? String(sz).split("{n}").join(n) : String(sz); };
 function dicseret(){
   // hangsúly a FOLYAMAT-dicséreten (kitartás, módszer), nem a személy minősítésén
-  const n = nevOlvas(), r = Math.random();
-  if(r<0.5) return valaszt(DICSERET_FOLYAMAT);
-  if(r<0.72) return valaszt(aktTema().dics);
-  if(n && r<0.85)
-    return valaszt([`Ez az, ${n}! 🙌`,`${n}, ez kitartó munka volt! 😎`,`Ügyes vagy, ${n}! 🌟`,
-                    `${n}, a gyakorlásod meghozta! 🏆`,`Így kell ezt, ${n}! 🔥`,
-                    `${n}, jól gondolkodtál! 🤝`,`Szép munka, ${n}! 🧠`]);
-  return valaszt(DICSERET);
+  const n = nevOlvas();
+  if(kenyszUzenet){ // lektor-mód: pontosan a kért mondat
+    const cs = kenyszUzenet.split("#")[0];
+    if(cs.indexOf("dicseret.")===0 && uzCsoport(cs)) return uzNev(valasztUz(cs));
+  }
+  const r = vel();
+  if(r<0.5) return uzNev(valasztUz("dicseret.folyamat"));
+  if(r<0.72) return uzNev(valasztUz("dicseret."+beall.tema));
+  if(n && r<0.85) return uzNev(valasztUz("dicseret.neves"));
+  return uzNev(valasztUz("dicseret.altalanos"));
+}
+function vigaszUzenet(){
+  if(kenyszUzenet){
+    const cs = kenyszUzenet.split("#")[0];
+    if(cs.indexOf("vigasz.")===0 && uzCsoport(cs)) return uzNev(valasztUz(cs));
+  }
+  return uzNev(valasztUz("vigasz."+beall.tema));
 }
 const KOSZONTOK_NEVES = [
   "Szia {n}! Jó munkát! 💪","Hajrá {n}, ma is menni fog! 🚀",
@@ -2545,8 +2634,16 @@ const KOSZONTOK_SIMA = [
 ];
 function veletlenUzenet(){
   const n = nevOlvas();
-  return n ? valaszt(KOSZONTOK_NEVES.concat(aktTema().koszontok)).replaceAll("{n}", n)
-           : valaszt(KOSZONTOK_SIMA);
+  if(kenyszUzenet){
+    const cs = kenyszUzenet.split("#")[0];
+    if(cs.indexOf("koszonto.")===0 && uzCsoport(cs)) return uzNev(valasztUz(cs));
+  }
+  if(!n) return valasztUz("koszonto.sima");
+  // az eredeti egyetlen összefűzött tömbből választott: a hosszakkal arányos súly
+  // pontosan ugyanazt az eloszlást adja, csak most tudjuk, melyik csoportból jött
+  const a = (uzCsoport("koszonto.neves")||[]).length;
+  const b = (uzCsoport("koszonto."+beall.tema)||[]).length;
+  return uzNev(valasztUz(rnd(1, a+b) <= a ? "koszonto.neves" : "koszonto."+beall.tema));
 }
 function frissitKoszonto(){ $("koszonto").textContent = veletlenUzenet(); }
 const RAG = {1:"es",2:"es",3:"as",4:"es",5:"ös",6:"os",7:"es",8:"as",9:"es",10:"es"};
@@ -2560,7 +2657,7 @@ const Nevelo = x => nevelo(x)==="az" ? "Az" : "A";
 /* ================= beállítások (életkor, kör-hossz) ================= */
 let beall = { kor:9, dbKor:10, tema:"hp", avatar:"🦊", targy:"matek", hangforras:"web",
               nyelv:NYELV_ALAP, orszag:ORSZAG_ALAP };
-function beallMent(){ try{ localStorage.setItem("matekBeall", JSON.stringify(beall)); }catch(e){} }
+function beallMent(){ if(lektorMod) return; try{ localStorage.setItem("matekBeall", JSON.stringify(beall)); }catch(e){} }
 function beallTolt(){ try{ const x=JSON.parse(localStorage.getItem("matekBeall"));
   if(x && x.kor>=7 && x.kor<=11 && x.dbKor>=5 && x.dbKor<=20){
     if(!x.tema || !TEMAK[x.tema]) x.tema="hp";
@@ -2723,6 +2820,106 @@ const stat = { szorzas:[0,0], helyi:[0,0], muvelet:[0,0], potlas:[0,0], irasbeli
                abc:[0,0], mgh:[0,0], jly:[0,0], szotag:[0,0], irasjel:[0,0],
                anszo:[0,0], anszam:[0,0], anbetuz:[0,0] }; // [jó, összes]
 
+/* ================= LEKTOR-MÓD ÉS VISSZAJÁTSZÁS =================
+   Egy link pontosan azt az állapotot hozza vissza, amit a gyerek látott:
+   #l=1&m=<modul>&s=<mag>&v=<válasz>&t=<téma>&k=<kor>&n=<név>&u=<üzenetkulcs>
+   v: "j" = a helyes válasz, "b" = tipikus rossz válasz, egyéb = pontosan az az érték.
+   u: pl. "dicseret.hp#42" – a megjelenítendő mondat (enélkül véletlen).
+   Lektor-módban NEM írunk se naplót, se beállítást. */
+let lektorMod = false, lektorAdat = null, lektorLista = null, lektorPoz = 0;
+function lektorParam(){
+  try{
+    const h = (location.hash||"").replace(/^#/,"");
+    if(!h) return null;
+    const p = new URLSearchParams(h);
+    if(p.get("l")!=="1") return null;
+    return { m:p.get("m")||"szorzas", s:(parseInt(p.get("s")||"0",10)||1)>>>0,
+             v:p.get("v")||"j", t:p.get("t")||"", k:parseInt(p.get("k")||"0",10)||0,
+             n:p.has("n")?p.get("n"):null, u:p.get("u")||null, cs:p.get("cs")||null };
+  }catch(e){ return null; }
+}
+// tipikus rossz válasz: a felkínált opciók közül egy másik, számnál egy közeli érték
+function lektorRosszValasz(k){
+  if(!k) return "0";
+  if(Array.isArray(k.opciok)){
+    const m = k.opciok.filter(o=>String(o)!==String(k.valasz));
+    if(m.length) return String(m[0]);
+  }
+  const n = parseInt(k.valasz,10);
+  return isNaN(n) ? "?" : String(n+1);
+}
+function lektorIndit(){
+  const a = lektorParam();
+  if(!a) return false;
+  lektorMod = true; lektorAdat = a;
+  if(a.t && TEMAK[a.t]) beall.tema = a.t;
+  if(a.k>=7 && a.k<=11){ beall.kor = a.k; korTablak(); }
+  // a léptethető csoport a cs= paraméterből, ennek hiányában az üzenetkulcsból jön
+  const cso = a.cs || (a.u ? a.u.split("#")[0] : null);
+  if(cso && uzCsoport(cso)){
+    lektorLista = cso;
+    lektorPoz = (a.u && a.u.indexOf(cso+"#")===0) ? (parseInt(a.u.split("#")[1],10)||0) : 0;
+  }
+  kenyszUzenet = a.u;
+  targyEllenoriz(); beallKijelez();
+  lektorSavKijelez();
+  lektorJatszik();
+  return true;
+}
+function lektorJatszik(){
+  const a = lektorAdat;
+  mod = a.m; korHossz = beall.dbKor;
+  kerdesek=0; jok=0; sorozat=0; maxSorozat=0; hibak=[]; korId=null; ujraMod=false;
+  mutat("scr-game"); rajzolPontok();
+  kovetkezo(true);
+  // a válasz beküldése ugyanazon a kódúton, amit a gyerek használ
+  const k = aktKerdes;
+  if(!k || k.modul==="irasbeli" || k.tipus==="allit" || k.tipus==="betuz") return; // ezeknél csak a feladat jelenik meg
+  bevitel = a.v==="j" ? String(k.valasz) : a.v==="b" ? lektorRosszValasz(k) : a.v;
+  ellenoriz();
+}
+// üzenet-léptetés: ugyanabban a csoportban a következő/előző mondat
+function lektorLep(d){
+  if(!lektorLista) return;
+  const t = uzCsoport(lektorLista) || [];
+  if(!t.length) return;
+  lektorPoz = (lektorPoz + d + t.length) % t.length;
+  lektorAdat.u = kenyszUzenet = lektorLista+"#"+lektorPoz;
+  lektorSavKijelez();
+  lektorJatszik();
+}
+/* ---- lektori megjegyzések (localStorage, CSV-exporttal) ---- */
+const LEKTOR_TAR = "matekLektor";
+function lektorMegjegyzesek(){ try{ return JSON.parse(localStorage.getItem(LEKTOR_TAR)||"{}"); }catch(e){ return {}; } }
+function lektorMegjegyzesMent(){
+  const k = (lektorAdat && lektorAdat.u) || (lektorAdat ? lektorAdat.m+"@"+lektorAdat.s : "?");
+  const be = $("lektor-megjegyzes");
+  const t = lektorMegjegyzesek();
+  const sz = (be && be.value || "").trim();
+  if(sz) t[k] = { sz, ido:new Date().toISOString(), link:location.href };
+  else delete t[k];
+  try{ localStorage.setItem(LEKTOR_TAR, JSON.stringify(t)); }catch(e){}
+  const j = $("lektor-jelzes"); if(j){ j.textContent = sz ? "mentve ✔" : "törölve"; setTimeout(()=>{ j.textContent=""; }, 1500); }
+}
+function lektorExport(){
+  const t = lektorMegjegyzesek();
+  const sorok = [["kulcs","megjegyzes","idopont","link"]];
+  for(const k in t) sorok.push([k, t[k].sz, t[k].ido, t[k].link]);
+  const csv = "\ufeff" + sorok.map(r=>r.map(c=>'"'+String(c).split('"').join('""')+'"').join(";")).join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8"}));
+  a.download = "lektor_megjegyzesek.csv"; a.click();
+}
+function lektorSavKijelez(){
+  const sav = $("lektor-sav"); if(!sav) return;
+  sav.style.display = lektorMod ? "block" : "none";
+  if(!lektorMod) return;
+  const a = lektorAdat, t = lektorLista ? (uzCsoport(lektorLista)||[]) : null;
+  $("lektor-kulcs").textContent = (a.u || (a.m + " · mag " + a.s)) + (t ? "  ("+(lektorPoz+1)+"/"+t.length+")" : "");
+  $("lektor-nyilak").style.display = t ? "inline-flex" : "none";
+  const be = $("lektor-megjegyzes");
+  if(be){ const m = lektorMegjegyzesek()[a.u || (a.m+"@"+a.s)]; be.value = m ? m.sz : ""; }
+}
 /* ================= képernyőváltás ================= */
 // Menü-szintek: 0 = tantárgyak főmenüje, 1 = a tantárgy feladattípusai, 2 = minden más (setup, játék, szülői)
 const MENU_SZINT = { "scr-fomenu":0, "scr-menu":1 };
@@ -2922,12 +3119,12 @@ function rajzolMuvelet(){
 
 function genSzorzas(){
   let a,b;
-  if(gyengeTenyek.length && Math.random()<0.5){
+  if(gyengeTenyek.length && vel()<0.5){
     const f = valaszt(gyengeTenyek); a=f[0]; b=f[1];
   } else {
     a = valaszt([...kivTablak]); b = rnd(1,10);
   }
-  if(Math.random()<0.25){ // hiányzó tényező
+  if(vel()<0.25){ // hiányzó tényező
     return { szoveg:`<span class="nagy">${a} × ? = ${a*b}</span>`, valasz:b,
              hint:`${a} × ${b} = ${a*b}, tehát a hiányzó szám: ${b}`,
              modul:"szorzas", cimke:`${a} × ? = ${a*b}`, teny:[a,b],
@@ -2964,7 +3161,7 @@ function genHelyi(){
              modul:"helyi", cimke:`${n}-ban a ${jegy}-es értéke`, tf:"Helyiérték · számjegy értéke" };
   }
   if(t==="kerekit"){
-    if(Math.random()<0.5){
+    if(vel()<0.5){
       let n; do{ n=rnd(101,989); }while(n%10===0);
       return { szoveg:`Kerekítsd <b>tízesre</b>:<br><span class="nagy">${n}</span>`,
                valasz:Math.round(n/10)*10,
@@ -2980,7 +3177,7 @@ function genHelyi(){
   if(t==="szomszed"){
     const fajta = valaszt(["egyes","tizes","szazas"]);
     if(fajta==="egyes"){
-      const n = rnd(100,998), kisebb = Math.random()<0.5;
+      const n = rnd(100,998), kisebb = vel()<0.5;
       return { szoveg:`Mi ${nevelo(n)} <b>${n}</b> szám<br><b>${kisebb?"kisebb":"nagyobb"}</b> egyes szomszédja?`,
                valasz: kisebb? n-1 : n+1,
                hint:`Az egyes szomszédok: ${n-1} és ${n+1}.`,
@@ -2988,14 +3185,14 @@ function genHelyi(){
     }
     if(fajta==="tizes"){
       let n; do{ n=rnd(101,989); }while(n%10===0);
-      const kisebb = Math.random()<0.5, also = Math.floor(n/10)*10;
+      const kisebb = vel()<0.5, also = Math.floor(n/10)*10;
       return { szoveg:`Mi ${nevelo(n)} <b>${n}</b> szám<br><b>${kisebb?"kisebb":"nagyobb"}</b> tízes szomszédja?`,
                valasz: kisebb? also : also+10,
                hint:`A tízes szomszédok: ${also} és ${also+10}.`,
                modul:"helyi", cimke:`${n} ${kisebb?"kisebb":"nagyobb"} tízes szomszédja`, tf:"Szomszédok · tízes" };
     }
     let n; do{ n=rnd(101,899); }while(n%100===0);
-    const kisebb = Math.random()<0.5, also = Math.floor(n/100)*100;
+    const kisebb = vel()<0.5, also = Math.floor(n/100)*100;
     return { szoveg:`Mi ${nevelo(n)} <b>${n}</b> szám<br><b>${kisebb?"kisebb":"nagyobb"}</b> százas szomszédja?`,
              valasz: kisebb? also : also+100,
              hint:`A százas szomszédok: ${also} és ${also+100}.`,
@@ -3003,7 +3200,7 @@ function genHelyi(){
   }
   // hasonlit
   let a=rnd(100,999), b;
-  do{ b = Math.random()<0.4 ? a - rnd(1,9)*(valaszt([1,10,100])) : rnd(100,999); } while(b===a || b<1);
+  do{ b = vel()<0.4 ? a - rnd(1,9)*(valaszt([1,10,100])) : rnd(100,999); } while(b===a || b<1);
   return { szoveg:`Melyik szám a <b>nagyobb</b>?`, tipus:"valaszto",
            opciok:[a,b], valasz:Math.max(a,b),
            hint:`Először a százasokat hasonlítsd, ha egyenlők, a tízeseket!`,
@@ -3020,7 +3217,7 @@ function genHelyi20(){ // 7 éveseknek: 20-as számkör
              tf:"Helyiérték · számépítés" };
   }
   if(t==="szomszed"){
-    const n=rnd(1,19), kisebb=Math.random()<0.5;
+    const n=rnd(1,19), kisebb=vel()<0.5;
     return { szoveg:`Mi ${nevelo(n)} <b>${n}</b> szám<br><b>${kisebb?"kisebb":"nagyobb"}</b> szomszédja?`,
              valasz:kisebb?n-1:n+1, hint:`A szomszédok: ${n-1} és ${n+1}.`,
              modul:"helyi", cimke:`${n} ${kisebb?"kisebb":"nagyobb"} szomszédja`, tf:"Szomszédok · egyes" };
@@ -3057,29 +3254,29 @@ function genHelyi100(){ // 8 éveseknek: 100-as számkör (kerekítés még nem 
              modul:"helyi", cimke:`${n} tízesre kerekítve`, tf:"Kerekítés · tízesre" };
   }
   if(t==="szomszed"){
-    if(Math.random()<0.5){
-      const n=rnd(10,98), kisebb=Math.random()<0.5;
+    if(vel()<0.5){
+      const n=rnd(10,98), kisebb=vel()<0.5;
       return { szoveg:`Mi ${nevelo(n)} <b>${n}</b> szám<br><b>${kisebb?"kisebb":"nagyobb"}</b> egyes szomszédja?`,
                valasz:kisebb?n-1:n+1, hint:`Az egyes szomszédok: ${n-1} és ${n+1}.`,
                modul:"helyi", cimke:`${n} ${kisebb?"kisebb":"nagyobb"} szomszédja`, tf:"Szomszédok · egyes" };
     }
     let n; do{ n=rnd(11,89); }while(n%10===0);
-    const kisebb=Math.random()<0.5, also=Math.floor(n/10)*10;
+    const kisebb=vel()<0.5, also=Math.floor(n/10)*10;
     return { szoveg:`Mi ${nevelo(n)} <b>${n}</b> szám<br><b>${kisebb?"kisebb":"nagyobb"}</b> tízes szomszédja?`,
              valasz:kisebb?also:also+10, hint:`A tízes szomszédok: ${also} és ${also+10}.`,
              modul:"helyi", cimke:`${n} ${kisebb?"kisebb":"nagyobb"} tízes szomszédja`, tf:"Szomszédok · tízes" };
   }
   const a=rnd(10,99); let b;
-  do{ b = Math.random()<0.4 ? a - rnd(1,9)*valaszt([1,10]) : rnd(10,99); }while(b===a || b<1);
+  do{ b = vel()<0.4 ? a - rnd(1,9)*valaszt([1,10]) : rnd(10,99); }while(b===a || b<1);
   return { szoveg:`Melyik szám a <b>nagyobb</b>?`, tipus:"valaszto", opciok:[a,b], valasz:Math.max(a,b),
            hint:`Először a tízeseket hasonlítsd, ha egyenlők, az egyeseket!`,
            modul:"helyi", cimke:`${a} vagy ${b}`, tf:"Összehasonlítás" };
 }
 
 function genMuvelet(){
-  let nehez = muveletNehez==="vegyes" ? (Math.random()<0.5?"konnyu":"nehez") : muveletNehez;
-  if(nehezKor() && muveletNehez==="vegyes" && Math.random()<0.4) nehez="nehez"; // 10-11 évnél több átlépés
-  const osszead = Math.random()<0.5;
+  let nehez = muveletNehez==="vegyes" ? (vel()<0.5?"konnyu":"nehez") : muveletNehez;
+  if(nehezKor() && muveletNehez==="vegyes" && vel()<0.4) nehez="nehez"; // 10-11 évnél több átlépés
+  const osszead = vel()<0.5;
   const m = szamkor();
   if(m===20){ // 7 évesek: 20-as számkör
     let a,b;
@@ -3094,7 +3291,7 @@ function genMuvelet(){
   }
   if(m===100){ // 8 évesek: 100-as számkör
     let a,b;
-    if(Math.random()<0.2){ // kerek tízesek
+    if(vel()<0.2){ // kerek tízesek
       if(osszead){ a=10*rnd(2,7); b=10*rnd(1,Math.floor((90-a)/10)); return muveletKerdes(a,b,"+"); }
       a=10*rnd(3,9); b=10*rnd(1,a/10-1); return muveletKerdes(a,b,"−");
     }
@@ -3112,7 +3309,7 @@ function genMuvelet(){
     return muveletKerdes(a,b,"−");
   }
   // 20% kerek tízesekkel
-  if(Math.random()<0.2){
+  if(vel()<0.2){
     if(osszead){
       const a=10*rnd(3,80), b=10*rnd(2,Math.floor((990-a)/10));
       return muveletKerdes(a,b,"+");
@@ -3171,7 +3368,7 @@ function genPotlas(){
   else if(t==="t10"){ a=rnd(1,9); cel=10; }
   else if(t==="t100"){ a=rnd(11,99); cel=100; }
   else if(t==="t1000"){
-    a = Math.random()<0.6 ? 10*rnd(11,99) : rnd(101,999); cel=1000;
+    a = vel()<0.6 ? 10*rnd(11,99) : rnd(101,999); cel=1000;
   }
   else if(t==="kerek10"){ do{ a=rnd(11,98); }while(a%10===0); cel=Math.ceil(a/10)*10; }
   else { do{ a=rnd(101,899); }while(a%100===0); cel=Math.ceil(a/100)*100; }
@@ -3210,7 +3407,7 @@ function genIrasbeli(){
 
 function genOsztas(maradekosIs){
   const b = valaszt([...kivTablak]), q = rnd(1,10);
-  const maradekos = maradekosIs && Math.random()<0.5;
+  const maradekos = maradekosIs && vel()<0.5;
   const r = maradekos ? rnd(1,b-1) : 0;
   const a = b*q + r;
   if(!maradekos){
@@ -3218,7 +3415,7 @@ function genOsztas(maradekosIs){
              hint:`Gondolj a szorzótáblára: ${b} × ${q} = ${a}`,
              modul:"osztas", cimke:`${a} : ${b}`, tf:`Osztás · ${b}-${RAG[b]} tábla` };
   }
-  if(Math.random()<0.5){
+  if(vel()<0.5){
     return { szoveg:`Hányszor van meg ${nevelo(b)} <b>${b}</b> ebben: <b>${a}</b>?`, valasz:q,
              hint:`${b} × ${q} = ${b*q}, és még marad ${r}. Tehát ${q}-szor.`,
              modul:"osztas", cimke:`${a} : ${b} (hányszor?)`, tf:"Osztás · maradékos" };
@@ -3247,7 +3444,7 @@ function genSzamegyenes(){
   const cimkek = m===20 ? [0,10,20] : m===100 ? [0,50,100] : [0,500,1000];
   const also = v => Math.floor(v/lepes)*lepes;
   const svg = v => szamegyenesSVG(v, m, lepes, cimkek);
-  if(Math.random()<0.5){ // választós
+  if(vel()<0.5){ // választós
     let v; do{ v = m===20 ? rnd(1,19) : m===100 ? rnd(2,98) : 10*rnd(2,98); }while(lepes>1 && v%lepes===0);
     const kozel = m===20 ? [v-1,v+1,v-2,v+2,v-5,v+5]
                 : m===100 ? [v-10,v+10,v-5,v+5,v-1,v+1]
@@ -3275,7 +3472,7 @@ function genLanc(){
   const lepesek = [];
   for(let i=0;i<lancLepes;i++){
     const d = m===20 ? rnd(1,9) : m===100 ? valaszt([rnd(2,9), 10*rnd(1,3)]) : 10*rnd(1,15);
-    let plusz = Math.random()<0.5;
+    let plusz = vel()<0.5;
     if(cur - d < 0) plusz = true;
     if(cur + d > m) plusz = false;
     const elozo = cur;
@@ -3369,7 +3566,7 @@ function genSzoveges(){
 function genSorozat(){
   const m = szamkor();
   const lepes = m===20 ? valaszt([1,2,5]) : m===100 ? valaszt([2,5,10]) : valaszt([10,25,50,100]);
-  const felfele = Math.random()<0.7;
+  const felfele = vel()<0.7;
   const start = felfele ? rnd(0, m-5*lepes) : rnd(5*lepes, m);
   const tagok = [];
   for(let i=0;i<4;i++) tagok.push(felfele ? start+i*lepes : start-i*lepes);
@@ -3426,7 +3623,7 @@ function genOra(){
                modul:"ora", cimke:`óra: ${h}:00`, tf:"Óra · egész óra" };
     }
     if(beall.kor===8){
-      if(Math.random()<0.5){
+      if(vel()<0.5){
         const h=rnd(1,12);
         return { szoveg:`${oraSVG(h,0)}Hány órát mutat az óra?`, valasz:h,
                  hint:`A rövid mutató ide mutat: ${h} → ${h} óra.`,
@@ -3450,7 +3647,7 @@ function genOra(){
   if(t==="atvalt"){
     const forma = valaszt(Object.keys(SZOFORMA));
     const kov = rnd(1,12), h = kov===1?12:kov-1, m = SZOFORMA[forma];
-    if(Math.random()<0.5){ // szóban -> digitális
+    if(vel()<0.5){ // szóban -> digitális
       const jo = digit(h,m);
       const opciok=[jo, digit(kov,m), digit(h, m===30?15:30)];
       return { szoveg:`Melyik digitális idő ez:<br><span class="nagy">${szovegesIdo(forma,kov)}</span> ?`,
@@ -3521,7 +3718,7 @@ function genPenz(){
 }
 
 function genBecsles(){
-  const ossz = Math.random()<0.5;
+  const ossz = vel()<0.5;
   let a,b;
   if(ossz){ a=rnd(105,880); b=rnd(105,985-a); } else { a=rnd(320,980); b=rnd(105,a-120); }
   const ka=Math.round(a/100)*100, kb=Math.round(b/100)*100;
@@ -3558,14 +3755,14 @@ function toRoman(n){
 }
 function genRomai(){
   const n = rnd(1,100);
-  if(Math.random()<0.5){
+  if(vel()<0.5){
     return { szoveg:`Melyik szám ez?<br><span class="nagy">${toRoman(n)}</span>`, valasz:n,
              hint:`${toRoman(n)} = ${n}`, modul:"romai", cimke:`${toRoman(n)} = ?`, tf:"Római számok · olvasás" };
   }
   const opciok=[toRoman(n)];
   let k=1;
   while(opciok.length<3){
-    const j = n+ (Math.random()<0.5?-k:k); k++;
+    const j = n+ (vel()<0.5?-k:k); k++;
     if(j>=1 && j<=100 && !opciok.includes(toRoman(j))) opciok.push(toRoman(j));
   }
   return { szoveg:`Hogyan írjuk római számmal?<br><span class="nagy">${n}</span>`,
@@ -3574,9 +3771,9 @@ function genRomai(){
 }
 
 function genSorrend(){
-  if(Math.random()<0.5){
+  if(vel()<0.5){
     const b=rnd(2,9), c=rnd(2,9), szorzat=b*c;
-    if(Math.random()<0.5){
+    if(vel()<0.5){
       const a=rnd(2,90);
       return { szoveg:`<span class="nagy">${a} + ${b} × ${c} = ?</span>`, valasz:a+szorzat,
                hint:`Előbb a szorzás: ${b} × ${c} = ${szorzat}, majd ${a} + ${szorzat} = ${a+szorzat}.`,
@@ -3588,7 +3785,7 @@ function genSorrend(){
              modul:"sorrend", cimke:`${a} − ${b} × ${c}`, tf:"Műveleti sorrend · szorzás" };
   }
   const c=rnd(2,9), q=rnd(2,9), d=c*q, a=rnd(2,90);
-  if(Math.random()<0.5)
+  if(vel()<0.5)
     return { szoveg:`<span class="nagy">${a} + ${d} : ${c} = ?</span>`, valasz:a+q,
              hint:`Előbb az osztás: ${d} : ${c} = ${q}, majd ${a} + ${q} = ${a+q}.`,
              modul:"sorrend", cimke:`${a} + ${d} : ${c}`, tf:"Műveleti sorrend · osztás" };
@@ -3606,7 +3803,7 @@ function genSzamalkotas(){
     while(halmaz.size<db) halmaz.add(rnd(0,9));
     jegyek = [...halmaz];
   }while(jegyek.every(x=>x===0));
-  const nagy = Math.random()<0.5;
+  const nagy = vel()<0.5;
   const cs = [...jegyek].sort((x,y)=> nagy ? y-x : x-y);
   if(!nagy && cs[0]===0){ [cs[0],cs[1]]=[cs[1],cs[0]]; } // 0 nem állhat elöl
   const val = +cs.join("");
@@ -3672,22 +3869,22 @@ function genIgazHamis(){
   const t = valaszt(lista);
   if(t==="osszehas"){
     let a=rnd(1,m), b; do{ b=rnd(1,m); }while(b===a);
-    const nagyobb = Math.random()<0.5;
+    const nagyobb = vel()<0.5;
     return ihKerdes(`${a} ${nagyobb?"&gt;":"&lt;"} ${b}`, nagyobb ? a>b : a<b,
       `${a} ${a>b?">":"<"} ${b} – a nagyobb szám felé nyílik a jel.`,
       `${a} ${nagyobb?">":"<"} ${b}?`, "összehasonlítás");
   }
   if(t==="muvelet"){
     const a=rnd(2, Math.floor(m/2)), b=rnd(1, Math.floor(m/2));
-    const igaz = Math.random()<0.5;
-    const c = igaz ? a+b : a+b + (Math.random()<0.5?1:-1)*rnd(1,3);
+    const igaz = vel()<0.5;
+    const c = igaz ? a+b : a+b + (vel()<0.5?1:-1)*rnd(1,3);
     return ihKerdes(`${a} + ${b} = ${c}`, igaz && c===a+b || (!igaz && c===a+b),
       `${a} + ${b} = ${a+b}${c===a+b?"":`, nem ${c}`}.`,
       `${a} + ${b} = ${c}?`, "művelet");
   }
   if(t==="paros"){
     const n=rnd(2,m);
-    const parost = Math.random()<0.5;
+    const parost = vel()<0.5;
     return ihKerdes(`${Nevelo(n)} ${n} ${parost?"páros":"páratlan"} szám.`,
       parost ? n%2===0 : n%2===1,
       `${Nevelo(n)} ${n} ${n%2===0?"páros":"páratlan"}: ${n%2===0?"osztható 2-vel":"nem osztható 2-vel"}.`,
@@ -3695,7 +3892,7 @@ function genIgazHamis(){
   }
   if(t==="oszthato"){
     const b=rnd(2,9);
-    const n = Math.random()<0.5 ? b*rnd(2,Math.floor(Math.min(m,90)/b)) : rnd(3,Math.min(m,90));
+    const n = vel()<0.5 ? b*rnd(2,Math.floor(Math.min(m,90)/b)) : rnd(3,Math.min(m,90));
     return ihKerdes(`${Nevelo(n)} ${n} osztható ${VELMAP[b]}.`, n%b===0,
       n%b===0 ? `${n} : ${b} = ${n/b}, tehát osztható.`
               : `${n} : ${b} nem egész (${b} × ${Math.floor(n/b)} = ${b*Math.floor(n/b)}, marad ${n%b}).`,
@@ -3728,8 +3925,8 @@ function genIgazHamis(){
 
 function genJelek(){
   const m = szamkor();
-  if(Math.random()<0.5){ // relációs jel
-    let a=rnd(1,m), b = Math.random()<0.2 ? a : rnd(1,m);
+  if(vel()<0.5){ // relációs jel
+    let a=rnd(1,m), b = vel()<0.2 ? a : rnd(1,m);
     const jo = a<b ? "<" : a>b ? ">" : "=";
     return { szoveg:`<span class="nagy">${a} ▢ ${b}</span><br>Melyik jel illik a ▢ helyére?`,
              tipus:"valaszto", opciok:["<",">","="], valasz:jo,
@@ -3760,7 +3957,7 @@ function genKakukk(){
   const t = beall.kor>=8 ? valaszt(["paros","tobbszoros","kerek"]) : "paros";
   let jok=[], kakukk, tulaj;
   if(t==="paros"){
-    const parosak = Math.random()<0.5;
+    const parosak = vel()<0.5;
     while(jok.length<3){ const x = rnd(1,Math.floor(m/2))*2 - (parosak?0:1);
       if(x>=1 && x<=m && !jok.includes(x)) jok.push(x); }
     kakukk = rnd(1,Math.floor(m/2))*2 - (parosak?1:0);
@@ -3935,7 +4132,7 @@ const ABC_SZAVAK = [["alma","🍎"],["béka","🐸"],["ceruza","✏️"],["dob",
   ["sajt","🧀"],["teknős","🐢"],["uborka","🥒"],["virág","🌸"],["zebra","🦓"]];
 const abcLista = () => (beall.kor<=7 ? ABC_ALAP : ABC_TELJES);
 const abcNagy = b => b.charAt(0).toUpperCase() + b.slice(1); // "cs" -> "Cs"
-const abcKever = a => a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]);
+const abcKever = a => a.map(x=>[vel(),x]).sort((p,q)=>p[0]-q[0]).map(p=>p[1]);
 // az ábécé darabkája a betű körül, a keresett betű kiemelve
 function abcReszlet(L, i){
   const a = Math.max(0,i-2), b = Math.min(L.length-1,i+2);
@@ -3953,7 +4150,7 @@ function abcOpciok(L, i, db){
   return abcKever([...ki]);
 }
 function genAbc(){
-  const L = abcLista(), r = Math.random();
+  const L = abcLista(), r = vel();
   // 1) Mi jön utána? – ez vési be legjobban a sorrendet, ezért ez a leggyakoribb
   if(r < 0.30){
     const i = rnd(0, L.length-2);
@@ -3983,7 +4180,7 @@ function genAbc(){
   }
   // 4) Kis- és nagybetű párosítása (mindkét irányban)
   if(r < 0.76){
-    const i = rnd(0, L.length-1), nagybol = Math.random()<0.5;
+    const i = rnd(0, L.length-1), nagybol = vel()<0.5;
     const opc = abcOpciok(L,i);
     return { szoveg: nagybol
              ? `Melyik ennek a <b>kisbetűs</b> párja?<br><span class="nagy">${abcNagy(L[i])}</span>`
@@ -4022,7 +4219,7 @@ function genMgh(){
            modul:"mgh", cimke:`${csonk} (${teljes})`, tf:"Magánhangzók · rövid vagy hosszú?" };
 }
 function genJly(){
-  const lyE = Math.random()<0.5;
+  const lyE = vel()<0.5;
   const szo = valaszt(lyE ? LY_SZAVAK : J_SZAVAK);
   const csonk = lyE ? szo.replace("ly","▢") : szo.replace("j","▢");
   return { szoveg:`J vagy LY?<br><span class="nagy">${csonk}</span>`,
@@ -4261,7 +4458,7 @@ function genAnszo(){
   const tarsak = ANGOL_SZAVAK.filter(x=>x[1]!==en && x[0]!==hu);
   const azonosTema = tarsak.filter(x=>x[2]===tema);
   const pool = azonosTema.length>=2 ? azonosTema : tarsak;
-  if(Math.random()<0.5){ // magyar -> angol
+  if(vel()<0.5){ // magyar -> angol
     const opciok=[en];
     while(opciok.length<3){ const d=valaszt(pool)[1]; if(!opciok.includes(d)) opciok.push(d); }
     opciok.sort();
@@ -4355,7 +4552,7 @@ function betuzKesz(){
                  b:"", g:"", q: {...aktKerdes} });
     v.className="visszajelzes rossz";
     v.innerHTML = `A helyes betűzés: <b>${aktKerdes.valasz}</b>`
-      + `<span class="hint vigasz">${valaszt(aktTema().vigasz)}</span>`
+      + `<span class="hint vigasz">${vigaszUzenet()}</span>`
       + peldaMondatHtml(aktKerdes);
   }
   naploFrissit();
@@ -4381,7 +4578,7 @@ function genEvszak(){
              modul:"evszak", cimke:`${ho} évszaka`, tf:"Évszakok, hónapok, napok" };
   }
   if(t===2){ // melyik nap jön utána / előtte
-    const i = rnd(0,6), utan = Math.random()<0.5;
+    const i = rnd(0,6), utan = vel()<0.5;
     const nap = NAPOK[i], jo = utan ? NAPOK[(i+1)%7] : NAPOK[(i+6)%7];
     const opciok = [jo];
     while(opciok.length<3){ const d = valaszt(NAPOK); if(!opciok.includes(d)) opciok.push(d); }
@@ -4533,7 +4730,7 @@ const EGTAJ_KERDESEK = [
   ["Délben merre van a Nap Magyarországon?", ["délen","északon","nyugaton"], "délen", "Délben a Nap délen, a legmagasabban áll."]
 ];
 function genEgtaj(){
-  if(Math.random()<0.4){ // térbeli tájékozódás: ha X felé nézel, merre van Y?
+  if(vel()<0.4){ // térbeli tájékozódás: ha X felé nézel, merre van Y?
     const i = rnd(0,3), nezes = EGTAJAK[i];
     const t = rnd(1,3);
     const jo = t===1 ? EGTAJAK[(i+1)%4] : t===2 ? EGTAJAK[(i+3)%4] : EGTAJAK[(i+2)%4];
@@ -4562,7 +4759,7 @@ const VARMEGYEK = [
 function genMegye(){
   const i = rnd(0, VARMEGYEK.length-1);
   const [megye, szekhely] = VARMEGYEK[i];
-  const varmegyeIrany = Math.random()<0.5;
+  const varmegyeIrany = vel()<0.5;
   if(varmegyeIrany){ // vármegye -> székhely
     const opciok = [szekhely];
     while(opciok.length<3){ const d = valaszt(VARMEGYEK)[1]; if(!opciok.includes(d)) opciok.push(d); }
@@ -4686,7 +4883,7 @@ function genRitmus(){
 function genSzolmizacio(){
   const t = rnd(1,3);
   if(t===1){ // melyik hang jön utána/előtte a szolmizációs sorban
-    const i = rnd(0,6), utan = Math.random()<0.5;
+    const i = rnd(0,6), utan = vel()<0.5;
     if((utan && i===6) || (!utan && i===0)) return genSzolmizacio();
     const jo = utan ? SZOLM[i+1] : SZOLM[i-1];
     const opciok = [jo];
@@ -4733,7 +4930,7 @@ function genHangkoz(){
   }
   if(t===2){ // lépés vagy ugrás?
     const i = rnd(0, alap.length-2);
-    const lepes = Math.random()<0.5;
+    const lepes = vel()<0.5;
     const masodik = lepes ? alap[i+1] : alap[Math.min(i+rnd(2,3), alap.length-1)];
     if(masodik[0]===alap[i][0]) return genHangkoz();
     const tavolsag = alap.indexOf(masodik) - i;
@@ -4983,7 +5180,12 @@ function kovetkezo(elso, fixKerdes){
     if(ujraMod){ ujraMod=false; hibaCache=null; szuloNezet(); return; }
     vege(); return;
   }
+  // Minden feladat SAJÁT maggal áll elő: ebből a magból a feladat, a válaszlehetőségek
+  // és a hozzá tartozó üzenetek pontosan visszajátszhatók (lektor-link, hiba-visszanézés).
+  const fMag = (lektorMod && lektorAdat) ? lektorAdat.s : ujMag();
+  magBeallit(fMag);
   aktKerdes = fixKerdes || ujKerdes(); bevitel=""; zarolva=false; ir=null;
+  if(aktKerdes) aktKerdes.mag = fMag;
   frissitKoszonto(); // a felső üzenet pörög: egy feladat, egy üzenet
   keszVisszaall(); $("tovabb").disabled=false;
   $("tipus-sor").innerHTML = aktKerdes.tf ? `<span>${aktKerdes.tf}</span>` : "";
@@ -5144,7 +5346,7 @@ function irKesz(){
                  f:ir.snap?ir.snap.f:"", b:"", g:"", q: {...aktKerdes} });
     v.className="visszajelzes rossz";
     v.innerHTML=`Kijött a végeredmény, de volt piros számjegy.<span class="hint">${aktKerdes.cimke} = ${aktKerdes.eredmeny} — nézzétek meg, melyik oszlopnál akadt el!</span>`
-      + `<span class="hint vigasz">${valaszt(aktTema().vigasz)}</span>`;
+      + `<span class="hint vigasz">${vigaszUzenet()}</span>`;
     keszNyil();
   }
   naploFrissit();
@@ -5212,7 +5414,7 @@ function ellenoriz(){
     v.className="visszajelzes rossz";
     v.innerHTML = `A helyes válasz: <b>${aktKerdes.valasz}</b><span class="hint">${aktKerdes.hint}</span>`
       + (aktKerdes.pontos ? `<span class="hint">Pontosan: ${aktKerdes.pontos}</span>` : "")
-      + `<span class="hint vigasz">${valaszt(aktTema().vigasz)}</span>`
+      + `<span class="hint vigasz">${vigaszUzenet()}</span>`
       + peldaMondatHtml(aktKerdes);
     hibak.push({ c:`${aktKerdes.cimke} → helyesen: ${aktKerdes.valasz}`,
                  tf:aktKerdes.tf||"", k:$("kerdes").innerHTML, f:v.innerHTML,
@@ -5407,7 +5609,7 @@ const SZULO_KERDESEK = [
   "Mi az, amiben ma jobb lettél, mint tegnap?",
   "A hibáid egyre okosabbak – melyikből lett ma tudás?"
 ];
-function naploIr(n){ try{ localStorage.setItem("matekNaplo", JSON.stringify(n)); }catch(e){} }
+function naploIr(n){ if(lektorMod) return; try{ localStorage.setItem("matekNaplo", JSON.stringify(n)); }catch(e){} }
 function ujSzuloKerdes(){ $("szulo-kerdes").textContent = valaszt(SZULO_KERDESEK); }
 function szuloNezet(){
   mutat("scr-szulo"); pinMegse(); ujSzuloKerdes();
@@ -5552,7 +5754,7 @@ function nevMegse(){
 }
 
 // VERZIÓ: minden publikálásnál (commitnál) eggyel emelni - a szülői lap alján látszik
-const VERZIO = "v44";
+const VERZIO = "v45";
 $("verzio-cimke").textContent = VERZIO;
 
 beallTolt();
@@ -5560,8 +5762,10 @@ localeInit();
 if(beall.kor!==9) korTablak();
 beallKijelez();
 hangforrasSorEpit();
-fomenu();
-if(nevOlvas()===null) nevSzerkeszt(); // első indulás: "Mi a neved?"
+if(!lektorIndit()){
+  fomenu();
+  if(nevOlvas()===null) nevSzerkeszt(); // első indulás: "Mi a neved?"
+}
 // PIN: Enter és helyes kód azonnali elfogadása; név: Enter = mentés
 $("pin-input").addEventListener("input", e=>{ if(e.target.value==="9999") pinOk(); });
 $("pin-input").addEventListener("keydown", e=>{ if(e.key==="Enter") pinOk(); });
