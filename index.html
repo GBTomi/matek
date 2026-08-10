@@ -255,6 +255,8 @@
   #lektor-sav button{background:#5b3fd9; color:#fff; border:none; border-radius:8px;
     padding:5px 10px; font-size:.82rem; cursor:pointer;}
   #lektor-sav button:active{transform:scale(.95);}
+  #lektor-sav select{border:none; border-radius:8px; padding:5px 8px; font-size:.82rem;
+    font-family:inherit; background:#fff; color:#2b2350;}
   #lektor-sav textarea{width:100%; margin-top:6px; border-radius:8px; border:none; padding:6px;
     font-family:inherit; font-size:.85rem; min-height:44px; resize:vertical;}
   #lektor-nyilak{display:inline-flex; gap:4px;}
@@ -266,6 +268,15 @@
     padding:7px 12px; font-size:.85rem; font-weight:700; cursor:pointer;}
   #visszanezes-sav button:active{transform:scale(.95);}
   #lektor-jelzes{opacity:.85; font-style:italic;}
+  #lektor-info{display:none; margin-top:8px; background:#3a3070; border-radius:10px;
+    padding:8px 10px; font-size:.8rem; line-height:1.45;}
+  #lektor-info b{font-weight:700;}
+  #lektor-info ul{margin:4px 0 0; padding-left:18px;}
+  #lektor-info li{margin-bottom:3px;}
+  /* felulet-szoveg kiemelese az f= linknel */
+  .lektor-kiemel{outline:3px solid #ffd43b !important; outline-offset:2px;
+    border-radius:6px; animation:lektorVillan 1.1s ease-in-out 3;}
+  @keyframes lektorVillan{0%,100%{background:transparent;} 50%{background:#fff3bf;}}
 </style>
 </head>
 <body>
@@ -276,9 +287,35 @@
       <span id="lektor-nyilak"><button onclick="lektorLep(-1)">◀ előző</button><button onclick="lektorLep(1)">következő ▶</button></span>
       <button onclick="lektorMegjegyzesMent()">megjegyzés mentése</button>
       <button onclick="lektorExport()">export CSV</button>
+      <select id="lektor-statusz" title="Státusz ehhez a szöveghez">
+        <option value="">— státusz —</option><option>OK</option><option>Javítandó</option><option>Kérdés</option>
+      </select>
+      <button id="lektor-kuld-gomb" onclick="lektorKuld()" style="display:none" title="Beírás a megosztott táblázatba">&#8593; küldés a táblázatba</button>
+      <button onclick="lektorInfo()" title="Mi ez és hogyan kell használni?">&#8505;&#65039; mi ez?</button>
       <span id="lektor-jelzes"></span>
     </div>
-    <textarea id="lektor-megjegyzes" placeholder="Megjegyzés ehhez a szöveghez…"></textarea>
+    <textarea id="lektor-megjegyzes" placeholder="Gyors megjegyzés ehhez a szöveghez…"></textarea>
+    <div id="lektor-info">
+      <b>Mit lát itt?</b> Ez a valódi program, pontosan abban az állapotban, ahogy a gyerek látja
+      &ndash; ugyanaz a feladat, ugyanaz az üzenet. Ez a lila sáv csak a lektori linkkel látszik,
+      a gyerek soha nem látja.
+      <ul>
+        <li><b>Fő csatorna a táblázat.</b> A javításokat, a státuszt és a részletes indoklást a
+          megkapott Excel <b>sárga oszlopaiba</b> írd &ndash; azt dolgozzuk fel.</li>
+        <li><b>Ez a doboz gyors jegyzet.</b> Amit ide írsz, a saját böngésződ tárolójába
+          mentődik. Privát ablakban vagy a böngészőadatok törlésekor <b>elveszik</b> &ndash; a végén
+          az &bdquo;export CSV&rdquo; gombbal tudod kimenteni.</li>
+        <li>Ha látod a <b>&bdquo;küldés a táblázatba&rdquo;</b> gombot, a státusz és a megjegyzés
+          egy kattintással bekerül a megosztott táblázat megfelelő sorába. A táblázat nem nyilvános:
+          csak az látja, akivel meg van osztva.</li>
+        <li>Az <b>előző / következő</b> gomb ugyanannak a csoportnak a többi mondatára lép
+          (csak visszajelzés-szövegeknél jelenik meg).</li>
+        <li>Itt semmit nem rontasz el: lektor módban a program <b>nem ír</b> se a gyerek naplójába,
+          se a beállításaiba.</li>
+        <li>A <b>{n}</b> helyére a gyerek neve, a <b>#</b> helyére változó szám kerül &ndash; ezeket
+          a javaslatodban is hagyd meg.</li>
+      </ul>
+    </div>
   </div>
   <h1><span id="avatar-gomb" onclick="avatarPanelNyit()" title="Kattints az avatar cseréjéhez">🦊</span> <span data-t="app.cim">Napi gyakorló</span></h1>
   <div class="koszonto" id="koszonto" onclick="nevSzerkeszt()" title="Kattints a név módosításához"></div>
@@ -562,6 +599,31 @@ function vel(){ // mulberry32
 const ujMag = () => Math.floor(Math.random()*2147483647);
 const rnd = (a,b) => Math.floor(vel()*(b-a+1))+a;
 const valaszt = arr => arr[rnd(0,arr.length-1)];
+
+/* ---- lektor-mod: KENYSZERITETT LISTATETEL (x= paraméter) ----
+   A lektor-link egy KONKRÉT szóra/mondatra nyitja meg a feladatot:  x=<lista>:<tétel>
+   A tételt az ÉRTÉKE azonosítja, nem az indexe, ezért a lista bővítése, átrendezése
+   nem csúsztatja el a korábban kiadott linkeket.
+   A véletlen-sorozat NEM tolódik el: a valaszt() mindig lefut, csak az eredményt
+   cseréljük - így ugyanabból a magból minden más (opciók, üzenet) változatlan marad. */
+let kenyszTetel = null; // {l:"<lista>", e:"<tétel>"}
+const kenyszE = azon => (kenyszTetel && kenyszTetel.l===azon) ? kenyszTetel.e : null;
+const kKeres = (tomb, e, kulcs) => tomb.find(x => String(kulcs ? kulcs(x) : x) === e);
+// tomb-bol valaszt, de lektor-modban a kenyszeritett tetelt adja (teljes = szukites elotti lista)
+function kValaszt(azon, tomb, kulcs, teljes){
+  const v = valaszt(tomb);
+  const e = kenyszE(azon);
+  if(e === null) return v;
+  const t = kKeres(tomb, e, kulcs) || (teljes ? kKeres(teljes, e, kulcs) : undefined);
+  return t === undefined ? v : t;
+}
+// index-alapu valasztasnal ugyanez
+function kIndex(azon, tomb, i, kulcs){
+  const e = kenyszE(azon);
+  if(e === null) return i;
+  const j = tomb.findIndex(x => String(kulcs ? kulcs(x) : x) === e);
+  return j < 0 ? i : j;
+}
 
 /* ================= NYELV ÉS ORSZÁG (i18n-váz) =================
    Ma egyetlen kész nyelv van (magyar), az alapértelmezés HU + hu. A váz viszont
@@ -2855,7 +2917,9 @@ function lektorParam(){
     if(p.get("l")!=="1") return null;
     return { m:p.get("m")||"szorzas", s:(parseInt(p.get("s")||"0",10)||1)>>>0,
              v:p.get("v")||"j", t:p.get("t")||"", k:parseInt(p.get("k")||"0",10)||0,
-             n:p.has("n")?p.get("n"):null, u:p.get("u")||null, cs:p.get("cs")||null };
+             n:p.has("n")?p.get("n"):null, u:p.get("u")||null, cs:p.get("cs")||null,
+             x:p.get("x")||null, f:p.get("f")||null,
+             id:p.get("id")||null, kod:p.get("kod")||null };
   }catch(e){ return null; }
 }
 // tipikus rossz válasz: a felkínált opciók közül egy másik, számnál egy közeli érték
@@ -2881,18 +2945,53 @@ function lektorIndit(){
     lektorPoz = (a.u && a.u.indexOf(cso+"#")===0) ? (parseInt(a.u.split("#")[1],10)||0) : 0;
   }
   kenyszUzenet = a.u;
+  // x=<lista>:<tétel> - a feladat egy KONKRÉT listaelemre (szó, mondat, hónap) nyíljon meg
+  a.tetel = null;
+  if(a.x){ const i = a.x.indexOf(":"); if(i > 0) a.tetel = { l:a.x.slice(0,i), e:a.x.slice(i+1) }; }
   targyEllenoriz(); beallKijelez();
   lektorSavKijelez();
+  // f=<kulcs> - felületi szöveg: itt nincs feladat, a képernyőt nyitjuk meg és kiemeljük.
+  // A teljes DOM-ra és a futásidőben rajzolt elemekre (tantárgykártyák) várni kell.
+  if(a.f){ fomenu(); setTimeout(()=>lektorFelulet(a.f), 0); return true; }
   lektorJatszik();
   return true;
+}
+/* Felületi szöveg megmutatása: megkeressük a data-t / data-tph attribútummal jelölt
+   elemet, előhozzuk a képernyőjét, odagörgetünk és felvillantjuk. A kulcs->képernyő
+   megfeleltetés futásidőben, a DOM-ból jön - nincs külön karbantartandó térkép. */
+// azok a felulet-szovegek, amiket a kod ir be (nincs rajtuk data-t attributum)
+const LEKTOR_ELEM = { "fomenu.korinfo":"kor-info", "beall.korErtek":"kor-kijelzo",
+                      "beall.dbErtek":"db-kijelzo", "app.koszonto":"koszonto" };
+function lektorFeluletElem(kulcs){
+  const t = kulcs.match(/^targy\.([a-z]+)\.(nev|leiras)$/); // tantargykartya: futasidoben epul
+  if(t && $("targy-"+t[1])) return $("targy-"+t[1]);
+  if(LEKTOR_ELEM[kulcs] && $(LEKTOR_ELEM[kulcs])) return $(LEKTOR_ELEM[kulcs]);
+  return [...document.querySelectorAll("[data-t],[data-tph]")]
+    .find(e => e.getAttribute("data-t")===kulcs || e.getAttribute("data-tph")===kulcs);
+}
+function lektorFelulet(kulcs){
+  const jel = $("lektor-jelzes");
+  const el = lektorFeluletElem(kulcs);
+  if(!el){ if(jel) jel.textContent = "ez a szöveg csak feladat közben jelenik meg"; return false; }
+  const scr = el.closest(".screen");
+  if(scr && scr.id !== "scr-game") mutat(scr.id);
+  document.querySelectorAll(".lektor-kiemel").forEach(e=>e.classList.remove("lektor-kiemel"));
+  el.classList.add("lektor-kiemel");
+  setTimeout(()=>{ try{ el.scrollIntoView({block:"center", behavior:"smooth"}); }catch(e){} }, 60);
+  return true;
+}
+function lektorInfo(){
+  const d = $("lektor-info"); if(!d) return;
+  d.style.display = (d.style.display === "block") ? "none" : "block";
 }
 /* Egy feladat visszajátszása a VALÓDI játékképernyőn, ugyanazzal a maggal.
    Ugyanezt használja a lektor-link és a szülői hiba-visszanézés is, ezért amit a
    szülő lát, bitre az, amit a gyerek látott. v: "j" | "b" | konkrét válasz | null (nincs válasz) */
-function visszajatszas(modul, mag, v, uzenetKulcs){
+function visszajatszas(modul, mag, v, uzenetKulcs, tetel){
   mod = modul; korHossz = beall.dbKor;
   kerdesek=0; jok=0; sorozat=0; maxSorozat=0; hibak=[]; korId=null;
   kenyszUzenet = uzenetKulcs || null;
+  kenyszTetel = tetel || null;
   eroltetettMag = (mag>>>0);
   visszajatszottMag = mag;
   mutat("scr-game"); rajzolPontok();
@@ -2910,7 +3009,7 @@ let visszajatszottMag = null, eroltetettMag = null;
 function lektorJatszik(){
   const a = lektorAdat;
   ujraMod = false;
-  visszajatszas(a.m, a.s, a.v, a.u);
+  visszajatszas(a.m, a.s, a.v, a.u, a.tetel);
 }
 // üzenet-léptetés: ugyanabban a csoportban a következő/előző mondat
 function lektorLep(d){
@@ -2924,9 +3023,14 @@ function lektorLep(d){
 }
 /* ---- lektori megjegyzések (localStorage, CSV-exporttal) ---- */
 const LEKTOR_TAR = "matekLektor";
+// a megjegyzes azonositoja: uzenetkulcs | felulet-kulcs | listatetel | modul@mag
+function lektorKulcs(){
+  const a = lektorAdat; if(!a) return "?";
+  return a.id || a.u || (a.f ? "felulet:"+a.f : null) || (a.x ? a.x : null) || (a.m+"@"+a.s);
+}
 function lektorMegjegyzesek(){ try{ return JSON.parse(localStorage.getItem(LEKTOR_TAR)||"{}"); }catch(e){ return {}; } }
 function lektorMegjegyzesMent(){
-  const k = (lektorAdat && lektorAdat.u) || (lektorAdat ? lektorAdat.m+"@"+lektorAdat.s : "?");
+  const k = lektorKulcs();
   const be = $("lektor-megjegyzes");
   const t = lektorMegjegyzesek();
   const sz = (be && be.value || "").trim();
@@ -2934,6 +3038,34 @@ function lektorMegjegyzesMent(){
   else delete t[k];
   try{ localStorage.setItem(LEKTOR_TAR, JSON.stringify(t)); }catch(e){}
   const j = $("lektor-jelzes"); if(j){ j.textContent = sz ? "mentve ✔" : "törölve"; setTimeout(()=>{ j.textContent=""; }, 1500); }
+}
+/* ---- kuldes a megosztott Google Sheets-be ----
+   A tabla NEM nyilvanos: csak azok latjak, akikkel megosztod. Az iras egy Apps Script
+   vegponton keresztul tortenik, amit a tabla tulajdonosa tesz kozze; a vegpont csak
+   ID + kod parossal fogad adatot, es semmit nem ad vissza (nem lehet vele olvasni).
+   Amig a VEGPONT ures, a kuldes-gomb meg sem jelenik - a program a mai modon mukodik. */
+const LEKTOR_VEGPONT = ""; // ide kerul az Apps Script webalkalmazas /exec URL-je
+function lektorKuldheto(){
+  return !!(LEKTOR_VEGPONT && lektorAdat && lektorAdat.id && lektorAdat.kod);
+}
+function lektorKuld(){
+  if(!lektorKuldheto()) return;
+  const jel = $("lektor-jelzes");
+  const be = $("lektor-megjegyzes"), st = $("lektor-statusz");
+  const adat = { id: lektorAdat.id, kod: lektorAdat.kod,
+                 megjegyzes: (be && be.value || "").trim(),
+                 statusz: (st && st.value) || "",
+                 link: location.href };
+  lektorMegjegyzesMent(); // a helyi masolat is maradjon meg
+  try{
+    // no-cors: a valaszt nem tudjuk elolvasni, ezert a visszajelzes csak annyit allit,
+    // hogy elkuldtuk. A biztos visszaigazolas maga a tablazat.
+    fetch(LEKTOR_VEGPONT, { method:"POST", mode:"no-cors",
+      headers:{ "Content-Type":"text/plain;charset=utf-8" }, body: JSON.stringify(adat) });
+    if(jel){ jel.textContent = "elküldve – nézd meg a táblázatban ✔"; setTimeout(()=>{ jel.textContent=""; }, 4000); }
+  }catch(e){
+    if(jel) jel.textContent = "a küldés nem sikerült, a megjegyzés helyben maradt";
+  }
 }
 function lektorExport(){
   const t = lektorMegjegyzesek();
@@ -2949,10 +3081,13 @@ function lektorSavKijelez(){
   sav.style.display = lektorMod ? "block" : "none";
   if(!lektorMod) return;
   const a = lektorAdat, t = lektorLista ? (uzCsoport(lektorLista)||[]) : null;
-  $("lektor-kulcs").textContent = (a.u || (a.m + " · mag " + a.s)) + (t ? "  ("+(lektorPoz+1)+"/"+t.length+")" : "");
+  $("lektor-kulcs").textContent = (a.f ? "felület · "+a.f : a.x ? a.x : (a.u || (a.m + " · mag " + a.s)))
+    + (t ? "  ("+(lektorPoz+1)+"/"+t.length+")" : "");
   $("lektor-nyilak").style.display = t ? "inline-flex" : "none";
   const be = $("lektor-megjegyzes");
-  if(be){ const m = lektorMegjegyzesek()[a.u || (a.m+"@"+a.s)]; be.value = m ? m.sz : ""; }
+  if(be){ const m = lektorMegjegyzesek()[lektorKulcs()]; be.value = m ? m.sz : ""; }
+  const kg = $("lektor-kuld-gomb");
+  if(kg) kg.style.display = lektorKuldheto() ? "inline-block" : "none";
 }
 /* ================= képernyőváltás ================= */
 // Menü-szintek: 0 = tantárgyak főmenüje, 1 = a tantárgy feladattípusai, 2 = minden más (setup, játék, szülői)
@@ -4188,7 +4323,9 @@ function abcOpciok(L, i, db){
   return abcKever([...ki]);
 }
 function genAbc(){
-  const L = abcLista(), r = vel();
+  const L = abcLista(), r0 = vel();
+  // lektor-link egy abece-szora: a 6. (kezdobetu) feladatfajtat kenyszeritjuk ki
+  const r = (kenyszE("abcszo") !== null) ? 0.99 : r0;
   // 1) Mi jön utána? – ez vési be legjobban a sorrendet, ezért ez a leggyakoribb
   if(r < 0.30){
     const i = rnd(0, L.length-2);
@@ -4240,7 +4377,7 @@ function genAbc(){
              modul:"abc", cimke:`${L[i]} vagy ${L[j]}`, tf:"Ábécé · melyik van előbb?" };
   }
   // 6) Kezdőbetű – a betű és a hang összekapcsolása
-  const [szo, kep] = valaszt(ABC_SZAVAK);
+  const [szo, kep] = kValaszt("abcszo", ABC_SZAVAK, x=>x[0]);
   const kezdo = szo.charAt(0);
   const i = L.indexOf(kezdo);
   const opciok = i >= 0 ? abcOpciok(L,i) : abcKever([kezdo, valaszt(L), valaszt(L)]);
@@ -4250,15 +4387,17 @@ function genAbc(){
            modul:"abc", cimke:`${szo} kezdőbetűje`, tf:"Ábécé · kezdőbetű" };
 }
 function genMgh(){
-  const [csonk, opciok, jo, teljes] = valaszt(MGH_SZAVAK);
+  const [csonk, opciok, jo, teljes] = kValaszt("mgh", MGH_SZAVAK, x=>x[3]);
   return { szoveg:`Melyik betű hiányzik?<br><span class="nagy">${csonk}</span>`,
            tipus:"valaszto", opciok, valasz:jo,
            hint:`A helyes alak: ${teljes}.`,
            modul:"mgh", cimke:`${csonk} (${teljes})`, tf:"Magánhangzók · rövid vagy hosszú?" };
 }
 function genJly(){
-  const lyE = vel()<0.5;
-  const szo = valaszt(lyE ? LY_SZAVAK : J_SZAVAK);
+  let lyE = vel()<0.5;
+  const kSzo = kenyszE("jly"); // lektor-link: a szo donti el, melyik listabol kerdezunk
+  if(kSzo !== null) lyE = LY_SZAVAK.includes(kSzo);
+  const szo = kValaszt("jly", lyE ? LY_SZAVAK : J_SZAVAK);
   const csonk = lyE ? szo.replace("ly","▢") : szo.replace("j","▢");
   return { szoveg:`J vagy LY?<br><span class="nagy">${csonk}</span>`,
            tipus:"valaszto", opciok:["j","ly"], valasz: lyE ? "ly" : "j",
@@ -4266,7 +4405,7 @@ function genJly(){
            modul:"jly", cimke:`${csonk} (${szo})`, tf:"J vagy Ly" };
 }
 function genSzotag(){
-  const szo = valaszt(SZOTAG_SZAVAK);
+  const szo = kValaszt("szotag", SZOTAG_SZAVAK);
   const db = szotagSzam(szo);
   return { szoveg:`Hány szótagból áll ez a szó?<br><span class="nagy">${szo}</span>`,
            valasz:db,
@@ -4274,7 +4413,7 @@ function genSzotag(){
            modul:"szotag", cimke:`${szo} szótagszáma`, tf:"Szótagolás" };
 }
 function genIrasjel(){
-  const [mondat, jel] = valaszt(IRASJEL_MONDATOK);
+  const [mondat, jel] = kValaszt("irasjel", IRASJEL_MONDATOK, x=>x[0]);
   const nev = jel==="." ? "kijelentő" : jel==="?" ? "kérdő" : "felkiáltó vagy felszólító";
   return { szoveg:`<span class="szoveges-szoveg">${mondat} ▢</span><br>Melyik írásjel kerül a végére?`,
            tipus:"valaszto", opciok:[".","?","!"], valasz:jel,
@@ -4492,7 +4631,7 @@ function peldaMondatHtml(k){
     + (hu ? `<div class="pelda-forditas">${hu}</div>` : "");
 }
 function genAnszo(){
-  const [hu, en, tema] = valaszt(ANGOL_SZAVAK);
+  const [hu, en, tema] = kValaszt("anszo", ANGOL_SZAVAK, x=>x[1]);
   const tarsak = ANGOL_SZAVAK.filter(x=>x[1]!==en && x[0]!==hu);
   const azonosTema = tarsak.filter(x=>x[2]===tema);
   const pool = azonosTema.length>=2 ? azonosTema : tarsak;
@@ -4513,14 +4652,14 @@ function genAnszo(){
 }
 function genAnszam(){
   const lista = beall.kor<=8 ? ANGOL_SZAMOK.filter(x=>x[0]<=12) : ANGOL_SZAMOK;
-  const [szam, szo] = valaszt(lista);
+  const [szam, szo] = kValaszt("anszam", lista, x=>x[1], ANGOL_SZAMOK);
   return { szoveg:`Írd be számmal:<br><span class="nagy">${szo}</span>`,
            valasz:szam, hangSzo:szo,
            hint:`${szo} = ${szam}`,
            modul:"anszam", cimke:`${szo} = ?`, tf:"Angol számok" };
 }
 function genAnbetuz(){
-  const [hu, en] = valaszt(BETUZ_SZAVAK);
+  const [hu, en] = kValaszt("anbetuz", BETUZ_SZAVAK, x=>x[1]);
   return { szoveg:`Betűzd angolul:<br><b>${hu}</b><div id="betuz-hely"></div>`,
            tipus:"betuz", valasz:en, hangSzo:en,
            hint:`${hu} = ${en}`,
@@ -4609,7 +4748,7 @@ const NAPOK = ["hétfő","kedd","szerda","csütörtök","péntek","szombat","vas
 function genEvszak(){
   const t = rnd(1, beall.kor<=7 ? 3 : 5);
   if(t===1){ // melyik évszakhoz tartozik a hónap?
-    const i = rnd(0,11), [ho, evszak] = EVSZAK_HONAP[i];
+    const i = kIndex("evszak", EVSZAK_HONAP, rnd(0,11), x=>x[0]), [ho, evszak] = EVSZAK_HONAP[i];
     return { szoveg:`Melyik évszakhoz tartozik?<br><span class="nagy">${ho}</span>`,
              tipus:"valaszto", opciok:["tavasz","nyár","ősz","tél"], valasz:evszak,
              hint:`A ${ho} a ${evszak} egyik hónapja.`,
@@ -4627,14 +4766,14 @@ function genEvszak(){
              modul:"evszak", cimke:`${nap} ${utan?"után":"előtt"}`, tf:"Évszakok, hónapok, napok" };
   }
   if(t===3){ // hányadik hónap
-    const i = rnd(0,11), ho = EVSZAK_HONAP[i][0];
+    const i = kIndex("evszak", EVSZAK_HONAP, rnd(0,11), x=>x[0]), ho = EVSZAK_HONAP[i][0];
     return { szoveg:`Hányadik hónap az évben?<br><span class="nagy">${ho}</span>`,
              valasz:i+1,
              hint:`Az év hónapjai sorban: január (1.) … december (12.). A ${ho} a ${i+1}. hónap.`,
              modul:"evszak", cimke:`${ho} sorszáma`, tf:"Évszakok, hónapok, napok" };
   }
   if(t===4){ // hány napos a hónap
-    const i = rnd(0,11), [ho,,nap] = EVSZAK_HONAP[i];
+    const i = kIndex("evszak", EVSZAK_HONAP, rnd(0,11), x=>x[0]), [ho,,nap] = EVSZAK_HONAP[i];
     if(i===1) return { szoveg:`Hány napos a <b>február</b> a nem szökőévekben?`, valasz:28,
              hint:`A február 28 napos, szökőévben 29.`,
              modul:"evszak", cimke:`február napjai`, tf:"Évszakok, hónapok, napok" };
@@ -5829,7 +5968,7 @@ function nevMegse(){
 }
 
 // VERZIÓ: minden publikálásnál (commitnál) eggyel emelni - a szülői lap alján látszik
-const VERZIO = "v47";
+const VERZIO = "v48";
 $("verzio-cimke").textContent = VERZIO;
 
 beallTolt();
