@@ -3132,11 +3132,11 @@ try{
 function fomenu(){ clearInterval(villamTimer); villamAktiv=false; hibaCache=null; ujraMod=false;
   if(szuloVisszanezes){ szuloVisszanezes=false; kenyszUzenet=null; visszanezesSavKijelez(); }
   szuloBeallVissza();
-  mutat("scr-fomenu"); frissitStat(); frissitKoszonto(); }
+  mutat("scr-fomenu"); frissitStat(); frissitKoszonto(); frissitesLehetHa(); }
 function menu(){ clearInterval(villamTimer); villamAktiv=false; hibaCache=null; ujraMod=false;
   if(szuloVisszanezes){ szuloVisszanezes=false; kenyszUzenet=null; visszanezesSavKijelez(); }
   szuloBeallVissza();
-  menuFrissit(); mutat("scr-menu"); frissitStat(); frissitKoszonto(); }
+  menuFrissit(); mutat("scr-menu"); frissitStat(); frissitKoszonto(); frissitesLehetHa(); }
 function frissitStat(){
   let o=0,j=0; Object.values(stat).forEach(s=>{ j+=s[0]; o+=s[1]; });
   $("stat-sor").textContent = o ? `Ma eddig: ${j} jó válasz ${o} feladatból` : "";
@@ -7032,8 +7032,36 @@ function nevMegse(){
 }
 
 // VERZIÓ: minden publikálásnál (commitnál) eggyel emelni - a szülői lap alján látszik
-const VERZIO = "v51";
+const VERZIO = "v53";
 $("verzio-cimke").textContent = VERZIO;
+
+// AUTO-FRISSÍTÉS: ha az oldal MÁR NYITVA van, amikor új verzió kerül ki a szerverre, ne
+// kelljen kézzel újratölteni. Feladat KÖZBEN (scr-game) nem szakítjuk félbe: csak jelezzük,
+// és a tényleges reload akkor történik, amikor a gyerek úgyis kilép a menübe (fomenu()/menu()
+// hívja a frissitesLehetHa()-t). Menün állva azonnal frissít, az nem zavaró.
+let ujVerzioErkezett = false;
+function oldalUjratolt(){ location.reload(); } // kulon fuggveny, hogy teszt lecserelhesse
+function frissitesLehetHa(){
+  if(!ujVerzioErkezett) return;
+  if(aktivKepernyo()==="scr-game") return; // feladat közben ne szakítson meg
+  oldalUjratolt();
+}
+function verzioEllenoriz(){
+  fetch(location.pathname + "?fr=" + Date.now(), {cache:"no-store"})
+    .then(r=>r.text())
+    .then(sz=>{
+      const m = sz.match(/const VERZIO = "(v\d+)"/);
+      if(m && m[1] !== VERZIO){ ujVerzioErkezett = true; frissitesLehetHa(); }
+    })
+    .catch(()=>{}); // offline/hálózati hiba: csendben kihagyjuk, legközelebb újra próbáljuk
+}
+// jsdom-os automata tesztekben (navigator.userAgent tartalmazza a "jsdom"-ot) a fetch valós
+// hálózatot próbálna elérni, és az időzítők a folyamatot is életben tartanák - ott ne induljon.
+if(!/jsdom/i.test(navigator.userAgent || "")){
+  setTimeout(verzioEllenoriz, 15000);          // rögtön induláskor is (pl. stale böngésző-cache eset)
+  setInterval(verzioEllenoriz, 5*60*1000);     // utána 5 percenként
+  document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) verzioEllenoriz(); });
+}
 
 beallTolt();
 localeInit();
