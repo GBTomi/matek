@@ -2879,6 +2879,8 @@ function menuFrissit(){
 let korHossz = 10;
 let mod = null, opts = {}, kerdesek = 0, jok = 0, sorozat = 0, maxSorozat = 0;
 let aktKerdes = null, bevitel = "", zarolva = false, hibak = [];
+// friss kérdéseknél ismétlés-szűrés: az utolsó kb. 3 kör "modul|címke" jelei (ld. kovetkezo())
+let kerdesTortenet = [];
 // adaptív szorzótábla: a rontott tények itt gyűlnek, és gyakrabban jönnek vissza
 let gyengeTenyek = [];
 // írásbeli mód futó állapota
@@ -6395,10 +6397,38 @@ function kovetkezo(elso, fixKerdes){
   // és a hozzá tartozó üzenetek pontosan visszajátszhatók (lektor-link, hiba-visszanézés).
   // eroltetettMag: visszajátszáskor (lektor-link, szülői hiba-visszanézés) a mentett mag,
   // egyébként minden feladat friss maggal indul
-  const fMag = (eroltetettMag !== null) ? eroltetettMag : ujMag();
-  eroltetettMag = null;
-  magBeallit(fMag);
-  aktKerdes = fixKerdes || ujKerdes(); bevitel=""; zarolva=false; ir=null;
+  let fMag;
+  if(fixKerdes){
+    fMag = (eroltetettMag !== null) ? eroltetettMag : ujMag();
+    eroltetettMag = null;
+    magBeallit(fMag);
+    aktKerdes = fixKerdes;
+  } else if(eroltetettMag !== null || kenyszTetel !== null){
+    // visszajátszás (lektor-link) / lektor kényszerített tétele: pontosan reprodukálandó,
+    // az ismétlés-szűrés itt nem alkalmazható
+    fMag = (eroltetettMag !== null) ? eroltetettMag : ujMag();
+    eroltetettMag = null;
+    magBeallit(fMag);
+    aktKerdes = ujKerdes();
+  } else {
+    // friss kérdés: ne ismétlődjön az utolsó kb. 3 kör kérdéseivel (modul+cimke alapján,
+    // ld. kerdesTortenet) - korlátos próbálkozásszámmal, hogy szűk kérdéskészletnél
+    // (pl. kevés tényanyag) se ragadjon be a kör
+    const ablak = Math.max(korHossz, 1) * 3;
+    let probalkozas = 0, jelolt;
+    do{
+      fMag = ujMag();
+      magBeallit(fMag);
+      jelolt = ujKerdes();
+      probalkozas++;
+    } while(jelolt && kerdesTortenet.includes(jelolt.modul+"|"+jelolt.cimke) && probalkozas < 40);
+    aktKerdes = jelolt;
+    if(aktKerdes){
+      kerdesTortenet.push(aktKerdes.modul+"|"+aktKerdes.cimke);
+      if(kerdesTortenet.length > ablak) kerdesTortenet.splice(0, kerdesTortenet.length - ablak);
+    }
+  }
+  bevitel=""; zarolva=false; ir=null;
   if(aktKerdes) aktKerdes.mag = fMag;
   frissitKoszonto(); // a felső üzenet pörög: egy feladat, egy üzenet
   keszVisszaall(); $("tovabb").disabled=false;
@@ -7002,7 +7032,7 @@ function nevMegse(){
 }
 
 // VERZIÓ: minden publikálásnál (commitnál) eggyel emelni - a szülői lap alján látszik
-const VERZIO = "v50";
+const VERZIO = "v51";
 $("verzio-cimke").textContent = VERZIO;
 
 beallTolt();
