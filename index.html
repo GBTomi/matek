@@ -6648,7 +6648,10 @@ function ellenoriz(){
       + peldaMondatHtml(aktKerdes);
     // gyenge tény javítva → kivesszük
     if(aktKerdes.teny) gyengeTenyek = gyengeTenyek.filter(f=>!(f[0]===aktKerdes.teny[0]&&f[1]===aktKerdes.teny[1]));
-    if(idoMod()) setTimeout(kovetkezo, 350);
+    // időre menő módoknál (villám, vegyes időre) élesben magától lép tovább - DE lektor-
+    // linkből/szülői visszanézésből nyitva ez elrejtené a segítő mondatot, mielőtt elolvasnák:
+    // ott (mint a nem-időre-menő móduloknál) kézi Tovább-gombra vár
+    if(idoMod() && !(lektorMod||szuloVisszanezes)) setTimeout(kovetkezo, 350);
     else if(aktKerdes.tipus==="valaszto"||aktKerdes.tipus==="allit") tovabbMutat();
     else keszNyil();
   } else {
@@ -6664,7 +6667,8 @@ function ellenoriz(){
                  tf:aktKerdes.tf||"", k:$("kerdes").innerHTML, f:v.innerHTML,
                  b:bevitel, g: aktKerdes.tipus==="valaszto" ? $("valaszgombok").innerHTML : "",
                  q: {...aktKerdes}, ...visszajatszasAdat(bevitel) });
-    if(idoMod()) setTimeout(kovetkezo, 1500);
+    // ld. fent: lektor-linknel/visszanezesnel ne tunjon el magatol a segito mondat
+    if(idoMod() && !(lektorMod||szuloVisszanezes)) setTimeout(kovetkezo, 1500);
     else if(aktKerdes.tipus==="valaszto"||aktKerdes.tipus==="allit") tovabbMutat();
     else keszNyil();
   }
@@ -7032,7 +7036,7 @@ function nevMegse(){
 }
 
 // VERZIÓ: minden publikálásnál (commitnál) eggyel emelni - a szülői lap alján látszik
-const VERZIO = "v54";
+const VERZIO = "v55";
 $("verzio-cimke").textContent = VERZIO;
 
 // AUTO-FRISSÍTÉS: megnyitáskor (nem időzítve, nem a nyitva tartás alatt) ellenőrzi, hogy a
