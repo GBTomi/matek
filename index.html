@@ -6486,9 +6486,17 @@ function kovetkezo(elso, fixKerdes){
   let szoveg = aktKerdes.szoveg;
   const szamos = !["valaszto","allit","betuz"].includes(aktKerdes.tipus);
   celMezo = false;
-  if(szamos && /\?(?=\s*(<\/span>|=|$))/.test(szoveg)){
-    szoveg = szoveg.replace(/\?(?=\s*(<\/span>|=|$))/, '<span class="cel" id="cel"><span class="kurzor">_</span></span>');
-    celMezo = true;
+  const CEL = '<span class="cel" id="cel"><span class="kurzor">_</span></span>';
+  if(szamos){
+    // képlet-kérdőjel: a ? a <span class="nagy"> BELSEJÉBEN (3 × ? = 24, 45 + 12 = ?) vagy közvetlenül
+    // utána ("<span class=nagy>23 + 45</span> ?"): a ? HELYÉRE megy a cél-mező
+    const kepletBenn = /(<span class="nagy">[^<]*)\?([^<]*<\/span>)/, kepletUtan = /(<span class="nagy">[^<]*<\/span>\s*)\?/;
+    // mondatvégi kérdőjel ("Hány mérkőzés lesz?", akár záró tagek előtt): a ? MARAD, a cél-mező
+    // utána jön (260909, user: a kérdőjel nem maradhat le)
+    const mondat = /\?(?=(\s|<\/(span|b|i|div)>)*$)/;
+    if(kepletBenn.test(szoveg)){ szoveg = szoveg.replace(kepletBenn, '$1' + CEL + '$2'); celMezo = true; }
+    else if(kepletUtan.test(szoveg)){ szoveg = szoveg.replace(kepletUtan, '$1' + CEL); celMezo = true; }
+    else if(mondat.test(szoveg)){ szoveg = szoveg.replace(mondat, '? ' + CEL); celMezo = true; }
   }
   $("kerdes").innerHTML = `<div class="kerdes-belso">${szoveg}</div>`;
   if(aktKerdes.hangSzo){
@@ -7100,7 +7108,7 @@ function nevMegse(){
 }
 
 // VERZIÓ: minden publikálásnál (commitnál) eggyel emelni - a szülői lap alján látszik
-const VERZIO = "v56";
+const VERZIO = "v57";
 $("verzio-cimke").textContent = VERZIO;
 
 // AUTO-FRISSÍTÉS: megnyitáskor (nem időzítve, nem a nyitva tartás alatt) ellenőrzi, hogy a
